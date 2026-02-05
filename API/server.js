@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
+const { connectDB } = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +36,19 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    // Connect to database
+    await connectDB();
+
+    // Start listening
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();

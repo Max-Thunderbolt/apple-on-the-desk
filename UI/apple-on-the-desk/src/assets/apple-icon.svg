@@ -1,0 +1,25 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="appleBodyGradient" x1="256" y1="120" x2="256" y2="460" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c5283d" /> <stop offset="100%" stop-color="#A833B9" /> </linearGradient>
+    
+    <linearGradient id="leafGradient" x1="256" y1="50" x2="350" y2="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1a936f" /> <stop offset="100%" stop-color="#00a8e8" /> </linearGradient>
+
+    <filter id="glassGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+      <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+    </filter>
+  </defs>
+
+  <path d="M270 60 C 270 60, 260 110, 240 135" stroke="#00171f" stroke-width="12" stroke-linecap="round" />
+
+  <path d="M256 136 C 216 136, 160 104, 104 136 C 32 176, 32 288, 64 352 C 88 400, 136 448, 192 464 C 224 472, 248 448, 256 448 C 264 448, 288 472, 320 464 C 376 448, 424 400, 448 352 C 480 288, 480 176, 408 136 C 352 104, 296 136, 256 136 Z" fill="url(#appleBodyGradient)"/>
+  
+  <path d="M265 120 Q 320 40, 400 80 Q 340 160, 265 120 Z" fill="url(#leafGradient)"/>
+
+  <path d="M120 160 C 160 140, 220 150, 240 180 C 250 200, 240 240, 200 260 C 140 290, 80 240, 80 200 C 80 180, 90 170, 120 160 Z" fill="#ffffff" fill-opacity="0.2" />
+  <path d="M130 175 C 160 160, 200 170, 215 190 C 220 200, 215 220, 190 235 C 150 255, 100 220, 100 195 C 100 185, 110 180, 130 175 Z" fill="#00a8e8" fill-opacity="0.3" />
+
+</svg>

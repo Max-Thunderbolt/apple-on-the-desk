@@ -1,96 +1,116 @@
-import { MongoClient, ObjectId } from 'mongodb';
+const { getDB } = require('../config/database');
 
-const mongoClient = new MongoClient(process.env.MONGODB_URI);
-
-const getAllClasses = async (req, res) => {
+const getAllClasses = async (req, res, next) => {
     try {
-        const classes = await mongoClient.db('apple-on-the-desk').collection('classes').find().toArray();
-        return {
+        const classes = await getDB().collection('Class').find().toArray();
+        res.json({
             success: true,
             message: 'Classes found successfully',
             classes: classes
-        };
+        });
     } catch (err) {
-        return {
-            success: false,
-            message: 'Failed to get classes',
-            error: err.message
-        };
+        next(err);
     }
 };
 
-const getClassById = async (req, res) => {
+const getClassNames = async (req, res, next) => {
     try {
-        const classData = await mongoClient.db('apple-on-the-desk').collection('classes').findOne({ _id: new ObjectId(req.params.id) });
-        return {
+        const classData = await getDB().collection('Class').find().toArray();
+        let classesData = [];
+        for (const classItem of classData) {
+            classesData.push({
+                name: classItem.name,
+                numberOfStudents: classItem.students.length,
+                id: classItem.id,
+                experience: classItem.experience ?? 0
+            });
+        }
+        res.json({
             success: true,
-            message: 'Class found successfully',
-            class: classData
-        };
+            message: 'Classes data found successfully',
+            classes: classesData
+        });
     } catch (err) {
-        return {
-            success: false,
-            message: 'Failed to get class by id',
-            error: err.message
-        };
+        next(err);
     }
 };
 
-const createClass = async (req, res) => {
+const getClassById = async (req, res, next) => {
     try {
-        const classData = await mongoClient.db('apple-on-the-desk').collection('classes').insertOne(req.body);
-        return {
+        const classData = await getDB().collection('Class').findOne({ id: req.params.id });
+        if (!classData) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+        res.json({
+            success: true,
+            class: classData
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const createClass = async (req, res, next) => {
+    try {
+        const result = await getDB().collection('Class').insertOne(req.body);
+        res.status(201).json({
             success: true,
             message: 'Class created successfully',
-            class: classData
-        };
+            class: { _id: result.insertedId, ...req.body }
+        });
     } catch (err) {
-        return {
-            success: false,
-            message: 'Failed to create class',
-            error: err.message
-        };
+        next(err);
     }
 };
 
-const updateClass = async (req, res) => {
+const updateClass = async (req, res, next) => {
     try {
-        const classData = await mongoClient.db('apple-on-the-desk').collection('classes').updateOne({ _id: new ObjectId(req.params.id) }, { $set: req.body });
-        return {
+        const result = await getDB().collection('Class').updateOne(
+            { id: req.params.id },
+            { $set: req.body }
+        );
+        if (result.matchedCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+        res.json({
             success: true,
             message: 'Class updated successfully',
-            class: classData
-        };
+            modifiedCount: result.modifiedCount
+        });
     } catch (err) {
-        return {
-            success: false,
-            message: 'Failed to update class',
-            error: err.message
-        };
+        next(err);
     }
 };
 
-const deleteClass = async (req, res) => {
+const deleteClass = async (req, res, next) => {
     try {
-        const classData = await mongoClient.db('apple-on-the-desk').collection('classes').deleteOne({ _id: new ObjectId(req.params.id) });
-        return {
+        const result = await getDB().collection('Class').deleteOne({ id: req.params.id });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+        res.json({
             success: true,
-            message: 'Class deleted successfully',
-            class: classData
-        };
+            message: 'Class deleted successfully'
+        });
     } catch (err) {
-        return {
-            success: false,
-            message: 'Failed to delete class',
-            error: err.message
-        };
+        next(err);
     }
 };
 
 module.exports = {
     getAllClasses,
+    getClassNames,
     getClassById,
     createClass,
     updateClass,
-    deleteClass
+    deleteClass,
 };
