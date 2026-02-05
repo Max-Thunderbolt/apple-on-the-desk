@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const http = axios.create({
-    baseURL: 'http://localhost:3001/api/',
+    baseURL: 'https://apple-on-the-desk-api.onrender.com/api/', //localhost:3001/api/
     headers: {
         'Content-Type': 'application/json',
     },
