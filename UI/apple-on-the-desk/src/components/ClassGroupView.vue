@@ -130,26 +130,41 @@ function openContextMenu(event, student) {
 
 .groupsContainer {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
     padding-bottom: 2rem;
 }
 
+@media (min-width: 768px) {
+    .groupsContainer {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+}
+
 .groupCard {
     background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
-    padding: 1rem;
+    padding: 0.75rem;
     transition: all 0.3s ease;
 }
 
-.groupCard:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-color: var(--seaGreen);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+@media (min-width: 768px) {
+    .groupCard {
+        padding: 1rem;
+    }
+}
+
+@media (hover: hover) {
+    .groupCard:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: var(--seaGreen);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
 }
 
 .groupHeader {
@@ -196,12 +211,6 @@ function openContextMenu(event, student) {
     cursor: pointer;
 }
 
-.studentRow:hover {
-    transform: translateX(4px);
-    background-color: var(--seaGreen);
-    box-shadow: 0 2px 8px rgba(var(--seaGreen-rgb), 0.4);
-}
-
 .studentRowCanAffordPoints {
     background-color: var(--seaGreen) !important;
     display: flex;
@@ -214,12 +223,6 @@ function openContextMenu(event, student) {
     min-height: 44px;
     transition: all 0.2s ease;
     cursor: pointer;
-}
-
-.studentRowCanAffordPoints:hover {
-    transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(var(--seaGreen-rgb), 0.5);
-    filter: brightness(1.1);
 }
 
 .studentRowCantAffordPoints {
@@ -237,10 +240,24 @@ function openContextMenu(event, student) {
     cursor: pointer;
 }
 
-.studentRowCantAffordPoints:hover {
-    transform: translateX(4px);
-    box-shadow: 0 2px 8px rgba(var(--intenseCherry-rgb), 0.5);
-    filter: brightness(1.1);
+@media (hover: hover) {
+    .studentRow:hover {
+        transform: translateX(4px);
+        background-color: var(--seaGreen);
+        box-shadow: 0 2px 8px rgba(var(--seaGreen-rgb), 0.4);
+    }
+
+    .studentRowCanAffordPoints:hover {
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(var(--seaGreen-rgb), 0.5);
+        filter: brightness(1.1);
+    }
+
+    .studentRowCantAffordPoints:hover {
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(var(--intenseCherry-rgb), 0.5);
+        filter: brightness(1.1);
+    }
 }
 
 .studentName {

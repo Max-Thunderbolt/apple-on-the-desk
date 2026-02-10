@@ -276,7 +276,7 @@ function handleCreateGroups() {
     font-weight: 700;
     font-style: normal;
     font-variation-settings: "wdth" 147.8;
-    font-size: 2.5rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
     color: var(--white);
     text-align: center;
     margin: 0;
@@ -393,7 +393,15 @@ function handleCreateGroups() {
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     margin-top: 0.5rem;
-    min-width: 250px;
+    min-width: 200px;
+    width: 90vw;
+    max-width: 250px;
+}
+
+@media (min-width: 600px) {
+    .actionsMenu {
+        width: auto;
+    }
 }
 
 .actionsMenuList {
@@ -410,10 +418,12 @@ function handleCreateGroups() {
     cursor: pointer;
 }
 
-.actionMenuItem:hover {
-    background: linear-gradient(90deg,
-            rgba(var(--seaGreen-rgb), 0.3) 0%,
-            rgba(var(--seaGreen-rgb), 0.1) 100%) !important;
+@media (hover: hover) {
+    .actionMenuItem:hover {
+        background: linear-gradient(90deg,
+                rgba(var(--seaGreen-rgb), 0.3) 0%,
+                rgba(var(--seaGreen-rgb), 0.1) 100%) !important;
+    }
 }
 
 .actionMenuItem .v-list-item-title {
@@ -531,17 +541,30 @@ function handleCreateGroups() {
     justify-content: center;
     align-items: center;
     margin-bottom: 12px !important;
-    padding: 1.5rem;
+    padding: 0.5rem;
     max-width: 700px;
-    gap: 2rem;
+    gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .classRankContainer {
+        padding: 1.5rem;
+        gap: 2rem;
+    }
 }
 
 .rankOrnament {
-    font-size: 3rem;
+    font-size: 1.5rem;
     color: var(--gold);
     animation: sparkle 3s ease-in-out infinite;
     text-shadow: 0 0 20px rgba(var(--gold-rgb), 0.8),
         0 0 40px rgba(var(--gold-rgb), 0.6);
+}
+
+@media (min-width: 768px) {
+    .rankOrnament {
+        font-size: 3rem;
+    }
 }
 
 .rankOrnamentLeft {
@@ -573,7 +596,7 @@ function handleCreateGroups() {
             rgba(var(--amethyst-rgb), 0.15) 50%,
             rgba(var(--gold-rgb), 0.15) 100%) !important;
     border-radius: 32px !important;
-    padding: 3.5rem 2.5rem 1.5rem 2.5rem !important;
+    padding: 3rem 1.5rem 1.5rem 1.5rem !important;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -584,7 +607,15 @@ function handleCreateGroups() {
         0 0 60px rgba(var(--gold-rgb), 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    min-width: 550px;
+    width: 100%;
+    max-width: 550px;
+}
+
+@media (min-width: 768px) {
+    .classRankCard {
+        padding: 3.5rem 2.5rem 1.5rem 2.5rem !important;
+        min-width: 550px;
+    }
 }
 
 .classRankCard::before {
@@ -606,11 +637,18 @@ function handleCreateGroups() {
 
 .rankCrown {
     position: absolute;
-    top: -35px;
-    font-size: 3.5rem;
+    top: -25px;
+    font-size: 2.5rem;
     animation: float 3s ease-in-out infinite;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
     z-index: 10;
+}
+
+@media (min-width: 768px) {
+    .rankCrown {
+        top: -35px;
+        font-size: 3.5rem;
+    }
 }
 
 @keyframes float {
@@ -656,7 +694,7 @@ function handleCreateGroups() {
 
 .rankName {
     font-family: var(--font);
-    font-size: 1.35rem;
+    font-size: clamp(1rem, 3vw, 1.35rem);
     font-weight: 700;
     color: var(--gold);
     text-transform: uppercase;

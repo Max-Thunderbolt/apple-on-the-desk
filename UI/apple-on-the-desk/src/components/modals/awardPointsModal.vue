@@ -158,6 +158,16 @@ function createPointsCategory() {
     padding: 0 0 0.5rem;
 }
 
+.pointsDialog {
+    max-width: 90vw;
+}
+
+@media (min-width: 600px) {
+    .pointsDialog {
+        max-width: 420px;
+    }
+}
+
 .pointsDialogTitle {
     font-family: var(--font);
     font-size: 1.25rem;
@@ -198,10 +208,6 @@ function createPointsCategory() {
     transition: background-color 0.15s ease;
 }
 
-.pointsCategoryItem:hover {
-    background-color: var(--seaGreen);
-}
-
 .pointsCategoryName {
     font-family: var(--font);
     font-weight: 500;
@@ -212,8 +218,14 @@ function createPointsCategory() {
     color: var(--seaGreen);
 }
 
-.pointsCategoryItem:hover .pointsCategoryValue {
-    color: var(--white);
+@media (hover: hover) {
+    .pointsCategoryItem:hover {
+        background-color: var(--seaGreen);
+    }
+
+    .pointsCategoryItem:hover .pointsCategoryValue {
+        color: var(--white);
+    }
 }
 
 .noCategories,
@@ -239,12 +251,6 @@ function createPointsCategory() {
     padding: 0.5rem 1rem !important;
     transition: all 0.3s ease !important;
     cursor: pointer !important;
-
-    &:hover {
-        transform: scale(1.02) !important;
-        border-color: rgba(255, 0, 0, 0.459) !important;
-        filter: brightness(1.1) !important;
-    }
 }
 
 .pointsDialogAwardButton {
@@ -257,13 +263,21 @@ function createPointsCategory() {
     padding: 0.5rem 1rem;
 }
 
-.pointsDialogAwardButton:hover {
-    transform: scale(1.02);
-    background-color: var(--seaGreen);
-    color: var(--white);
-    border: none;
-    box-shadow: 0 0 10px 0 rgba(26, 147, 111, 0.5);
-    transition: all 0.3s ease;
+@media (hover: hover) {
+    .pointsDialogCancelButton:hover {
+        transform: scale(1.02) !important;
+        border-color: rgba(255, 0, 0, 0.459) !important;
+        filter: brightness(1.1) !important;
+    }
+
+    .pointsDialogAwardButton:hover {
+        transform: scale(1.02);
+        background-color: var(--seaGreen);
+        color: var(--white);
+        border: none;
+        box-shadow: 0 0 10px 0 rgba(26, 147, 111, 0.5);
+        transition: all 0.3s ease;
+    }
 }
 
 .pointsDialogButtons {

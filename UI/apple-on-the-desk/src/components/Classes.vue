@@ -208,7 +208,8 @@ const navigateTo = (path) => {
     --card-glass-color: 73, 54, 87;
     justify-content: center;
     color: var(--white) !important;
-    width: 300px;
+    width: 100%;
+    max-width: 400px;
     border-radius: 20px !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
     background: linear-gradient(135deg,
@@ -226,13 +227,21 @@ const navigateTo = (path) => {
         border-color 0.3s ease;
 }
 
-.classCard:hover {
-    transform: scale(1.02) translateY(-6px);
-    border-color: rgba(255, 255, 255, 0.35) !important;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.25),
-        0 12px 40px rgba(0, 0, 0, 0.25),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
+@media (min-width: 600px) {
+    .classCard {
+        width: 300px;
+    }
+}
+
+@media (hover: hover) {
+    .classCard:hover {
+        transform: scale(1.02) translateY(-6px);
+        border-color: rgba(255, 255, 255, 0.35) !important;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.25),
+            0 12px 40px rgba(0, 0, 0, 0.25),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
 }
 
 .cardDivider {
@@ -313,14 +322,16 @@ const navigateTo = (path) => {
 }
 
 
-.contextMenuItem:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
+@media (hover: hover) {
+    .contextMenuItem:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
 
-.contextMenuItemDanger:hover {
-    border-radius: 15px !important;
-    background: rgba(197, 40, 61, 0.25);
-    color: var(--intenseCherry);
+    .contextMenuItemDanger:hover {
+        border-radius: 15px !important;
+        background: rgba(197, 40, 61, 0.25);
+        color: var(--intenseCherry);
+    }
 }
 
 .addClassButton_Classes {
@@ -342,7 +353,7 @@ const navigateTo = (path) => {
 .editClassModalCard,
 .addClassModalCard {
     width: 100% !important;
-    padding: 2rem !important;
+    padding: 1rem !important;
     border-radius: 20px !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
     background: linear-gradient(135deg,
@@ -354,5 +365,12 @@ const navigateTo = (path) => {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.12),
         0 4px 24px rgba(0, 0, 0, 0.2) !important;
+}
+
+@media (min-width: 768px) {
+    .editClassModalCard,
+    .addClassModalCard {
+        padding: 2rem !important;
+    }
 }
 </style>

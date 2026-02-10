@@ -151,21 +151,21 @@ async function submit() {
 .pageTitle {
     font-family: var(--font);
     font-weight: 600;
-    font-size: 2.5rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
     color: var(--white);
     margin-bottom: 1.5rem;
     text-align: center;
 }
 
 .inDialog .pageTitle {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 4vw, 2rem);
     margin-bottom: 1rem;
 }
 
 .addClassForm {
     width: 100%;
     max-width: 520px;
-    padding: 2rem;
+    padding: 1rem;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     background: linear-gradient(135deg,
@@ -177,6 +177,12 @@ async function submit() {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.12),
         0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+@media (min-width: 768px) {
+    .addClassForm {
+        padding: 2rem;
+    }
 }
 
 .formGroup {
@@ -212,9 +218,11 @@ async function submit() {
     color: rgba(255, 255, 255, 0.5);
 }
 
-.formInput:hover,
-.formTextarea:hover {
-    border-color: rgba(255, 255, 255, 0.3);
+@media (hover: hover) {
+    .formInput:hover,
+    .formTextarea:hover {
+        border-color: rgba(255, 255, 255, 0.3);
+    }
 }
 
 .formInput:focus,
@@ -272,12 +280,6 @@ async function submit() {
             rgba(255, 0, 0, 0.459) 100%) !important;
 }
 
-.cancelButton:hover {
-    transform: scale(1.02);
-    border-color: rgba(255, 0, 0, 0.459) !important;
-    filter: brightness(1.1);
-}
-
 .submitButton {
     color: var(--white) !important;
     background: linear-gradient(135deg,
@@ -289,13 +291,21 @@ async function submit() {
         0 4px 16px rgba(26, 147, 111, 0.2);
 }
 
-.submitButton:hover:not(:disabled) {
-    transform: scale(1.02) translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.35) !important;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 8px 24px rgba(26, 147, 111, 0.35);
-    filter: brightness(1.08);
+@media (hover: hover) {
+    .cancelButton:hover {
+        transform: scale(1.02);
+        border-color: rgba(255, 0, 0, 0.459) !important;
+        filter: brightness(1.1);
+    }
+
+    .submitButton:hover:not(:disabled) {
+        transform: scale(1.02) translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.35) !important;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+            0 8px 24px rgba(26, 147, 111, 0.35);
+        filter: brightness(1.08);
+    }
 }
 
 .submitButton:disabled {
