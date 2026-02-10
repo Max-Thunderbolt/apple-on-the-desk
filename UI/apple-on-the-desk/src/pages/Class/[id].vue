@@ -6,6 +6,18 @@
     </v-breadcrumbs>
     <div class="container" style="justify-content: flex-start !important;">
         <h1 class="classTitle">{{ classData?.name }} </h1>
+        <div class="classRankContainer">
+            <v-card class="classRankCard">
+                <v-card-text class="classRankText">
+                    {{ experienceToRank(classData?.experience).icon }} {{
+                        experienceToRank(classData?.experience).name
+                    }}
+                </v-card-text>
+                <v-card-text class="classExperienceText">
+                    {{ classData?.experience }} exp
+                </v-card-text>
+            </v-card>
+        </div>
         <div class="classContent">
             <!-- TIMER -->
             <div v-if="!viewShopModal" class="timer">
@@ -17,36 +29,70 @@
             </div>
             <!-- ACTION BUTTONS -->
             <div class="shopContainer">
-                <v-btn class="shopButton" @click="viewShop()">
-                    <v-icon>{{ viewShopModal ? 'mdi-timer' : 'mdi-store' }}</v-icon>
-                    {{ viewShopModal ? 'Timer' : 'Shop' }}
-                </v-btn>
-                <v-btn v-if="!viewShopModal" class="awardClassPointsButton" @click="openAwardClassPointsModal()">
-                    🏆
-                    Award Class Points
-                </v-btn>
+                <v-menu v-model="actionsMenuOpen" :close-on-content-click="false" location="bottom">
+                    <template v-slot:activator="{ props }">
+                        <v-btn class="actionsButton" v-bind="props">
+                            <v-icon>mdi-dots-vertical</v-icon>
+                            Actions
+                            <v-icon>{{ actionsMenuOpen ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                        </v-btn>
+                    </template>
+                    <v-card class="actionsMenu">
+                        <v-list class="actionsMenuList">
+                            <v-list-item class="actionMenuItem" @click="viewShop()">
+                                <template v-slot:prepend>
+                                    <v-icon :color="viewShopModal ? 'timer' : 'store'">{{ viewShopModal ? 'mdi-timer' :
+                                        'mdi-store' }}</v-icon>
+                                </template>
+                                <v-list-item-title>{{ viewShopModal ? 'Timer' : 'Shop' }}</v-list-item-title>
+                            </v-list-item>
+                            <v-divider v-if="!viewShopModal" />
+                            <v-list-item v-if="!viewShopModal" class="actionMenuItem" @click="handleAwardClassPoints()">
+                                <template v-slot:prepend>
+                                    <span class="actionItemIcon">🏆</span>
+                                </template>
+                                <v-list-item-title>Award Class Points</v-list-item-title>
+                            </v-list-item>
+                            <v-divider v-if="!viewShopModal" />
+                            <v-list-item v-if="!viewShopModal" class="actionMenuItem" @click="handleCreateGroups()">
+                                <template v-slot:prepend>
+                                    <v-icon color="seaGreen">mdi-account-group</v-icon>
+                                </template>
+                                <v-list-item-title>Create Groups</v-list-item-title>
+                            </v-list-item>
+                        </v-list>
+                    </v-card>
+                </v-menu>
             </div>
             <!-- CLASS LIST -->
             <ClassList v-if="classData && id" :shopCost="shopCost" :isViewingShop="viewShopModal" :class-id="id"
                 :students="classData.students || []" :experience="classData.experience || 0"
                 @students-updated="onStudentsUpdated" @shopCostUpdated="onShopCostUpdated" />
+
             <!-- CLASS RANK -->
             <div class="classRankContainer">
+                <div class="rankOrnament rankOrnamentLeft">✦</div>
                 <v-card class="classRankCard">
+                    <div class="rankCrown">👑</div>
                     <v-card-text class="classRankText">
-                        {{ experienceToRank(classData?.experience).icon }} {{
-                            experienceToRank(classData?.experience).name
-                        }}
+                        <span class="rankIcon">{{ experienceToRank(classData?.experience).icon }}</span>
+                        <span class="rankName">{{ experienceToRank(classData?.experience).name }}</span>
                     </v-card-text>
                     <v-card-text class="classExperienceText">
-                        {{ classData?.experience }} exp
+                        <span class="expLabel">Experience</span>
+                        <span class="expValue">{{ classData?.experience ?? 0 }}</span>
                     </v-card-text>
+                    <div class="rankShimmer"></div>
                 </v-card>
+                <div class="rankOrnament rankOrnamentRight">✦</div>
             </div>
         </div>
     </div>
     <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
         :all-students="classData?.students || []" :class-id="id" @studentsUpdated="onStudentsUpdated" />
+
+    <grouper-modal v-model="grouperModalOpen" :class-id="id" :students="classData?.students || []"
+        @groupsUpdated="onGroupsUpdated" />
 </template>
 
 <script setup>
@@ -59,6 +105,7 @@ import Server from '../../services/server';
 import { toast } from 'vue-sonner';
 import { experienceToRank, getExperience } from '../../controllers/ExperienceController';
 import AwardPointsModal from '../../components/modals/awardPointsModal.vue';
+import grouperModal from '../../components/modals/GrouperModal.vue';
 
 const router = useRouter();
 const { id } = useRoute().params;
@@ -68,6 +115,8 @@ const shopItems = ref([]);
 const shopCost = ref(0);
 const awardClassPointsModal = ref(false);
 const selectedStudents = ref([]);
+const grouperModalOpen = ref(false);
+const actionsMenuOpen = ref(false);
 let breadcrumbs = computed(() => [
     { title: 'Home', to: '/' },
     { title: 'Classes', to: '/Classes' },
@@ -155,6 +204,25 @@ function closeAwardClassPointsModal() {
     awardClassPointsModal.value = false;
 }
 
+function openGrouperModal() {
+    grouperModalOpen.value = true;
+}
+
+function onGroupsUpdated(updatedStudents) {
+    // Reload the class data to get the latest state with groups
+    loadClass();
+}
+
+function handleAwardClassPoints() {
+    actionsMenuOpen.value = false;
+    openAwardClassPointsModal();
+}
+
+function handleCreateGroups() {
+    actionsMenuOpen.value = false;
+    openGrouperModal();
+}
+
 </script>
 
 <style>
@@ -230,6 +298,97 @@ function closeAwardClassPointsModal() {
     border: none;
     color: var(--white);
     background-color: rgba(var(--amethyst-rgb), 0.589);
+}
+
+.grouperButton {
+    background: linear-gradient(135deg,
+            rgba(var(--seaGreen-rgb), 0.589) 0%,
+            rgba(var(--seaGreen-rgb), 0.589) 50%,
+            rgba(var(--seaGreen-rgb), 0.589) 100%) !important;
+    border-radius: 180px;
+    box-shadow: 0 0 10px 0 rgba(var(--seaGreen-rgb), 0.5);
+    padding: 6px 20px;
+    color: var(--white);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.grouperButton:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px 0 rgba(var(--seaGreen-rgb), 0.589);
+    border: none;
+    color: var(--white);
+    background-color: rgba(var(--seaGreen-rgb), 0.589);
+}
+
+.actionsButton {
+    background: linear-gradient(135deg,
+            rgba(var(--gold-rgb), 0.589) 0%,
+            rgba(var(--amethyst-rgb), 0.589) 50%,
+            rgba(var(--seaGreen-rgb), 0.589) 100%) !important;
+    border-radius: 180px;
+    box-shadow: 0 0 10px 0 rgba(var(--gold-rgb), 0.5);
+    padding: 6px 20px;
+    text-align: center;
+    color: var(--white);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    gap: 0.5rem;
+}
+
+.actionsButton:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 15px 0 rgba(var(--gold-rgb), 0.7);
+    filter: brightness(1.1);
+}
+
+.actionsMenu {
+    background-color: var(--inkBlack) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    margin-top: 0.5rem;
+    min-width: 250px;
+}
+
+.actionsMenuList {
+    background-color: transparent !important;
+    padding: 0.5rem 0;
+}
+
+.actionMenuItem {
+    font-family: var(--font);
+    color: var(--white) !important;
+    padding: 0.75rem 1.25rem;
+    min-height: 48px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.actionMenuItem:hover {
+    background: linear-gradient(90deg,
+            rgba(var(--seaGreen-rgb), 0.3) 0%,
+            rgba(var(--seaGreen-rgb), 0.1) 100%) !important;
+}
+
+.actionMenuItem .v-list-item-title {
+    font-family: var(--font);
+    font-weight: 500;
+    color: var(--white);
+}
+
+.actionItemIcon {
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+}
+
+.actionsMenuList .v-divider {
+    border-color: rgba(255, 255, 255, 0.1);
+    margin: 0.25rem 0;
 }
 
 .pointsDialogCard {
@@ -326,44 +485,216 @@ function closeAwardClassPointsModal() {
 }
 
 .classRankContainer {
+    position: relative;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    margin-bottom: 20px;
-    padding: 0.5rem 0.5rem;
-    margin-top: 20px;
-    border-top: 1px solid rgba(var(--gold-rgb), 0.5);
-    border-bottom: 1px solid rgba(var(--gold-rgb), 0.5);
-    border-radius: 24px;
-    background-color: var(--inkBlack);
+    align-items: center;
+    margin: 3rem auto;
+    padding: 2rem;
+    max-width: 600px;
+    gap: 2rem;
+}
+
+.rankOrnament {
+    font-size: 3rem;
+    color: var(--gold);
+    animation: sparkle 3s ease-in-out infinite;
+    text-shadow: 0 0 20px rgba(var(--gold-rgb), 0.8),
+        0 0 40px rgba(var(--gold-rgb), 0.6);
+}
+
+.rankOrnamentLeft {
+    animation-delay: 0s;
+}
+
+.rankOrnamentRight {
+    animation-delay: 1.5s;
+}
+
+@keyframes sparkle {
+
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(1) rotate(0deg);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2) rotate(180deg);
+    }
 }
 
 .classRankCard {
-    background-color: var(--inkBlack);
-    border-radius: 24px;
-    padding: 0.5rem 0.5rem;
+    position: relative;
+    background: linear-gradient(135deg,
+            rgba(var(--gold-rgb), 0.15) 0%,
+            rgba(var(--amethyst-rgb), 0.15) 50%,
+            rgba(var(--gold-rgb), 0.15) 100%) !important;
+    border: 2px solid;
+    border-image: linear-gradient(135deg,
+            rgba(var(--gold-rgb), 0.8),
+            rgba(var(--amethyst-rgb), 0.8),
+            rgba(var(--gold-rgb), 0.8)) 1;
+    border-radius: 32px !important;
+    padding: 2rem 3rem !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 1rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(var(--gold-rgb), 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    min-width: 350px;
+}
+
+.classRankCard::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg,
+            rgba(var(--gold-rgb), 0.3),
+            rgba(var(--amethyst-rgb), 0.3),
+            rgba(var(--gold-rgb), 0.3));
+    border-radius: 32px;
+    z-index: -1;
+    filter: blur(15px);
+    opacity: 0.6;
+}
+
+.rankCrown {
+    position: absolute;
+    top: -30px;
+    font-size: 3rem;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 .classRankText {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0 !important;
+}
+
+.rankIcon {
+    font-size: 4rem;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.rankName {
     font-family: var(--font);
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--white);
-    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg,
+            var(--gold),
+            var(--amethyst),
+            var(--gold));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: shimmer 3s ease-in-out infinite;
+    text-shadow: 0 2px 20px rgba(var(--gold-rgb), 0.5);
+}
+
+@keyframes shimmer {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
 }
 
 .classExperienceText {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem 2rem !important;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    border: 1px solid rgba(var(--gold-rgb), 0.3);
+}
+
+.expLabel {
     font-family: var(--font);
-    font-size: 1rem;
+    font-size: 0.85rem;
     font-weight: 500;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+}
+
+.expValue {
+    font-family: var(--font);
+    font-size: 1.75rem;
+    font-weight: 700;
     color: var(--white);
-    opacity: 0.8;
-    text-align: center;
+    text-shadow: 0 2px 10px rgba(var(--gold-rgb), 0.5);
+}
+
+.rankShimmer {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.1) 50%,
+            transparent 70%);
+    animation: shimmerSlide 3s infinite;
+    pointer-events: none;
+}
+
+@keyframes shimmerSlide {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
 }
 
 .shopModal {

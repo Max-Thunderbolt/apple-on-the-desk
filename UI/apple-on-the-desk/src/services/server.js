@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const http = axios.create({
-    baseURL: 'https://apple-on-the-desk-api.onrender.com/api/', //'http://localhost:3001/api/', //'http://13.246.227.85/api/', //'https://apple-on-the-desk-api.onrender.com/api/', //localhost:3001/api/
+    baseURL: 'http://localhost:3001/api/', //'http://localhost:3001/api/', //'http://13.246.227.85/api/', //'https://apple-on-the-desk-api.onrender.com/api/', //localhost:3001/api/
     headers: {
         'Content-Type': 'application/json',
     },
@@ -111,6 +111,46 @@ class Server {
             return response.data;
         } catch (error) {
             console.error('Error awarding points:', error);
+            throw error;
+        }
+    }
+
+    async generateGroups(classId, numberOfGroups) {
+        try {
+            const response = await this.http.post(`/classes/${classId}/generate-groups`, { numberOfGroups });
+            return response.data;
+        } catch (error) {
+            console.error('Error generating groups:', error);
+            throw error;
+        }
+    }
+
+    async getGroups(classId) {
+        try {
+            const response = await this.http.get(`/classes/${classId}/groups`);
+            return response.data;
+        } catch (error) {
+            console.error('Error getting groups:', error);
+            throw error;
+        }
+    }
+
+    async clearGroups(classId) {
+        try {
+            const response = await this.http.put(`/classes/${classId}/clear-groups`);
+            return response.data;
+        } catch (error) {
+            console.error('Error clearing groups:', error);
+            throw error;
+        }
+    }
+
+    async updateStudentConstraints(classId, studentId, cannotPairWith) {
+        try {
+            const response = await this.http.put(`/classes/${classId}/students/${studentId}/constraints`, { cannotPairWith });
+            return response.data;
+        } catch (error) {
+            console.error('Error updating student constraints:', error);
             throw error;
         }
     }
