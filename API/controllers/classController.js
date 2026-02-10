@@ -1,4 +1,5 @@
 const { getDB } = require('../config/database');
+const { generateGroups, clearGroups, getStudentsByGroup } = require('../utils/groupingAlgorithm');
 
 const getAllClasses = async (req, res) => {
     try {
@@ -273,6 +274,196 @@ const awardPoints = async (req, res) => {
     }
 };
 
+const generateGroupsForClass = async (req, res) => {
+    try {
+        const { numberOfGroups } = req.body;
+        const classId = req.params.id;
+
+        // Validate input
+        if (!numberOfGroups || numberOfGroups <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Number of groups must be greater than 0'
+            });
+        }
+
+        // Get the class
+        const classDoc = await getDB().collection('Class').findOne({ id: classId });
+        if (!classDoc) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        const students = classDoc.students || [];
+
+        if (students.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot create groups for a class with no students'
+            });
+        }
+
+        // Ensure students have the required fields
+        const studentsWithDefaults = students.map(s => ({
+            ...s,
+            cannotPairWith: s.cannotPairWith || [],
+            group: s.group || null
+        }));
+
+        // Generate groups using the algorithm
+        try {
+            const studentsWithGroups = generateGroups(studentsWithDefaults, numberOfGroups);
+
+            // Update the class with new student data
+            await getDB().collection('Class').updateOne(
+                { id: classId },
+                { $set: { students: studentsWithGroups } }
+            );
+
+            return res.json({
+                success: true,
+                message: 'Groups generated successfully',
+                students: studentsWithGroups
+            });
+        } catch (algorithmError) {
+            return res.status(400).json({
+                success: false,
+                message: algorithmError.message
+            });
+        }
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'Error generating groups',
+            error: err.message
+        });
+    }
+};
+
+const getGroups = async (req, res) => {
+    try {
+        const classId = req.params.id;
+
+        // Get the class
+        const classDoc = await getDB().collection('Class').findOne({ id: classId });
+        if (!classDoc) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        const students = classDoc.students || [];
+        const groupedStudents = getStudentsByGroup(students);
+
+        return res.json({
+            success: true,
+            groups: groupedStudents
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'Error getting groups',
+            error: err.message
+        });
+    }
+};
+
+const clearGroupsForClass = async (req, res) => {
+    try {
+        const classId = req.params.id;
+
+        // Get the class
+        const classDoc = await getDB().collection('Class').findOne({ id: classId });
+        if (!classDoc) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        const students = classDoc.students || [];
+        const studentsWithoutGroups = clearGroups(students);
+
+        // Update the class
+        await getDB().collection('Class').updateOne(
+            { id: classId },
+            { $set: { students: studentsWithoutGroups } }
+        );
+
+        return res.json({
+            success: true,
+            message: 'Groups cleared successfully',
+            students: studentsWithoutGroups
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'Error clearing groups',
+            error: err.message
+        });
+    }
+};
+
+const updateStudentConstraints = async (req, res) => {
+    try {
+        const classId = req.params.id;
+        const studentId = req.params.studentId;
+        const { cannotPairWith } = req.body;
+
+        // Validate input
+        if (!Array.isArray(cannotPairWith)) {
+            return res.status(400).json({
+                success: false,
+                message: 'cannotPairWith must be an array'
+            });
+        }
+
+        // Get the class
+        const classDoc = await getDB().collection('Class').findOne({ id: classId });
+        if (!classDoc) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        // Find and update the student
+        const students = classDoc.students || [];
+        const studentIndex = students.findIndex(s => s.id === studentId);
+
+        if (studentIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not found'
+            });
+        }
+
+        // Update the student's constraints
+        students[studentIndex].cannotPairWith = cannotPairWith;
+
+        // Update the class
+        await getDB().collection('Class').updateOne(
+            { id: classId },
+            { $set: { students: students } }
+        );
+
+        return res.json({
+            success: true,
+            message: 'Student constraints updated successfully',
+            student: students[studentIndex]
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'Error updating student constraints',
+            error: err.message
+        });
+    }
+};
+
 module.exports = {
     getAllClasses,
     getClassNames,
@@ -282,4 +473,8 @@ module.exports = {
     deleteClass,
     updateStudentPoints,
     awardPoints,
+    generateGroupsForClass,
+    getGroups,
+    clearGroupsForClass,
+    updateStudentConstraints,
 };

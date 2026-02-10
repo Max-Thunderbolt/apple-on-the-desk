@@ -19,6 +19,12 @@ router.put('/classes/:id/students', classController.updateStudentPoints);
 router.post('/classes/:id/award-points', classController.awardPoints);
 router.delete('/classes/:id', classController.deleteClass);
 
+// GROUPING ROUTES
+router.post('/classes/:id/generate-groups', classController.generateGroupsForClass);
+router.get('/classes/:id/groups', classController.getGroups);
+router.put('/classes/:id/clear-groups', classController.clearGroupsForClass);
+router.put('/classes/:id/students/:studentId/constraints', classController.updateStudentConstraints);
+
 // POINTS CATEGORIES ROUTES
 router.get('/points-categories', pointsCategoryController.getAllPointsCategories);
 

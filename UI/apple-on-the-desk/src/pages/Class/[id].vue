@@ -5,7 +5,31 @@
         </template>
     </v-breadcrumbs>
     <div class="container" style="justify-content: flex-start !important;">
-        <h1 class="classTitle">{{ classData?.name }} </h1>
+        <!-- ROYAL RANK HEADER -->
+        <div class="classRankContainer">
+            <div class="rankOrnament rankOrnamentLeft">✦</div>
+            <v-card class="classRankCard">
+                <div class="rankCrown">{{ experienceToRank(classData?.experience).icon }}</div>
+                <div class="rankTopRow">
+                    <h1 class="className">{{ classData?.name }}</h1>
+                    <div class="rankDisplay">
+                        <span class="rankName">{{ experienceToRank(classData?.experience).name }}</span>
+                    </div>
+                </div>
+                <div class="experienceProgress">
+                    <div class="progressInfo">
+                        <span class="currentExp">{{ classData?.experience ?? 0 }} XP</span>
+                        <span class="nextRankLabel">Next: {{ getNextRank().name }}</span>
+                        <span class="nextRankExp">{{ getNextRank().experience }} XP</span>
+                    </div>
+                    <div class="progressBarContainer">
+                        <div class="progressBar" :style="{ width: progressToNextRank + '%' }">
+                        </div>
+                    </div>
+                </div>
+            </v-card>
+            <div class="rankOrnament rankOrnamentRight">✦</div>
+        </div>
         <div class="classContent">
             <!-- TIMER -->
             <div v-if="!viewShopModal" class="timer">
@@ -17,36 +41,52 @@
             </div>
             <!-- ACTION BUTTONS -->
             <div class="shopContainer">
-                <v-btn class="shopButton" @click="viewShop()">
-                    <v-icon>{{ viewShopModal ? 'mdi-timer' : 'mdi-store' }}</v-icon>
-                    {{ viewShopModal ? 'Timer' : 'Shop' }}
-                </v-btn>
-                <v-btn v-if="!viewShopModal" class="awardClassPointsButton" @click="openAwardClassPointsModal()">
-                    🏆
-                    Award Class Points
-                </v-btn>
+                <v-menu v-model="actionsMenuOpen" :close-on-content-click="true" location="bottom">
+                    <template v-slot:activator="{ props }">
+                        <v-btn class="actionsButton" v-bind="props">
+                            <v-icon>mdi-dots-vertical</v-icon>
+                            Actions
+                            <v-icon>{{ actionsMenuOpen ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                        </v-btn>
+                    </template>
+                    <v-card class="actionsMenu">
+                        <v-list class="actionsMenuList">
+                            <v-list-item class="actionMenuItem" @click="viewShop()">
+                                <template v-slot:prepend>
+                                    <v-icon :color="viewShopModal ? 'timer' : 'store'">{{ viewShopModal ? 'mdi-timer' :
+                                        'mdi-store' }}</v-icon>
+                                </template>
+                                <v-list-item-title>{{ viewShopModal ? 'Timer' : 'Shop' }}</v-list-item-title>
+                            </v-list-item>
+                            <v-divider v-if="!viewShopModal" />
+                            <v-list-item v-if="!viewShopModal" class="actionMenuItem" @click="handleAwardClassPoints()">
+                                <template v-slot:prepend>
+                                    <span class="actionItemIcon">🏆</span>
+                                </template>
+                                <v-list-item-title>Award Class Points</v-list-item-title>
+                            </v-list-item>
+                            <v-divider v-if="!viewShopModal" />
+                            <v-list-item v-if="!viewShopModal" class="actionMenuItem" @click="handleCreateGroups()">
+                                <template v-slot:prepend>
+                                    <v-icon color="seaGreen">mdi-account-group</v-icon>
+                                </template>
+                                <v-list-item-title>Create Groups</v-list-item-title>
+                            </v-list-item>
+                        </v-list>
+                    </v-card>
+                </v-menu>
             </div>
             <!-- CLASS LIST -->
             <ClassList v-if="classData && id" :shopCost="shopCost" :isViewingShop="viewShopModal" :class-id="id"
                 :students="classData.students || []" :experience="classData.experience || 0"
                 @students-updated="onStudentsUpdated" @shopCostUpdated="onShopCostUpdated" />
-            <!-- CLASS RANK -->
-            <div class="classRankContainer">
-                <v-card class="classRankCard">
-                    <v-card-text class="classRankText">
-                        {{ experienceToRank(classData?.experience).icon }} {{
-                            experienceToRank(classData?.experience).name
-                        }}
-                    </v-card-text>
-                    <v-card-text class="classExperienceText">
-                        {{ classData?.experience }} exp
-                    </v-card-text>
-                </v-card>
-            </div>
         </div>
     </div>
     <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
         :all-students="classData?.students || []" :class-id="id" @studentsUpdated="onStudentsUpdated" />
+
+    <grouper-modal v-model="grouperModalOpen" :class-id="id" :students="classData?.students || []"
+        @groupsUpdated="onGroupsUpdated" />
 </template>
 
 <script setup>
@@ -59,6 +99,7 @@ import Server from '../../services/server';
 import { toast } from 'vue-sonner';
 import { experienceToRank, getExperience } from '../../controllers/ExperienceController';
 import AwardPointsModal from '../../components/modals/awardPointsModal.vue';
+import grouperModal from '../../components/modals/GrouperModal.vue';
 
 const router = useRouter();
 const { id } = useRoute().params;
@@ -68,11 +109,54 @@ const shopItems = ref([]);
 const shopCost = ref(0);
 const awardClassPointsModal = ref(false);
 const selectedStudents = ref([]);
+const grouperModalOpen = ref(false);
+const actionsMenuOpen = ref(false);
 let breadcrumbs = computed(() => [
     { title: 'Home', to: '/' },
     { title: 'Classes', to: '/Classes' },
     { title: classData.value?.name, to: `/Class/${id}` },
 ]);
+
+// Rank thresholds
+const RANK_THRESHOLDS = [
+    { experience: 0, name: 'Beginner', icon: '🥉' },
+    { experience: 100, name: 'Novice', icon: '🥈' },
+    { experience: 200, name: 'Apprentice', icon: '🥇' },
+    { experience: 300, name: 'Expert', icon: '💜' },
+    { experience: 400, name: 'Master', icon: '💎' },
+    { experience: 500, name: 'Grandmaster', icon: '👑' },
+];
+
+const getNextRank = () => {
+    const currentExp = classData.value?.experience ?? 0;
+    const nextRank = RANK_THRESHOLDS.find(rank => rank.experience > currentExp);
+    return nextRank || RANK_THRESHOLDS[RANK_THRESHOLDS.length - 1];
+};
+
+const getCurrentRank = () => {
+    const currentExp = classData.value?.experience ?? 0;
+    for (let i = RANK_THRESHOLDS.length - 1; i >= 0; i--) {
+        if (currentExp >= RANK_THRESHOLDS[i].experience) {
+            return RANK_THRESHOLDS[i];
+        }
+    }
+    return RANK_THRESHOLDS[0];
+};
+
+const progressToNextRank = computed(() => {
+    const currentExp = classData.value?.experience ?? 0;
+    const currentRank = getCurrentRank();
+    const nextRank = getNextRank();
+
+    if (currentRank.experience === nextRank.experience) {
+        return 100; // Max rank
+    }
+
+    const expInCurrentRank = currentExp - currentRank.experience;
+    const expNeededForNextRank = nextRank.experience - currentRank.experience;
+
+    return Math.min(100, Math.floor((expInCurrentRank / expNeededForNextRank) * 100));
+});
 
 const emit = defineEmits(['shopCostUpdated']);
 
@@ -155,25 +239,50 @@ function closeAwardClassPointsModal() {
     awardClassPointsModal.value = false;
 }
 
+function openGrouperModal() {
+    grouperModalOpen.value = true;
+}
+
+function onGroupsUpdated(updatedStudents) {
+    // Reload the class data to get the latest state with groups
+    loadClass();
+}
+
+function handleAwardClassPoints() {
+    openAwardClassPointsModal();
+}
+
+function handleCreateGroups() {
+    openGrouperModal();
+}
+
 </script>
 
 <style>
 @import '../../styles/style.css';
 
+.rankTopRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+    flex-wrap: wrap;
+}
 
-.classTitle {
+.className {
     font-family: var(--font);
     font-optical-sizing: auto;
-    font-weight: 600;
+    font-weight: 700;
     font-style: normal;
-    font-variation-settings:
-        "wdth" 147.8;
-    font-size: 6.25rem;
+    font-variation-settings: "wdth" 147.8;
+    font-size: 2.5rem;
     color: var(--white);
     text-align: center;
-    margin-top: 20px;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    margin: 0;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(var(--gold-rgb), 0.3);
+    letter-spacing: 1px;
 }
 
 .shopContainer {
@@ -230,6 +339,97 @@ function closeAwardClassPointsModal() {
     border: none;
     color: var(--white);
     background-color: rgba(var(--amethyst-rgb), 0.589);
+}
+
+.grouperButton {
+    background: linear-gradient(135deg,
+            rgba(var(--seaGreen-rgb), 0.589) 0%,
+            rgba(var(--seaGreen-rgb), 0.589) 50%,
+            rgba(var(--seaGreen-rgb), 0.589) 100%) !important;
+    border-radius: 180px;
+    box-shadow: 0 0 10px 0 rgba(var(--seaGreen-rgb), 0.5);
+    padding: 6px 20px;
+    color: var(--white);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.grouperButton:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px 0 rgba(var(--seaGreen-rgb), 0.589);
+    border: none;
+    color: var(--white);
+    background-color: rgba(var(--seaGreen-rgb), 0.589);
+}
+
+.actionsButton {
+    background: linear-gradient(135deg,
+            rgba(var(--gold-rgb), 0.589) 0%,
+            rgba(var(--amethyst-rgb), 0.589) 50%,
+            rgba(var(--seaGreen-rgb), 0.589) 100%) !important;
+    border-radius: 180px;
+    box-shadow: 0 0 10px 0 rgba(var(--gold-rgb), 0.5);
+    padding: 6px 20px;
+    text-align: center;
+    color: var(--white);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    gap: 0.5rem;
+}
+
+.actionsButton:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 15px 0 rgba(var(--gold-rgb), 0.7);
+    filter: brightness(1.1);
+}
+
+.actionsMenu {
+    background-color: var(--inkBlack) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    margin-top: 0.5rem;
+    min-width: 250px;
+}
+
+.actionsMenuList {
+    background-color: transparent !important;
+    padding: 0.5rem 0;
+}
+
+.actionMenuItem {
+    font-family: var(--font);
+    color: var(--white) !important;
+    padding: 0.75rem 1.25rem;
+    min-height: 48px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.actionMenuItem:hover {
+    background: linear-gradient(90deg,
+            rgba(var(--seaGreen-rgb), 0.3) 0%,
+            rgba(var(--seaGreen-rgb), 0.1) 100%) !important;
+}
+
+.actionMenuItem .v-list-item-title {
+    font-family: var(--font);
+    font-weight: 500;
+    color: var(--white);
+}
+
+.actionItemIcon {
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+}
+
+.actionsMenuList .v-divider {
+    border-color: rgba(255, 255, 255, 0.1);
+    margin: 0.25rem 0;
 }
 
 .pointsDialogCard {
@@ -326,45 +526,235 @@ function closeAwardClassPointsModal() {
 }
 
 .classRankContainer {
+    position: relative;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    margin-bottom: 20px;
-    padding: 0.5rem 0.5rem;
-    margin-top: 20px;
-    border-top: 1px solid rgba(var(--gold-rgb), 0.5);
-    border-bottom: 1px solid rgba(var(--gold-rgb), 0.5);
-    border-radius: 24px;
-    background-color: var(--inkBlack);
+    align-items: center;
+    margin-bottom: 12px !important;
+    padding: 1.5rem;
+    max-width: 700px;
+    gap: 2rem;
+}
+
+.rankOrnament {
+    font-size: 3rem;
+    color: var(--gold);
+    animation: sparkle 3s ease-in-out infinite;
+    text-shadow: 0 0 20px rgba(var(--gold-rgb), 0.8),
+        0 0 40px rgba(var(--gold-rgb), 0.6);
+}
+
+.rankOrnamentLeft {
+    animation-delay: 0s;
+}
+
+.rankOrnamentRight {
+    animation-delay: 1.5s;
+}
+
+@keyframes sparkle {
+
+    0%,
+    100% {
+        opacity: 0.6;
+        transform: scale(1) rotate(0deg);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2) rotate(180deg);
+    }
 }
 
 .classRankCard {
-    background-color: var(--inkBlack);
-    border-radius: 24px;
-    padding: 0.5rem 0.5rem;
+    position: relative;
+    background: linear-gradient(135deg,
+            rgba(var(--gold-rgb), 0.15) 0%,
+            rgba(var(--amethyst-rgb), 0.15) 50%,
+            rgba(var(--gold-rgb), 0.15) 100%) !important;
+    border-radius: 32px !important;
+    padding: 3.5rem 2.5rem 1.5rem 2.5rem !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 1rem;
+    overflow: visible;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(var(--gold-rgb), 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    min-width: 550px;
+}
+
+.classRankCard::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg,
+            rgba(var(--gold-rgb), 0.3),
+            rgba(var(--amethyst-rgb), 0.3),
+            rgba(var(--gold-rgb), 0.3));
+    border-radius: 32px;
+    z-index: -1;
+    filter: blur(15px);
+    opacity: 0.6;
+}
+
+.rankCrown {
+    position: absolute;
+    top: -35px;
+    font-size: 3.5rem;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    z-index: 10;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.rankDisplay {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 50px;
+    border: 1px solid rgba(var(--gold-rgb), 0.3);
+}
+
+.rankIcon {
+    font-size: 2rem;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+    animation: pulse 2s ease-in-out infinite;
+    line-height: 1;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.rankName {
+    font-family: var(--font);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.8),
+        0 0 20px rgba(var(--amethyst-rgb), 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes shimmer {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.experienceProgress {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
     gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    border: 1px solid rgba(var(--gold-rgb), 0.3);
 }
 
-.classRankText {
+.progressInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-family: var(--font);
-    font-size: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--white);
+    margin-bottom: 0.25rem;
+}
+
+.currentExp {
     font-weight: 600;
-    color: var(--white);
-    text-align: center;
+    color: var(--gold);
+    text-shadow: 0 2px 8px rgba(var(--gold-rgb), 0.5);
 }
 
-.classExperienceText {
-    font-family: var(--font);
-    font-size: 1rem;
+.nextRankLabel {
     font-weight: 500;
-    color: var(--white);
     opacity: 0.8;
-    text-align: center;
 }
+
+.nextRankExp {
+    font-weight: 600;
+    color: var(--amethyst);
+}
+
+.progressBarContainer {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(var(--gold-rgb), 0.2);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.progressBar {
+    position: relative;
+    height: 100%;
+    background: linear-gradient(90deg,
+            rgba(var(--gold-rgb), 0.8) 0%,
+            rgba(var(--amethyst-rgb), 0.8) 50%,
+            rgba(var(--gold-rgb), 0.8) 100%);
+    border-radius: 12px;
+    transition: width 0.8s ease-out;
+    box-shadow: 0 0 20px rgba(var(--gold-rgb), 0.6),
+        0 0 40px rgba(var(--amethyst-rgb), 0.4);
+    overflow: hidden;
+}
+
+.progressShine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.4) 50%,
+            transparent 100%);
+    animation: shine 2s infinite;
+}
+
 
 .shopModal {
     margin-bottom: 20px;

@@ -7,28 +7,58 @@
         },
     }" />
     <div class="classList">
+        <!-- View Toggle -->
+        <div v-if="students && students.length > 0 && hasGroups" class="viewToggle">
+            <v-btn-toggle v-model="actualViewMode" class="viewToggleButtons" mandatory>
+                <v-btn value="list" class="viewToggleBtn">
+                    <v-icon>mdi-view-list</v-icon>
+                    List View
+                </v-btn>
+                <v-btn value="groups" class="viewToggleBtn">
+                    <v-icon>mdi-view-grid</v-icon>
+                    Group View
+                </v-btn>
+            </v-btn-toggle>
+        </div>
+
         <div v-if="!students || students.length === 0" class="emptyState">
             No students in this class.
         </div>
+
+        <!-- Group View -->
+        <ClassGroupView v-else-if="actualViewMode === 'groups'" :students="props.students" :shopCost="props.shopCost"
+            :isViewingShop="props.isViewingShop" :selectedStudents="selectedStudents" @student-click="selectAction"
+            @student-context-menu="openContextMenu" />
+
+        <!-- List View -->
         <div v-else class="studentGrid">
             <div v-for="(column, colIndex) in columns" :key="colIndex" class="studentColumn">
                 <div v-for="student in column" :key="student.id">
                     <div v-if="props.isViewingShop && canAffordPoints(student)" class="studentRowCanAffordPoints"
-                        @click="selectAction(student)">
-                        <span class="studentName">{{ student.name }}</span>
+                        @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
+                        <div class="studentNameContainer">
+                            <span class="studentName">{{ student.name }}</span>
+                            <span v-if="student.group" class="groupBadge">{{ student.group }}</span>
+                        </div>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts <span
                                 v-if="selectedStudents?.some((s) => s.id === student.id)"><v-icon>mdi-check</v-icon></span></span>
                     </div>
                     <div v-else-if="props.isViewingShop && !canAffordPoints(student)" class="studentRowCantAffordPoints"
-                        @click="selectAction(student)">
-                        <span class="studentName">{{ student.name }}</span>
+                        @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
+                        <div class="studentNameContainer">
+                            <span class="studentName">{{ student.name }}</span>
+                            <span v-if="student.group" class="groupBadge">{{ student.group }}</span>
+                        </div>
                         <span class="studentPoints"> {{ student.points ?? 0 }} pts ({{ formatCost(student.points -
                             props.shopCost) }}) <span
                                 v-if="selectedStudents?.some((s) => s.id === student.id)"><v-icon>mdi-check</v-icon></span></span>
                     </div>
                     <div v-else class="studentRow" @click="selectAction(student)"
-                        @contextmenu.prevent="editStudentName(student)">
-                        <span class="studentName">{{ student.name }}</span>
+                        @contextmenu.prevent="openContextMenu($event, student)">
+                        <div class="studentNameContainer">
+                            <span class="studentName">{{ student.name }}</span>
+                            <span v-if="student.group" class="groupBadge">{{ student.group }}</span>
+                        </div>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts </span>
                     </div>
                 </div>
@@ -37,7 +67,7 @@
 
         <div v-if="isViewingShop" class="checkoutContainer">
             <span class="checkoutTotal">
-                Total: {{ formatCost(totalSelectedPoints) }} 
+                Total: {{ formatCost(totalSelectedPoints) }}
                 <span v-if="!canAffordShop" class="checkoutShortfall">
                     ({{ formatCost(pointsRemaining) }} needed)
                 </span>
@@ -50,8 +80,32 @@
             </v-btn>
         </div>
 
+        <!-- Context Menu -->
+        <v-menu v-model="contextMenuOpen"
+            :style="{ position: 'fixed', left: contextMenuX + 'px', top: contextMenuY + 'px' }" :location="undefined"
+            :attach="false">
+            <v-list class="contextMenu">
+                <v-list-item @click="editStudentName(contextMenuStudent)">
+                    <template v-slot:prepend>
+                        <v-icon>mdi-pencil</v-icon>
+                    </template>
+                    <v-list-item-title>Edit Name</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="openConstraintsModal(contextMenuStudent)">
+                    <template v-slot:prepend>
+                        <v-icon>mdi-account-multiple-remove</v-icon>
+                    </template>
+                    <v-list-item-title>Manage Pairing Constraints</v-list-item-title>
+                </v-list-item>
+            </v-list>
+        </v-menu>
+
         <award-points-modal v-model:pointsDialogOpen="pointsDialogOpen" v-model:selectedStudents="selectedStudents"
             :all-students="props.students" :class-id="props.classId" @studentsUpdated="onStudentsUpdated" />
+
+        <student-constraints-modal v-model="constraintsModalOpen" :class-id="props.classId"
+            :student="selectedStudentForConstraints" :all-students="props.students"
+            @constraintsUpdated="onConstraintsUpdated" />
     </div>
 </template>
 
@@ -60,6 +114,8 @@ import { ref, computed, watch } from 'vue';
 import Server from '../services/server';
 import { Toaster, toast } from 'vue-sonner';
 import AwardPointsModal from '../components/modals/awardPointsModal.vue';
+import StudentConstraintsModal from '../components/modals/StudentConstraintsModal.vue';
+import ClassGroupView from './ClassGroupView.vue';
 
 const props = defineProps({
     shopCost: {
@@ -88,6 +144,28 @@ const emit = defineEmits(['students-updated', 'experience-updated']);
 
 const pointsDialogOpen = ref(false);
 const selectedStudents = ref([]);
+const contextMenuOpen = ref(false);
+const contextMenuX = ref(0);
+const contextMenuY = ref(0);
+const contextMenuStudent = ref(null);
+const constraintsModalOpen = ref(false);
+const selectedStudentForConstraints = ref({});
+
+const hasGroups = computed(() => {
+    return props.students?.some(s => s.group) || false;
+});
+
+// Track the actual view mode selection
+const actualViewMode = ref('list');
+
+// Watch for when groups are created and switch to group view automatically
+watch(hasGroups, (newHasGroups) => {
+    if (newHasGroups && actualViewMode.value === 'list') {
+        actualViewMode.value = 'groups';
+    } else if (!newHasGroups) {
+        actualViewMode.value = 'list';
+    }
+});
 /** Split students into 4 columns */
 const columns = computed(() => {
     const list = props.students || [];
@@ -157,22 +235,6 @@ function selectAction(student) {
         } else {
             selectedStudents.value = [...selectedStudents.value, student];
         }
-
-        // if (!canAffordPoints(student)) {
-        //     console.log('student cannot afford points');
-        //     toast.error(`${student.name} cannot afford this item,`, {
-        //         description: `${student.name} needs ${formatCost(props.shopCost - student.points)} more points to afford this item`,
-        //         duration: 3000,
-
-        //     });
-        //     return;
-        // } else {
-        //     if (selectedStudents.value?.some((s) => s.id === student.id)) {
-        //         selectedStudents.value = selectedStudents.value.filter((s) => s.id !== student.id);
-        //     } else {
-        //         selectedStudents.value = [...selectedStudents.value, student];
-        //     }
-        // }
     }
 }
 
@@ -195,7 +257,15 @@ function canAffordPoints(student) {
     return student.points >= props.shopCost;
 }
 
+function openContextMenu(event, student) {
+    contextMenuStudent.value = student;
+    contextMenuX.value = event.clientX;
+    contextMenuY.value = event.clientY;
+    contextMenuOpen.value = true;
+}
+
 async function editStudentName(student) {
+    contextMenuOpen.value = false;
     if (!student) return;
 
     const currentName = student.name ?? '';
@@ -223,6 +293,20 @@ async function editStudentName(student) {
         console.error('Failed to update student name:', err);
         toast.error('Failed to update student name');
     }
+}
+
+function openConstraintsModal(student) {
+    contextMenuOpen.value = false;
+    if (!student) return;
+    selectedStudentForConstraints.value = student;
+    constraintsModalOpen.value = true;
+}
+
+function onConstraintsUpdated(updatedStudent) {
+    const updated = props.students.map((s) =>
+        s.id === updatedStudent.id ? { ...s, cannotPairWith: updatedStudent.cannotPairWith } : { ...s }
+    );
+    emit('students-updated', updated);
 }
 
 async function checkout() {
@@ -288,6 +372,48 @@ async function checkout() {
 .classList {
     width: 100%;
     margin-top: 1rem;
+}
+
+.viewToggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.viewToggleButtons {
+    background-color: var(--inkBlack) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 180px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.viewToggleBtn {
+    font-family: var(--font) !important;
+    color: var(--white) !important;
+    text-transform: none !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    padding: 8px 20px !important;
+    transition: all 0.3s ease !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.viewToggleBtn:hover {
+    background-color: rgba(var(--seaGreen-rgb), 0.2) !important;
+}
+
+.viewToggleBtn.v-btn--active {
+    background: linear-gradient(135deg,
+            rgba(var(--seaGreen-rgb), 0.6) 0%,
+            rgba(var(--seaGreen-rgb), 0.7) 100%) !important;
+    color: var(--white) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.viewToggleBtn .v-icon {
+    margin-right: 0.5rem;
 }
 
 .emptyState {
@@ -377,6 +503,14 @@ async function checkout() {
     background-color: var(--intenseCherry) !important;
 }
 
+.studentNameContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
 .studentName {
     font-family: var(--font);
     font-size: 1rem;
@@ -394,6 +528,20 @@ async function checkout() {
 
 .studentName.clickable:hover {
     color: var(--freshSky);
+}
+
+.groupBadge {
+    font-family: var(--font);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--white);
+    background: linear-gradient(135deg,
+            rgba(var(--seaGreen-rgb), 0.6) 0%,
+            rgba(var(--seaGreen-rgb), 0.8) 100%);
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .studentPoints {
@@ -453,5 +601,27 @@ async function checkout() {
 .checkoutButton:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.contextMenu {
+    background-color: var(--inkBlack) !important;
+    border: 1px solid var(--white);
+    border-radius: 12px;
+    padding: 0.25rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.contextMenu .v-list-item {
+    font-family: var(--font);
+    color: var(--white);
+    min-height: 40px;
+}
+
+.contextMenu .v-list-item:hover {
+    background-color: var(--seaGreen) !important;
+}
+
+:deep(.v-overlay__content) {
+    position: fixed !important;
 }
 </style>

@@ -14,11 +14,14 @@ declare module 'vue' {
     AwardPointsModal: typeof import('./src/components/modals/awardPointsModal.vue')['default']
     Classes: typeof import('./src/components/Classes.vue')['default']
     ClassForm: typeof import('./src/components/modals/ClassForm.vue')['default']
+    ClassGroupView: typeof import('./src/components/ClassGroupView.vue')['default']
     ClassList: typeof import('./src/components/classList.vue')['default']
+    GrouperModal: typeof import('./src/components/modals/GrouperModal.vue')['default']
     Home: typeof import('./src/components/Home.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Shop: typeof import('./src/components/Shop.vue')['default']
+    StudentConstraintsModal: typeof import('./src/components/modals/StudentConstraintsModal.vue')['default']
     Timer: typeof import('./src/components/Timer.vue')['default']
   }
 }
