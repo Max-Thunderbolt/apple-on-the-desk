@@ -5,18 +5,30 @@
         </template>
     </v-breadcrumbs>
     <div class="container" style="justify-content: flex-start !important;">
-        <h1 class="classTitle">{{ classData?.name }} </h1>
+        <!-- ROYAL RANK HEADER -->
         <div class="classRankContainer">
+            <div class="rankOrnament rankOrnamentLeft">✦</div>
             <v-card class="classRankCard">
-                <v-card-text class="classRankText">
-                    {{ experienceToRank(classData?.experience).icon }} {{
-                        experienceToRank(classData?.experience).name
-                    }}
-                </v-card-text>
-                <v-card-text class="classExperienceText">
-                    {{ classData?.experience }} exp
-                </v-card-text>
+                <div class="rankCrown">{{ experienceToRank(classData?.experience).icon }}</div>
+                <div class="rankTopRow">
+                    <h1 class="className">{{ classData?.name }}</h1>
+                    <div class="rankDisplay">
+                        <span class="rankName">{{ experienceToRank(classData?.experience).name }}</span>
+                    </div>
+                </div>
+                <div class="experienceProgress">
+                    <div class="progressInfo">
+                        <span class="currentExp">{{ classData?.experience ?? 0 }} XP</span>
+                        <span class="nextRankLabel">Next: {{ getNextRank().name }}</span>
+                        <span class="nextRankExp">{{ getNextRank().experience }} XP</span>
+                    </div>
+                    <div class="progressBarContainer">
+                        <div class="progressBar" :style="{ width: progressToNextRank + '%' }">
+                        </div>
+                    </div>
+                </div>
             </v-card>
+            <div class="rankOrnament rankOrnamentRight">✦</div>
         </div>
         <div class="classContent">
             <!-- TIMER -->
@@ -29,7 +41,7 @@
             </div>
             <!-- ACTION BUTTONS -->
             <div class="shopContainer">
-                <v-menu v-model="actionsMenuOpen" :close-on-content-click="false" location="bottom">
+                <v-menu v-model="actionsMenuOpen" :close-on-content-click="true" location="bottom">
                     <template v-slot:activator="{ props }">
                         <v-btn class="actionsButton" v-bind="props">
                             <v-icon>mdi-dots-vertical</v-icon>
@@ -68,24 +80,6 @@
             <ClassList v-if="classData && id" :shopCost="shopCost" :isViewingShop="viewShopModal" :class-id="id"
                 :students="classData.students || []" :experience="classData.experience || 0"
                 @students-updated="onStudentsUpdated" @shopCostUpdated="onShopCostUpdated" />
-
-            <!-- CLASS RANK -->
-            <div class="classRankContainer">
-                <div class="rankOrnament rankOrnamentLeft">✦</div>
-                <v-card class="classRankCard">
-                    <div class="rankCrown">👑</div>
-                    <v-card-text class="classRankText">
-                        <span class="rankIcon">{{ experienceToRank(classData?.experience).icon }}</span>
-                        <span class="rankName">{{ experienceToRank(classData?.experience).name }}</span>
-                    </v-card-text>
-                    <v-card-text class="classExperienceText">
-                        <span class="expLabel">Experience</span>
-                        <span class="expValue">{{ classData?.experience ?? 0 }}</span>
-                    </v-card-text>
-                    <div class="rankShimmer"></div>
-                </v-card>
-                <div class="rankOrnament rankOrnamentRight">✦</div>
-            </div>
         </div>
     </div>
     <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
@@ -122,6 +116,47 @@ let breadcrumbs = computed(() => [
     { title: 'Classes', to: '/Classes' },
     { title: classData.value?.name, to: `/Class/${id}` },
 ]);
+
+// Rank thresholds
+const RANK_THRESHOLDS = [
+    { experience: 0, name: 'Beginner', icon: '🥉' },
+    { experience: 100, name: 'Novice', icon: '🥈' },
+    { experience: 200, name: 'Apprentice', icon: '🥇' },
+    { experience: 300, name: 'Expert', icon: '💜' },
+    { experience: 400, name: 'Master', icon: '💎' },
+    { experience: 500, name: 'Grandmaster', icon: '👑' },
+];
+
+const getNextRank = () => {
+    const currentExp = classData.value?.experience ?? 0;
+    const nextRank = RANK_THRESHOLDS.find(rank => rank.experience > currentExp);
+    return nextRank || RANK_THRESHOLDS[RANK_THRESHOLDS.length - 1];
+};
+
+const getCurrentRank = () => {
+    const currentExp = classData.value?.experience ?? 0;
+    for (let i = RANK_THRESHOLDS.length - 1; i >= 0; i--) {
+        if (currentExp >= RANK_THRESHOLDS[i].experience) {
+            return RANK_THRESHOLDS[i];
+        }
+    }
+    return RANK_THRESHOLDS[0];
+};
+
+const progressToNextRank = computed(() => {
+    const currentExp = classData.value?.experience ?? 0;
+    const currentRank = getCurrentRank();
+    const nextRank = getNextRank();
+
+    if (currentRank.experience === nextRank.experience) {
+        return 100; // Max rank
+    }
+
+    const expInCurrentRank = currentExp - currentRank.experience;
+    const expNeededForNextRank = nextRank.experience - currentRank.experience;
+
+    return Math.min(100, Math.floor((expInCurrentRank / expNeededForNextRank) * 100));
+});
 
 const emit = defineEmits(['shopCostUpdated']);
 
@@ -214,12 +249,10 @@ function onGroupsUpdated(updatedStudents) {
 }
 
 function handleAwardClassPoints() {
-    actionsMenuOpen.value = false;
     openAwardClassPointsModal();
 }
 
 function handleCreateGroups() {
-    actionsMenuOpen.value = false;
     openGrouperModal();
 }
 
@@ -228,20 +261,28 @@ function handleCreateGroups() {
 <style>
 @import '../../styles/style.css';
 
+.rankTopRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+    flex-wrap: wrap;
+}
 
-.classTitle {
+.className {
     font-family: var(--font);
     font-optical-sizing: auto;
-    font-weight: 600;
+    font-weight: 700;
     font-style: normal;
-    font-variation-settings:
-        "wdth" 147.8;
-    font-size: 6.25rem;
+    font-variation-settings: "wdth" 147.8;
+    font-size: 2.5rem;
     color: var(--white);
     text-align: center;
-    margin-top: 20px;
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    margin: 0;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(var(--gold-rgb), 0.3);
+    letter-spacing: 1px;
 }
 
 .shopContainer {
@@ -489,9 +530,9 @@ function handleCreateGroups() {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 3rem auto;
-    padding: 2rem;
-    max-width: 600px;
+    margin-bottom: 12px !important;
+    padding: 1.5rem;
+    max-width: 700px;
     gap: 2rem;
 }
 
@@ -531,24 +572,19 @@ function handleCreateGroups() {
             rgba(var(--gold-rgb), 0.15) 0%,
             rgba(var(--amethyst-rgb), 0.15) 50%,
             rgba(var(--gold-rgb), 0.15) 100%) !important;
-    border: 2px solid;
-    border-image: linear-gradient(135deg,
-            rgba(var(--gold-rgb), 0.8),
-            rgba(var(--amethyst-rgb), 0.8),
-            rgba(var(--gold-rgb), 0.8)) 1;
     border-radius: 32px !important;
-    padding: 2rem 3rem !important;
+    padding: 3.5rem 2.5rem 1.5rem 2.5rem !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
         0 0 60px rgba(var(--gold-rgb), 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    min-width: 350px;
+    min-width: 550px;
 }
 
 .classRankCard::before {
@@ -570,10 +606,11 @@ function handleCreateGroups() {
 
 .rankCrown {
     position: absolute;
-    top: -30px;
-    font-size: 3rem;
+    top: -35px;
+    font-size: 3.5rem;
     animation: float 3s ease-in-out infinite;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    z-index: 10;
 }
 
 @keyframes float {
@@ -588,18 +625,21 @@ function handleCreateGroups() {
     }
 }
 
-.classRankText {
+.rankDisplay {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    padding: 1rem 0 !important;
+    gap: 0.75rem;
+    padding: 0.5rem 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 50px;
+    border: 1px solid rgba(var(--gold-rgb), 0.3);
 }
 
 .rankIcon {
-    font-size: 4rem;
+    font-size: 2rem;
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
     animation: pulse 2s ease-in-out infinite;
+    line-height: 1;
 }
 
 @keyframes pulse {
@@ -616,20 +656,16 @@ function handleCreateGroups() {
 
 .rankName {
     font-family: var(--font);
-    font-size: 2rem;
+    font-size: 1.35rem;
     font-weight: 700;
-    background: linear-gradient(135deg,
-            var(--gold),
-            var(--amethyst),
-            var(--gold));
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--gold);
     text-transform: uppercase;
     letter-spacing: 2px;
-    animation: shimmer 3s ease-in-out infinite;
-    text-shadow: 0 2px 20px rgba(var(--gold-rgb), 0.5);
+    line-height: 1.2;
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.8),
+        0 0 20px rgba(var(--amethyst-rgb), 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes shimmer {
@@ -644,58 +680,81 @@ function handleCreateGroups() {
     }
 }
 
-.classExperienceText {
+.experienceProgress {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.75rem 2rem !important;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 20px;
     border: 1px solid rgba(var(--gold-rgb), 0.3);
 }
 
-.expLabel {
+.progressInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-family: var(--font);
     font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--gold);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    opacity: 0.9;
-}
-
-.expValue {
-    font-family: var(--font);
-    font-size: 1.75rem;
-    font-weight: 700;
     color: var(--white);
-    text-shadow: 0 2px 10px rgba(var(--gold-rgb), 0.5);
+    margin-bottom: 0.25rem;
 }
 
-.rankShimmer {
+.currentExp {
+    font-weight: 600;
+    color: var(--gold);
+    text-shadow: 0 2px 8px rgba(var(--gold-rgb), 0.5);
+}
+
+.nextRankLabel {
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.nextRankExp {
+    font-weight: 600;
+    color: var(--amethyst);
+}
+
+.progressBarContainer {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(var(--gold-rgb), 0.2);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.progressBar {
+    position: relative;
+    height: 100%;
+    background: linear-gradient(90deg,
+            rgba(var(--gold-rgb), 0.8) 0%,
+            rgba(var(--amethyst-rgb), 0.8) 50%,
+            rgba(var(--gold-rgb), 0.8) 100%);
+    border-radius: 12px;
+    transition: width 0.8s ease-out;
+    box-shadow: 0 0 20px rgba(var(--gold-rgb), 0.6),
+        0 0 40px rgba(var(--amethyst-rgb), 0.4);
+    overflow: hidden;
+}
+
+.progressShine {
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg,
-            transparent 30%,
-            rgba(255, 255, 255, 0.1) 50%,
-            transparent 70%);
-    animation: shimmerSlide 3s infinite;
-    pointer-events: none;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.4) 50%,
+            transparent 100%);
+    animation: shine 2s infinite;
 }
 
-@keyframes shimmerSlide {
-    0% {
-        transform: translateX(-100%) translateY(-100%) rotate(45deg);
-    }
-
-    100% {
-        transform: translateX(100%) translateY(100%) rotate(45deg);
-    }
-}
 
 .shopModal {
     margin-bottom: 20px;

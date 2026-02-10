@@ -27,8 +27,8 @@
 
         <!-- Group View -->
         <ClassGroupView v-else-if="actualViewMode === 'groups'" :students="props.students" :shopCost="props.shopCost"
-            :isViewingShop="props.isViewingShop" :selectedStudents="selectedStudents"
-            @student-click="selectAction" @student-context-menu="openContextMenu" />
+            :isViewingShop="props.isViewingShop" :selectedStudents="selectedStudents" @student-click="selectAction"
+            @student-context-menu="openContextMenu" />
 
         <!-- List View -->
         <div v-else class="studentGrid">
@@ -67,7 +67,7 @@
 
         <div v-if="isViewingShop" class="checkoutContainer">
             <span class="checkoutTotal">
-                Total: {{ formatCost(totalSelectedPoints) }} 
+                Total: {{ formatCost(totalSelectedPoints) }}
                 <span v-if="!canAffordShop" class="checkoutShortfall">
                     ({{ formatCost(pointsRemaining) }} needed)
                 </span>
@@ -81,8 +81,9 @@
         </div>
 
         <!-- Context Menu -->
-        <v-menu v-model="contextMenuOpen" :style="{ position: 'fixed', left: contextMenuX + 'px', top: contextMenuY + 'px' }"
-            :location="undefined" :attach="false">
+        <v-menu v-model="contextMenuOpen"
+            :style="{ position: 'fixed', left: contextMenuX + 'px', top: contextMenuY + 'px' }" :location="undefined"
+            :attach="false">
             <v-list class="contextMenu">
                 <v-list-item @click="editStudentName(contextMenuStudent)">
                     <template v-slot:prepend>
@@ -154,18 +155,17 @@ const hasGroups = computed(() => {
     return props.students?.some(s => s.group) || false;
 });
 
-// Set default view mode based on whether groups exist
-const viewMode = computed({
-    get: () => {
-        return hasGroups.value ? 'groups' : 'list';
-    },
-    set: (value) => {
-        viewMode.value = value;
+// Track the actual view mode selection
+const actualViewMode = ref('list');
+
+// Watch for when groups are created and switch to group view automatically
+watch(hasGroups, (newHasGroups) => {
+    if (newHasGroups && actualViewMode.value === 'list') {
+        actualViewMode.value = 'groups';
+    } else if (!newHasGroups) {
+        actualViewMode.value = 'list';
     }
 });
-
-// Track the actual view mode selection
-const actualViewMode = ref('groups');
 /** Split students into 4 columns */
 const columns = computed(() => {
     const list = props.students || [];
