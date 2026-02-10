@@ -45,12 +45,8 @@
             </div>
         </div>
     </div>
-    <award-points-modal 
-        v-model:pointsDialogOpen="awardClassPointsModal" 
-        v-model:selectedStudents="selectedStudents"
-        :all-students="classData?.students || []"
-        :class-id="id"
-        @studentsUpdated="onStudentsUpdated" />
+    <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
+        :all-students="classData?.students || []" :class-id="id" @studentsUpdated="onStudentsUpdated" />
 </template>
 
 <script setup>
@@ -335,6 +331,7 @@ function closeAwardClassPointsModal() {
     align-items: flex-start;
     margin-bottom: 20px;
     padding: 0.5rem 0.5rem;
+    margin-top: 20px;
     border-top: 1px solid rgba(var(--gold-rgb), 0.5);
     border-bottom: 1px solid rgba(var(--gold-rgb), 0.5);
     border-radius: 24px;
