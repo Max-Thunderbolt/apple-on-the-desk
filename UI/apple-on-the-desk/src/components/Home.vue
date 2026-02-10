@@ -11,9 +11,6 @@
             <v-btn class="viewClassesButton" @click="navigateTo('/Classes')">
                 View Classes
             </v-btn>
-            <v-btn class="addClassButton" @click="navigateTo('/AddClass')">
-                Add a Class
-            </v-btn>
         </div>
     </div>
 </template>

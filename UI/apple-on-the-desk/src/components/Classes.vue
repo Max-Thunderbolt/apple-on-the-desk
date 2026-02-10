@@ -6,7 +6,7 @@
         </template>
     </v-breadcrumbs>
     <div class="container" style="justify-content: flex-start !important;">
-        <div class="title">My Classes <v-btn class="addClassButton_Classes" @click="navigateTo('/AddClass')">
+        <div class="title">My Classes <v-btn class="addClassButton_Classes" @click="openAddClassModal">
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
         </div>
@@ -26,7 +26,8 @@
                         {{ classItem.experience }} exp
                     </v-card-text>
                     <v-card-text style="text-align: center; font-family: var(--font); font-size: 1.5rem;">
-                        {{ getExperienceIcon(classItem.experience) }} {{ getExperienceName(classItem.experience) }}
+                        {{ experienceToRank(classItem.experience).icon }} {{ experienceToRank(classItem.experience).name
+                        }}
                     </v-card-text>
                     <!-- <v-card-actions style="justify-content: center; font-family: var(--font); gap: 10px;">
                         <v-btn class="classShopButton" @click.stop="navigateTo(`/Class/${classItem.id}/shop`)">
@@ -39,6 +40,10 @@
 
             <div v-if="contextMenuClass" class="contextMenuBackdrop" @click="closeContextMenu">
                 <div class="contextMenu" :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }" @click.stop>
+                    <button class="contextMenuItem" @click="openEditClassModal">
+                        <v-icon size="small">mdi-pencil</v-icon>
+                        Edit class
+                    </button>
                     <button class="contextMenuItem contextMenuItemDanger" @click="deleteSelectedClass">
                         <v-icon size="small">mdi-delete</v-icon>
                         Delete class
@@ -46,105 +51,45 @@
                 </div>
             </div>
         </div>
+        <v-dialog v-model="editClassModal" max-width="600" persistent transition="dialog-transition"
+            class="editClassModal" @click:outside="closeEditClassModal">
+            <v-card class="editClassModalCard">
+                <ClassForm v-if="classToEdit" :class-data="classToEdit" @saved="onEditSaved"
+                    @cancel="closeEditClassModal" />
+            </v-card>
+        </v-dialog>
+        <v-dialog v-model="addClassModal" max-width="600" persistent transition="dialog-transition"
+            class="addClassModal" @click:outside="closeAddClassModal">
+            <v-card class="addClassModalCard">
+                <ClassForm @saved="onAddSaved" @cancel="closeAddClassModal" />
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
 import { ref, onMounted, onUnmounted } from 'vue';
-import { getClassNames, deleteClass } from '../services/server';
-// import rank1 from '../assets/rank 1.JPG';
-// import rank2 from '../assets/rank 2.JPG';
-// import rank3 from '../assets/rank 3.JPG';
-// import rank4 from '../assets/rank 4.JPG';
-// import rank5 from '../assets/rank 5.JPG';
-// import rank6 from '../assets/rank 6.JPG';
+import ClassController from '../controllers/ClassController';
+import { experienceToRank } from '../controllers/ExperienceController';
+import Server from '../services/server';
+import ClassForm from './modals/ClassForm.vue';
 
 const classes = ref([]);
 const router = useRouter();
 const contextMenuClass = ref(null);
 const contextMenuX = ref(0);
 const contextMenuY = ref(0);
+const editClassModal = ref(false);
+const addClassModal = ref(false);
+const classToEdit = ref(null);
+const classManager = new ClassController();
 
-const organiseClassNames = (classNames) => {
-    return classNames.sort((a, b) => a.name.localeCompare(b.name));
-}
 
 const loadClasses = async () => {
     console.log('Getting classes...');
-    const response = await getClassNames();
-
-    classes.value = organiseClassNames(response.classes);
+    classes.value = await classManager.getClassNames();
 }
-
-// const experienceIcons = {
-//     rank1: rank1,
-//     rank2: rank2,
-//     rank3: rank3,
-//     rank4: rank4,
-//     rank5: rank5,
-//     rank6: rank6,
-// }
-
-const experienceIcons = {
-    rank1: '🥉',
-    rank2: '🥈',
-    rank3: '🥇',
-    rank4: '💜',
-    rank5: '💎',
-    rank6: '👑',
-}
-
-const getExperienceIcon = (experience) => {
-    if (experience >= 0 && experience < 100) {
-        console.log('[getExperienceIcon level 0 < x < 100] experience', experience);
-        return experienceIcons.rank1;
-    } else if (experience >= 100 && experience < 200) {
-        console.log('[getExperienceIcon level 100 < x < 200] experience', experience);
-        return experienceIcons.rank2;
-    } else if (experience >= 200 && experience < 300) {
-        console.log('[getExperienceIcon level 200 < x < 300] experience', experience);
-        return experienceIcons.rank3;
-    } else if (experience >= 300 && experience < 400) {
-        console.log('[getExperienceIcon level 300 < x < 400] experience', experience);
-        return experienceIcons.rank4;
-    } else if (experience >= 400 && experience < 500) {
-        console.log('[getExperienceIcon level 400 < x < 500] experience', experience);
-        return experienceIcons.rank5;
-    } else if (experience >= 500 && experience < 600) {
-        console.log('[getExperienceIcon level 500 < x < 600] experience', experience);
-        return experienceIcons.rank6;
-    } else {
-        console.log('[getExperienceIcon default] experience', experience);
-        return experienceIcons.rank1;
-    }
-}
-
-const getExperienceName = (experience) => {
-    if (experience >= 0 && experience < 100) {
-        console.log('[getExperienceName level 0 < x < 100] experience', experience);
-        return 'Beginner';
-    } else if (experience >= 100 && experience < 200) {
-        console.log('[getExperienceName level 100 < x < 200] experience', experience);
-        return 'Novice';
-    } else if (experience >= 200 && experience < 300) {
-        console.log('[getExperienceName level 200 < x < 300] experience', experience);
-        return 'Apprentice';
-    } else if (experience >= 300 && experience < 400) {
-        console.log('[getExperienceName level 300 < x < 400] experience', experience);
-        return 'Expert';
-    } else if (experience >= 400 && experience < 500) {
-        console.log('[getExperienceName level 400 < x < 500] experience', experience);
-        return 'Master';
-    } else if (experience >= 500 && experience < 600) {
-        console.log('[getExperienceName level 500 < x < 600] experience', experience);
-        return 'Grandmaster';
-    } else {
-        console.log('[getExperienceName default] experience', experience);
-        return 'Beginner';
-    }
-}
-
 
 const CARD_COLOURS = [
     '#493657ff',
@@ -191,12 +136,47 @@ async function deleteSelectedClass() {
     if (!contextMenuClass.value) return;
     const id = contextMenuClass.value.id;
     try {
-        await deleteClass(id);
+        await Server.deleteClass(id);
         classes.value = classes.value.filter((c) => c.id !== id);
     } catch (err) {
         console.error('Failed to delete class:', err);
     }
     closeContextMenu();
+}
+
+async function openEditClassModal() {
+    const id = contextMenuClass.value?.id;
+    closeContextMenu();
+    if (!id) return;
+    try {
+        classToEdit.value = await classManager.getClassById(id);
+        editClassModal.value = true;
+    } catch (err) {
+        console.error('Failed to load class for edit:', err);
+    }
+}
+
+function closeEditClassModal() {
+    editClassModal.value = false;
+    classToEdit.value = null;
+}
+
+function onEditSaved() {
+    closeEditClassModal();
+    loadClasses();
+}
+
+function openAddClassModal() {
+    addClassModal.value = true;
+}
+
+function closeAddClassModal() {
+    addClassModal.value = false;
+}
+
+function onAddSaved() {
+    closeAddClassModal();
+    loadClasses();
 }
 
 onMounted(() => {
@@ -357,5 +337,22 @@ const navigateTo = (path) => {
     cursor: pointer !important;
     height: 50px !important;
     width: 30px !important;
+}
+
+.editClassModalCard,
+.addClassModalCard {
+    width: 100% !important;
+    padding: 2rem !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    background: linear-gradient(135deg,
+            rgba(0, 23, 31, 0.6) 0%,
+            rgba(0, 23, 31, 0.4) 50%,
+            rgba(0, 23, 31, 0.5) 100%) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 4px 24px rgba(0, 0, 0, 0.2) !important;
 }
 </style>

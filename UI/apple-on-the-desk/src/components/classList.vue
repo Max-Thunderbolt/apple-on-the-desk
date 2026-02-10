@@ -26,7 +26,8 @@
                             props.shopCost) }}) <span
                                 v-if="selectedStudents?.some((s) => s.id === student.id)"><v-icon>mdi-check</v-icon></span></span>
                     </div>
-                    <div v-else class="studentRow" @click="selectAction(student)">
+                    <div v-else class="studentRow" @click="selectAction(student)"
+                        @contextmenu.prevent="editStudentName(student)">
                         <span class="studentName">{{ student.name }}</span>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts </span>
                     </div>
@@ -43,41 +44,20 @@
             </v-btn>
         </div>
 
-        <v-dialog v-model="pointsDialogOpen" max-width="420" persistent transition="dialog-transition"
-            class="pointsDialog" @click:outside="closePointsDialog">
-            <v-card class="pointsDialogCard">
-                <v-card-title class="pointsDialogTitle">
-                    Award points – {{ selectedStudents?.name }}
-                </v-card-title>
-                <v-card-subtitle class="pointsDialogSubtitle">
-                    Choose a category
-                </v-card-subtitle>
-                <v-card-text class="pointsDialogList">
-                    <div v-for="category in pointsCategories" :key="category._id || category.id || category.name"
-                        class="pointsCategoryItem" @click="awardPoints(category)">
-                        <span class="pointsCategoryName">{{ category.name }}</span>
-                        <span class="pointsCategoryValue">+{{ formatCost(category.value) }}</span>
-                    </div>
-                    <div v-if="pointsCategories.length === 0 && !pointsCategoriesLoading" class="noCategories">
-                        No point categories available.
-                    </div>
-                    <div v-if="pointsCategoriesLoading" class="loadingCategories">
-                        Loading…
-                    </div>
-                </v-card-text>
-                <v-card-actions>
-                    <v-spacer />
-                    <v-btn class="pointsDialogCancelButton" variant="text" @click="closePointsDialog">Cancel</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+        <award-points-modal 
+            v-model:pointsDialogOpen="pointsDialogOpen" 
+            v-model:selectedStudents="selectedStudents"
+            :all-students="props.students"
+            :class-id="props.classId"
+            @studentsUpdated="onStudentsUpdated" />
     </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { updateClass, getAllPointsCategories } from '../services/server';
+import Server from '../services/server';
 import { Toaster, toast } from 'vue-sonner';
+import AwardPointsModal from '../components/modals/awardPointsModal.vue';
 
 const props = defineProps({
     shopCost: {
@@ -106,8 +86,6 @@ const emit = defineEmits(['students-updated', 'experience-updated']);
 
 const pointsDialogOpen = ref(false);
 const selectedStudents = ref([]);
-const pointsCategories = ref([]);
-const pointsCategoriesLoading = ref(false);
 /** Split students into 4 columns */
 const columns = computed(() => {
     const list = props.students || [];
@@ -131,24 +109,14 @@ watch(() => props.shopCost, (shopCost) => {
     }
 });
 
-watch(pointsDialogOpen, (open) => {
+watch(() => pointsDialogOpen.value, (open) => {
+    console.log('pointsDialogOpen', open);
     if (open) {
-        loadPointsCategories();
+        console.log('pointsDialogOpen is true');
+    } else {
+        console.log('pointsDialogOpen is false');
     }
 });
-
-async function loadPointsCategories() {
-    pointsCategoriesLoading.value = true;
-    pointsCategories.value = [];
-    try {
-        const data = await getAllPointsCategories();
-        pointsCategories.value = data.pointsCategories ?? [];
-    } catch (err) {
-        console.error('Failed to load points categories:', err);
-    } finally {
-        pointsCategoriesLoading.value = false;
-    }
-}
 
 function formatCost(cost) {
     const n = Number(cost);
@@ -191,6 +159,10 @@ function selectAction(student) {
     }
 }
 
+function onStudentsUpdated(updatedStudents) {
+    emit('students-updated', updatedStudents);
+}
+
 function openPointsDialog(student) {
     selectedStudents.value = [student];
     pointsDialogOpen.value = props.isViewingShop ? false : true;
@@ -206,25 +178,33 @@ function canAffordPoints(student) {
     return student.points >= props.shopCost;
 }
 
-async function awardPoints(category) {
-    if (!selectedStudents.value) return;
-    const students = selectedStudents.value;
-    const value = Number(category.value) || 0;
-    const updated = props.students.map((s) => {
-        if (students.some((student) => student.id === s.id)) {
-            return { ...s, points: (s.points ?? 0) + value };
-        }
-        return { ...s };
-    });
-    const updatedExperience = (value * 2) + props.experience;
-    console.log('updatedExperience', updatedExperience);
+async function editStudentName(student) {
+    if (!student) return;
+
+    const currentName = student.name ?? '';
+    const newName = window.prompt('Edit student name', currentName);
+
+    if (newName == null) return;
+
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === currentName) return;
+
+    const updated = props.students.map((s) =>
+        s.id === student.id
+            ? { ...s, name: trimmed }
+            : { ...s }
+    );
+
     try {
-        await updateClass(props.classId, { students: updated, experience: updatedExperience });
+        await Server.updateClass(props.classId, { students: updated });
         emit('students-updated', updated);
-        emit('experience-updated', updatedExperience);
-        closePointsDialog();
+        toast.success('Student name updated', {
+            description: `${currentName} → ${trimmed}`,
+            duration: 3000,
+        });
     } catch (err) {
-        console.error('Failed to award points:', err);
+        console.error('Failed to update student name:', err);
+        toast.error('Failed to update student name');
     }
 }
 
@@ -271,7 +251,7 @@ async function checkout() {
     });
 
     try {
-        await updateClass(props.classId, { students: updated });
+        await Server.updateClass(props.classId, { students: updated });
         emit('students-updated', updated);
         toast.success('Purchase completed', {
             description: `Deducted ${formatCost(totalCost)} from selected students (least points first)`,
@@ -403,99 +383,6 @@ async function checkout() {
     font-size: 0.9rem;
     opacity: 0.9;
     color: var(--white);
-}
-
-.pointsDialogCard {
-    background-color: var(--inkBlack);
-    border-radius: 25px;
-    border: 1px solid var(--white);
-    padding: 0 0 0.5rem;
-}
-
-.pointsDialogTitle {
-    font-family: var(--font);
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--white);
-    text-align: center;
-    padding: 0.5rem 0;
-}
-
-.pointsDialogSubtitle {
-    font-family: var(--font);
-    padding-top: 0;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--white);
-    opacity: 0.8;
-    text-align: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--white);
-}
-
-.pointsDialogList {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding-top: 0.5rem;
-}
-
-.pointsCategoryItem {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1rem;
-    background-color: var(--inkBlack);
-    color: var(--white);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-}
-
-.pointsCategoryItem:hover {
-    background-color: var(--seaGreen);
-}
-
-.pointsCategoryName {
-    font-family: var(--font);
-    font-weight: 500;
-}
-
-.pointsCategoryValue {
-    font-weight: 600;
-    color: var(--seaGreen);
-}
-
-.pointsCategoryItem:hover .pointsCategoryValue {
-    color: var(--white);
-}
-
-.noCategories,
-.loadingCategories {
-    color: var(--white);
-    opacity: 0.8;
-    text-align: center;
-    padding: 1rem;
-}
-
-.pointsDialogCancelButton {
-    font-family: var(--font) !important;
-    font-size: 1rem !important;
-    font-weight: 500 !important;
-    color: var(--white) !important;
-    background: linear-gradient(135deg,
-            rgba(255, 0, 0, 0.459) 0%,
-            rgba(255, 0, 0, 0.459) 100%) !important;
-    border-radius: 15px !important;
-    padding: 0.5rem 1rem !important;
-    transition: all 0.3s ease !important;
-    cursor: pointer !important;
-
-    &:hover {
-        transform: scale(1.02) !important;
-        border-color: rgba(255, 0, 0, 0.459) !important;
-        filter: brightness(1.1) !important;
-    }
 }
 
 .checkoutContainer {

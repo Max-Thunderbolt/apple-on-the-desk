@@ -15,6 +15,8 @@ router.get('/classes/names', classController.getClassNames);
 router.get('/classes/:id', classController.getClassById);
 router.post('/classes', classController.createClass);
 router.put('/classes/:id', classController.updateClass);
+router.put('/classes/:id/students', classController.updateStudentPoints);
+router.post('/classes/:id/award-points', classController.awardPoints);
 router.delete('/classes/:id', classController.deleteClass);
 
 // POINTS CATEGORIES ROUTES

@@ -11,6 +11,7 @@
     --freshSky-rgb: 0, 168, 232;
     --seaGreen-rgb: 26, 147, 111;
     --gold-rgb: 247, 183, 7;
+    --amethyst-rgb: 168, 51, 185;
   }
 
   [data-sonner-toast][data-type="success"] {

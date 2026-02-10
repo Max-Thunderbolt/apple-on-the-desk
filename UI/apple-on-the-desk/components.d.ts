@@ -11,7 +11,9 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AwardPointsModal: typeof import('./src/components/modals/awardPointsModal.vue')['default']
     Classes: typeof import('./src/components/Classes.vue')['default']
+    ClassForm: typeof import('./src/components/modals/ClassForm.vue')['default']
     ClassList: typeof import('./src/components/classList.vue')['default']
     Home: typeof import('./src/components/Home.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
