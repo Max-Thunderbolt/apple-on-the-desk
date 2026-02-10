@@ -425,12 +425,26 @@ async function checkout() {
 
 .studentGrid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem 2rem;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 0.5rem;
     width: 100%;
     max-width: 1000px;
     margin: 0 auto;
     padding-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+    .studentGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem 1rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .studentGrid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem 2rem;
+    }
 }
 
 .studentColumn {
@@ -452,12 +466,14 @@ async function checkout() {
     transition: all 0.3s ease;
 }
 
-.studentRow:hover {
-    transform: scale(1.05) translateY(-10px) !important;
-    box-shadow: 0 0 20px 0 var(--seaGreen) !important;
-    border: none !important;
-    color: var(--white) !important;
-    background-color: var(--seaGreen) !important;
+@media (hover: hover) {
+    .studentRow:hover {
+        transform: scale(1.05) translateY(-10px) !important;
+        box-shadow: 0 0 20px 0 var(--seaGreen) !important;
+        border: none !important;
+        color: var(--white) !important;
+        background-color: var(--seaGreen) !important;
+    }
 }
 
 .studentRowCanAffordPoints {
@@ -471,14 +487,6 @@ async function checkout() {
     box-shadow: 10px 10px 10px 0 rgba(0, 0, 0, 0.5);
     min-height: 48px;
     transition: all 0.3s ease;
-}
-
-.studentRowCanAffordPoints:hover {
-    transform: scale(1.05) translateY(-10px) !important;
-    box-shadow: 0 0 20px 0 var(--seaGreen) !important;
-    border: none !important;
-    color: var(--white) !important;
-    background-color: var(--seaGreen) !important;
 }
 
 .studentRowCantAffordPoints {
@@ -495,12 +503,22 @@ async function checkout() {
     color: var(--white) !important;
 }
 
-.studentRowCantAffordPoints:hover {
-    transform: scale(1.05) translateY(-10px) !important;
-    box-shadow: 0 0 20px 0 var(--intenseCherry) !important;
-    border: none !important;
-    color: var(--white) !important;
-    background-color: var(--intenseCherry) !important;
+@media (hover: hover) {
+    .studentRowCanAffordPoints:hover {
+        transform: scale(1.05) translateY(-10px) !important;
+        box-shadow: 0 0 20px 0 var(--seaGreen) !important;
+        border: none !important;
+        color: var(--white) !important;
+        background-color: var(--seaGreen) !important;
+    }
+
+    .studentRowCantAffordPoints:hover {
+        transform: scale(1.05) translateY(-10px) !important;
+        box-shadow: 0 0 20px 0 var(--intenseCherry) !important;
+        border: none !important;
+        color: var(--white) !important;
+        background-color: var(--intenseCherry) !important;
+    }
 }
 
 .studentNameContainer {
@@ -566,13 +584,15 @@ async function checkout() {
     padding: 0.5rem 1rem;
 }
 
-.checkoutButton:hover {
-    transform: scale(1.02);
-    background-color: var(--seaGreen);
-    color: var(--white);
-    border: none;
-    box-shadow: 0 0 10px 0 rgba(26, 147, 111, 0.5);
-    transition: all 0.3s ease;
+@media (hover: hover) {
+    .checkoutButton:hover {
+        transform: scale(1.02);
+        background-color: var(--seaGreen);
+        color: var(--white);
+        border: none;
+        box-shadow: 0 0 10px 0 rgba(26, 147, 111, 0.5);
+        transition: all 0.3s ease;
+    }
 }
 
 .checkoutTotal {
@@ -617,8 +637,10 @@ async function checkout() {
     min-height: 40px;
 }
 
-.contextMenu .v-list-item:hover {
-    background-color: var(--seaGreen) !important;
+@media (hover: hover) {
+    .contextMenu .v-list-item:hover {
+        background-color: var(--seaGreen) !important;
+    }
 }
 
 :deep(.v-overlay__content) {

@@ -143,11 +143,18 @@ function calcCost(selectedIds) {
 
 .shopGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
     width: 100%;
     max-width: 800px;
     margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .shopGrid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
 }
 
 .shopItemCard {
@@ -178,12 +185,14 @@ function calcCost(selectedIds) {
         0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.shopItemCard:hover {
-    transform: scale(1.02) translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.15),
-        0 8px 24px rgba(0, 168, 232, 0.2);
+@media (hover: hover) {
+    .shopItemCard:hover {
+        transform: scale(1.02) translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.15),
+            0 8px 24px rgba(0, 168, 232, 0.2);
+    }
 }
 
 .shopItemCard.selected {
@@ -244,8 +253,10 @@ function calcCost(selectedIds) {
     transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.clearSelectionBtn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+@media (hover: hover) {
+    .clearSelectionBtn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
 }
 </style>
