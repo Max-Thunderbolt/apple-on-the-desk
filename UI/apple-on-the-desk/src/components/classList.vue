@@ -36,20 +36,22 @@
         </div>
 
         <div v-if="isViewingShop" class="checkoutContainer">
-            <span class="checkoutTotal">Total: {{formatCost(selectedStudents?.reduce((acc, student) => acc +
-                student.points, 0))}} ({{formatCost(selectedStudents?.reduce((acc, student) => acc +
-                    student.points, 0) - props.shopCost)}} needed)</span>
-            <v-btn class="checkoutButton" @click="checkout">
+            <span class="checkoutTotal">
+                Total: {{ formatCost(totalSelectedPoints) }} 
+                <span v-if="!canAffordShop" class="checkoutShortfall">
+                    ({{ formatCost(pointsRemaining) }} needed)
+                </span>
+                <span v-else class="checkoutExcess">
+                    ({{ formatCost(-pointsRemaining) }} excess)
+                </span>
+            </span>
+            <v-btn class="checkoutButton" :disabled="!canAffordShop" @click="checkout">
                 Checkout
             </v-btn>
         </div>
 
-        <award-points-modal 
-            v-model:pointsDialogOpen="pointsDialogOpen" 
-            v-model:selectedStudents="selectedStudents"
-            :all-students="props.students"
-            :class-id="props.classId"
-            @studentsUpdated="onStudentsUpdated" />
+        <award-points-modal v-model:pointsDialogOpen="pointsDialogOpen" v-model:selectedStudents="selectedStudents"
+            :all-students="props.students" :class-id="props.classId" @studentsUpdated="onStudentsUpdated" />
     </div>
 </template>
 
@@ -96,6 +98,21 @@ const columns = computed(() => {
     return cols;
 });
 
+/** Total points of selected students */
+const totalSelectedPoints = computed(() => {
+    return selectedStudents.value?.reduce((acc, student) => acc + (student.points || 0), 0) || 0;
+});
+
+/** Remaining points needed to afford shop cost (negative if they have excess) */
+const pointsRemaining = computed(() => {
+    return props.shopCost - totalSelectedPoints.value;
+});
+
+/** Whether selected students can afford the shop cost */
+const canAffordShop = computed(() => {
+    return totalSelectedPoints.value >= props.shopCost;
+});
+
 watch(() => props.isViewingShop, (viewingShop) => {
     if (viewingShop) {
         pointsDialogOpen.value = false;
@@ -122,10 +139,10 @@ function formatCost(cost) {
     const n = Number(cost);
     if (Number.isNaN(n)) return String(cost ?? '—');
     if (n % 1 === 0) {
-        return `${n.toLocaleString()} pts`;
+        return `${n.toLocaleString(undefined, { locale: 'en-ZA' })} pts`;
     } else {
         // toLocaleString for floating point, keep one decimal, comma-separate thousands
-        return `${n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} pts`;
+        return `${n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: true, locale: 'en-ZA' })} pts`;
     }
 }
 
@@ -421,5 +438,20 @@ async function checkout() {
     border-radius: 12px;
     margin-right: 1rem;
     padding: 0.5rem 1rem;
+}
+
+.checkoutShortfall {
+    color: var(--intenseCherry);
+    font-weight: 600;
+}
+
+.checkoutExcess {
+    color: var(--seaGreen);
+    font-weight: 600;
+}
+
+.checkoutButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 </style>

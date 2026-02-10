@@ -34,7 +34,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, onUnmounted, watch } from 'vue';
+import swapSoundFile from '../assets/DriverNavigatorSwap.wav';
 
 const enteredDuration = ref(120);
 const timeRemaining = ref(120);
@@ -45,6 +46,9 @@ const totalTimeSeconds = ref(0);
 
 let intervalId = null;
 const durationPerIteration = ref(0);
+
+// Create audio element for the swap sound
+const swapSound = new Audio(swapSoundFile);
 
 const formattedTime = computed(() => {
     const s = timeRemaining.value;
@@ -74,6 +78,8 @@ const formattedTotalTime = computed(() => {
 
 const tick = () => {
     if (timeRemaining.value <= 0) {
+        // Play sound when timer reaches 0
+        playSwapSound();
         totalIterations.value++;
         totalTimeSeconds.value += durationPerIteration.value;
         timeRemaining.value = durationPerIteration.value;
@@ -84,6 +90,18 @@ const tick = () => {
         : 0;
     if (timeRemaining.value < 0) {
         timeRemaining.value = 0;
+    }
+};
+
+const playSwapSound = () => {
+    try {
+        // Reset audio to beginning in case it's already playing
+        swapSound.currentTime = 0;
+        swapSound.play().catch(err => {
+            console.warn('Could not play swap sound:', err);
+        });
+    } catch (err) {
+        console.warn('Error playing swap sound:', err);
     }
 };
 
