@@ -32,7 +32,13 @@ function initializeFirebaseAdmin() {
 }
 
 function getAuth() {
-  return admin.auth ? admin.auth() : null;
+  if (!admin.auth) return null;
+  if (!admin.apps.length) return null;
+  try {
+    return admin.auth();
+  } catch (_) {
+    return null;
+  }
 }
 
 module.exports = { initializeFirebaseAdmin, getAuth };
