@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const http = axios.create({
-    baseURL: 'http://localhost:3001/api/', //'http://localhost:3001/api/', //'http://13.246.227.85/api/', //'https://apple-on-the-desk-api.onrender.com/api/', //localhost:3001/api/
+    baseURL: 'https://apple-on-the-desk-api.onrender.com/api/', //'http://localhost:3001/api/', //'http://13.246.227.85/api/', //'https://apple-on-the-desk-api.onrender.com/api/', //localhost:3001/api/
     headers: {
         'Content-Type': 'application/json',
     },
@@ -18,7 +18,7 @@ http.interceptors.request.use(async (config) => {
         try {
             const token = await _authGetter();
             if (token) config.headers.Authorization = `Bearer ${token}`;
-        } catch (_) {}
+        } catch (_) { }
     }
     return config;
 });
