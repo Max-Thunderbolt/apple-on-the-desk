@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const http = axios.create({
-    baseURL: 'https://apple-on-the-desk-api.onrender.com/api/', //'http://localhost:3001/api/', //'http://13.246.227.85/api/', //'https://apple-on-the-desk-api.onrender.com/api/', //localhost:3001/api/
+    baseURL: import.meta.env.DEV ? '/api/' : 'http://localhost:3001/api/', // in dev, use Vite proxy to API
     headers: {
         'Content-Type': 'application/json',
     },
@@ -178,11 +178,12 @@ class Server {
         }
     }
 
-    async awardPoints(classId, categoryId, selectedStudentIds) {
+    async awardPoints(classId, categoryId, selectedStudentIds, isForGroup = false) {
         try {
             const response = await this.http.post(`/classes/${classId}/award-points`, {
                 categoryId,
-                selectedStudentIds
+                selectedStudentIds,
+                isForGroup: !!isForGroup
             });
             return response.data;
         } catch (error) {
@@ -217,6 +218,16 @@ class Server {
             return response.data;
         } catch (error) {
             console.error('Error clearing groups:', error);
+            throw error;
+        }
+    }
+
+    async assignStudentToGroup(classId, studentId, groupName) {
+        try {
+            const response = await this.http.put(`/classes/${classId}/students/${studentId}/group`, { group: groupName });
+            return response.data;
+        } catch (error) {
+            console.error('Error assigning student to group:', error);
             throw error;
         }
     }

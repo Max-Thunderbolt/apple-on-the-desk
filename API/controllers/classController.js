@@ -188,27 +188,29 @@ const updateStudentPoints = async (req, res) => {
 
 const awardPoints = async (req, res) => {
     try {
-        const { categoryId, selectedStudentIds } = req.body;
+        const { categoryId, selectedStudentIds, isForGroup } = req.body;
         const classId = req.params.id;
+        console.log('[awardPoints] classId:', classId, 'categoryId:', categoryId, 'userId:', req.userId, 'isForGroup:', isForGroup);
 
         // Get the class
         const classDoc = await getDB().collection('Class').findOne({ id: classId, userId: req.userId });
         if (!classDoc) {
+            console.log('[awardPoints] 404 Class not found for id:', classId);
             return res.status(404).json({
                 success: false,
                 message: 'Class not found'
             });
         }
 
-        // Get the points category (check both id and _id fields), scoped to user
+        // Get the points category (same logic as pointsCategoryController: user's or default)
         const { ObjectId } = require('mongodb');
-        let category = await getDB().collection('PointCategory').findOne({ id: categoryId, userId: req.userId });
-        if (!category) {
-            if (ObjectId.isValid(categoryId)) {
-                category = await getDB().collection('PointCategory').findOne({ _id: new ObjectId(categoryId), userId: req.userId });
-            }
+        const categoryFilter = { $or: [{ userId: req.userId }, { default: true }] };
+        let category = await getDB().collection('PointCategory').findOne({ ...categoryFilter, id: categoryId });
+        if (!category && ObjectId.isValid(categoryId)) {
+            category = await getDB().collection('PointCategory').findOne({ ...categoryFilter, _id: new ObjectId(categoryId) });
         }
         if (!category) {
+            console.log('[awardPoints] 404 Points category not found for categoryId:', categoryId, 'userId:', req.userId);
             return res.status(404).json({
                 success: false,
                 message: 'Points category not found'
@@ -225,9 +227,11 @@ const awardPoints = async (req, res) => {
             });
         }
 
-        // Calculate points: if awarding to whole class, each gets value/10, otherwise full value
+        // Calculate points: isForGroup => full value per student; else whole class => value/10, otherwise full value
         const isWholeClass = selectedStudentIds.length === allStudents.length;
-        const pointsToAward = isWholeClass ? Math.floor(category.value / 10) : category.value;
+        const pointsToAward = isForGroup
+            ? category.value
+            : (isWholeClass ? Math.floor(category.value / 10) : category.value);
         const experienceToAward = Math.floor(category.value / 2);
         
         console.log('=== AWARD POINTS DEBUG ===');
@@ -235,6 +239,7 @@ const awardPoints = async (req, res) => {
         console.log('Found category:', category.name, 'Value:', category.value);
         console.log('Total students:', allStudents.length);
         console.log('Selected students:', selectedStudentIds.length);
+        console.log('Is for group:', !!isForGroup);
         console.log('Is whole class:', isWholeClass);
         console.log('Points to award per student:', pointsToAward);
         console.log('Experience to award to class:', experienceToAward);
@@ -412,6 +417,58 @@ const clearGroupsForClass = async (req, res) => {
     }
 };
 
+const assignStudentToGroup = async (req, res) => {
+    try {
+        const classId = req.params.id;
+        const studentId = req.params.studentId;
+        const { group: groupName } = req.body;
+
+        if (groupName === undefined || groupName === null) {
+            return res.status(400).json({
+                success: false,
+                message: 'group is required'
+            });
+        }
+
+        const classDoc = await getDB().collection('Class').findOne({ id: classId, userId: req.userId });
+        if (!classDoc) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        const students = classDoc.students || [];
+        const studentIndex = students.findIndex(s => s.id === studentId);
+
+        if (studentIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not found'
+            });
+        }
+
+        students[studentIndex].group = groupName === '' ? null : groupName;
+
+        await getDB().collection('Class').updateOne(
+            { id: classId, userId: req.userId },
+            { $set: { students } }
+        );
+
+        return res.json({
+            success: true,
+            message: 'Student assigned to group successfully',
+            students
+        });
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: 'Error assigning student to group',
+            error: err.message
+        });
+    }
+};
+
 const updateStudentConstraints = async (req, res) => {
     try {
         const classId = req.params.id;
@@ -481,5 +538,6 @@ module.exports = {
     generateGroupsForClass,
     getGroups,
     clearGroupsForClass,
+    assignStudentToGroup,
     updateStudentConstraints,
 };
