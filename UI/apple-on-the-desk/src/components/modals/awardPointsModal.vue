@@ -10,7 +10,8 @@
             </v-card-subtitle>
             <v-card-text class="pointsDialogList">
                 <div v-for="category in pointsCategories" :key="category._id || category.id || category.name"
-                    class="pointsCategoryItem" @click="awardPoints(category)">
+                    class="pointsCategoryItem" @click="awardPoints(category)"
+                    @contextmenu.prevent="openCategoryContextMenu($event, category)">
                     <span class="pointsCategoryName">{{ category.name }}</span>
                     <span class="pointsCategoryValue">+{{ formatCost(category.value) }}</span>
                 </div>
@@ -24,21 +25,43 @@
             <v-card-actions>
                 <v-spacer />
                 <div class="pointsDialogButtons">
-                    <v-btn class="pointsDialogAwardButton" variant="text" @click="createPointsCategory">Create
+                    <v-btn class="pointsDialogAwardButton" variant="text" @click="openCreateCategoryModal">Create
                         Category</v-btn>
                     <v-btn class="pointsDialogCancelButton" variant="text" @click="closePointsDialog">Cancel</v-btn>
                 </div>
             </v-card-actions>
         </v-card>
     </v-dialog>
+    <v-menu v-model="categoryContextMenuOpen" :style="{ position: 'fixed', left: categoryContextMenuX + 'px', top: categoryContextMenuY + 'px' }"
+        :location="undefined" :attach="false" class="pointsCategoryContextMenu">
+        <v-list class="contextMenuList">
+            <v-list-item @click="openEditCategoryModal">
+                <template v-slot:prepend><v-icon size="small">mdi-pencil</v-icon></template>
+                <v-list-item-title>Edit</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="deleteCategoryFromMenu">
+                <template v-slot:prepend><v-icon size="small">mdi-delete</v-icon></template>
+                <v-list-item-title>Delete</v-list-item-title>
+            </v-list-item>
+        </v-list>
+    </v-menu>
+    <CreateItemModal v-model="createCategoryModalOpen" type="pointsCategory" :editing-item="categoryToEdit"
+        @saved="onCategorySaved" />
 </template>
 
 <script setup>
 import { ref, watch, computed } from 'vue';
 import PointsController from '../../controllers/PointsController';
+import CreateItemModal from './CreateItemModal.vue';
 
 const pointsCategories = ref([]);
 const pointsCategoriesLoading = ref(false);
+const createCategoryModalOpen = ref(false);
+const categoryToEdit = ref(null);
+const categoryContextMenuOpen = ref(false);
+const categoryContextMenuX = ref(0);
+const categoryContextMenuY = ref(0);
+const categoryContextTarget = ref(null);
 
 
 const props = defineProps({
@@ -141,10 +164,46 @@ function closePointsDialog() {
     emit('update:selectedStudents', []);
 }
 
-function createPointsCategory() {
-    console.log('Create points category clicked');
-    // TODO: Implement points category creation dialog
-    alert('Create Points Category feature coming soon!');
+function openCreateCategoryModal() {
+    categoryToEdit.value = null;
+    createCategoryModalOpen.value = true;
+}
+
+function openCategoryContextMenu(e, category) {
+    categoryContextTarget.value = category;
+    categoryContextMenuX.value = e.clientX;
+    categoryContextMenuY.value = e.clientY;
+    categoryContextMenuOpen.value = true;
+}
+
+function openEditCategoryModal() {
+    if (categoryContextTarget.value) {
+        categoryToEdit.value = categoryContextTarget.value;
+        categoryContextMenuOpen.value = false;
+        createCategoryModalOpen.value = true;
+    }
+    categoryContextTarget.value = null;
+}
+
+async function deleteCategoryFromMenu() {
+    const cat = categoryContextTarget.value;
+    categoryContextMenuOpen.value = false;
+    categoryContextTarget.value = null;
+    if (!cat || !pointsManager) return;
+    const categoryId = cat.id || cat._id;
+    if (!confirm(`Delete category "${cat.name}"? This cannot be undone.`)) return;
+    try {
+        await pointsManager.deletePointsCategory(categoryId);
+        loadPointsCategories();
+    } catch (err) {
+        console.error('Failed to delete category:', err);
+        alert('Could not delete category. Please try again.');
+    }
+}
+
+function onCategorySaved() {
+    categoryToEdit.value = null;
+    loadPointsCategories();
 }
 </script>
 
@@ -286,5 +345,25 @@ function createPointsCategory() {
     gap: 1rem;
     margin-top: 1rem;
     width: 100%;
+}
+
+.contextMenuList {
+    background-color: var(--inkBlack) !important;
+    border: 1px solid var(--white);
+    border-radius: 12px;
+    padding: 0.25rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.contextMenuList .v-list-item {
+    font-family: var(--font);
+    color: var(--white);
+    min-height: 40px;
+}
+
+@media (hover: hover) {
+    .contextMenuList .v-list-item:hover {
+        background-color: var(--seaGreen) !important;
+    }
 }
 </style>

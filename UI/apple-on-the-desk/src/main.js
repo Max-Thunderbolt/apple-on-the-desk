@@ -6,6 +6,18 @@
 
 // Plugins
 import { registerPlugins } from '@/plugins'
+import { app, auth } from '@/firebase'
+import { getAnalytics } from 'firebase/analytics'
+import { initAuth } from '@/composables/useAuth'
+import { setAuthGetter } from '@/services/server'
+
+getAnalytics(app)
+initAuth()
+
+setAuthGetter(async () => {
+  const user = auth.currentUser
+  return user ? await user.getIdToken() : null
+})
 
 // Components
 import App from './App.vue'
@@ -16,8 +28,8 @@ import { createApp } from 'vue'
 // Styles
 import 'unfonts.css'
 
-const app = createApp(App)
+const vueApp = createApp(App)
 
-registerPlugins(app)
+registerPlugins(vueApp)
 
-app.mount('#app')
+vueApp.mount('#app')

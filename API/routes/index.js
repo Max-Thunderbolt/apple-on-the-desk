@@ -1,13 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
 const classController = require('../controllers/classController');
 const pointsCategoryController = require('../controllers/pointsCategoryController');
 const shopItemsController = require('../controllers/shopItemsController');
-// Import route modules
-// const exampleRoutes = require('./example');
+const accountController = require('../controllers/accountController');
 
-// Mount routes
-// router.use('/example', exampleRoutes);
+// API root (no auth)
+router.get('/', (req, res) => {
+  res.json({
+    message: 'API is running',
+    version: '1.0.0'
+  });
+});
+
+// All data routes require auth and are scoped by userId
+router.use(requireAuth);
 
 // CLASSES ROUTES
 router.get('/classes', classController.getAllClasses);
@@ -27,16 +35,17 @@ router.put('/classes/:id/students/:studentId/constraints', classController.updat
 
 // POINTS CATEGORIES ROUTES
 router.get('/points-categories', pointsCategoryController.getAllPointsCategories);
+router.post('/points-categories', pointsCategoryController.createPointsCategory);
+router.put('/points-categories/:id', pointsCategoryController.updatePointsCategory);
+router.delete('/points-categories/:id', pointsCategoryController.deletePointsCategory);
 
 // SHOP ITEMS ROUTES
 router.get('/shop-items', shopItemsController.getShopItems);
+router.post('/shop-items', shopItemsController.createShopItem);
+router.put('/shop-items/:id', shopItemsController.updateShopItem);
+router.delete('/shop-items/:id', shopItemsController.deleteShopItem);
 
-// API root endpoint
-router.get('/', (req, res) => {
-  res.json({
-    message: 'API is running',
-    version: '1.0.0'
-  });
-});
+// ACCOUNT
+router.delete('/account', accountController.deleteAccount);
 
 module.exports = router;

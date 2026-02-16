@@ -16,20 +16,20 @@
                     <div v-for="student in groupStudents" :key="student.id">
                         <div v-if="props.isViewingShop && canAffordPoints(student)" class="studentRowCanAffordPoints"
                             @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
-                            <span class="studentName">{{ student.name }}</span>
+                            <span class="studentName" :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{ student.name }}</span>
                             <span class="studentPoints">{{ student.points ?? 0 }} pts <span
                                     v-if="isStudentSelected(student)"><v-icon size="small">mdi-check</v-icon></span></span>
                         </div>
                         <div v-else-if="props.isViewingShop && !canAffordPoints(student)" class="studentRowCantAffordPoints"
                             @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
-                            <span class="studentName">{{ student.name }}</span>
+                            <span class="studentName" :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{ student.name }}</span>
                             <span class="studentPoints"> {{ student.points ?? 0 }} pts ({{ formatCost(student.points -
                                 props.shopCost) }}) <span
                                     v-if="isStudentSelected(student)"><v-icon size="small">mdi-check</v-icon></span></span>
                         </div>
                         <div v-else class="studentRow" @click="selectAction(student)"
                             @contextmenu.prevent="openContextMenu($event, student)">
-                            <span class="studentName">{{ student.name }}</span>
+                            <span class="studentName" :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{ student.name }}</span>
                             <span class="studentPoints">{{ student.points ?? 0 }} pts </span>
                         </div>
                     </div>
@@ -267,6 +267,11 @@ function openContextMenu(event, student) {
     color: var(--white);
     flex: 1;
     min-width: 0;
+}
+
+.studentName.zeroPoints {
+    text-decoration: line-through;
+    opacity: 0.85;
 }
 
 .studentPoints {

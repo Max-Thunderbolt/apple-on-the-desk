@@ -22,12 +22,16 @@ export default class PointsController {
     }
 
     async createPointsCategory(name, value) {
-        const response = await Server.createPointsCategory(this.classId, { name, value });
+        const response = await Server.createPointsCategory({ name, value });
+        return response.pointsCategory;
+    }
+
+    async updatePointsCategory(id, name, value) {
+        const response = await Server.updatePointsCategory(id, { name, value });
         return response.pointsCategory;
     }
 
     async deletePointsCategory(categoryId) {
-        const response = await Server.deletePointsCategory(this.classId, categoryId);
-        return response.pointsCategory;
+        await Server.deletePointsCategory(categoryId);
     }
 }
