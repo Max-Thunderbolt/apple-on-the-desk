@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const http = axios.create({
-    baseURL: import.meta.env.DEV ? '/api/' : 'http://localhost:3001/api/', // in dev, use Vite proxy to API
+    baseURL: 'https://apple-on-the-desk.onrender.com/api/',
+    // baseURL: import.meta.env.DEV ? '/api/' : 'http://localhost:3001/api/', // in dev, use Vite proxy to API
     headers: {
         'Content-Type': 'application/json',
     },
