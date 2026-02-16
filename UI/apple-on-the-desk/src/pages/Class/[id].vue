@@ -37,7 +37,8 @@
             </div>
             <!-- SHOP -->
             <div v-if="viewShopModal" class="shopModal">
-                <Shop :shopItems="shopItems" @cost-updated="onCostUpdated" />
+                <Shop :shopItems="shopItems" @cost-updated="onCostUpdated"
+                    @item-context-menu="(e, item) => openShopItemContextMenu(e, item)" />
             </div>
             <!-- ACTION BUTTONS -->
             <div class="shopContainer">
@@ -57,6 +58,12 @@
                                         'mdi-store' }}</v-icon>
                                 </template>
                                 <v-list-item-title>{{ viewShopModal ? 'Timer' : 'Shop' }}</v-list-item-title>
+                            </v-list-item>
+                            <v-list-item v-if="viewShopModal" class="actionMenuItem" @click="openCreateShopItemModal">
+                                <template v-slot:prepend>
+                                    <v-icon color="seaGreen">mdi-plus</v-icon>
+                                </template>
+                                <v-list-item-title>Create shop item</v-list-item-title>
                             </v-list-item>
                             <v-divider v-if="!viewShopModal" />
                             <v-list-item v-if="!viewShopModal" class="actionMenuItem" @click="handleAwardClassPoints()">
@@ -87,6 +94,23 @@
 
     <grouper-modal v-model="grouperModalOpen" :class-id="id" :students="classData?.students || []"
         @groupsUpdated="onGroupsUpdated" />
+
+    <v-menu v-model="shopItemContextMenuOpen"
+        :style="{ position: 'fixed', left: shopItemContextMenuX + 'px', top: shopItemContextMenuY + 'px' }"
+        :location="undefined" :attach="false" class="shopItemContextMenu">
+        <v-list class="shopContextMenuList">
+            <v-list-item @click="openEditShopItemModal">
+                <template v-slot:prepend><v-icon size="small">mdi-pencil</v-icon></template>
+                <v-list-item-title>Edit</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="deleteShopItemFromMenu">
+                <template v-slot:prepend><v-icon size="small">mdi-delete</v-icon></template>
+                <v-list-item-title>Delete</v-list-item-title>
+            </v-list-item>
+        </v-list>
+    </v-menu>
+    <CreateItemModal v-model="createShopItemModalOpen" type="shopItem" :editing-item="shopItemToEdit"
+        @saved="onShopItemSaved" />
 </template>
 
 <script setup>
@@ -100,6 +124,7 @@ import { toast } from 'vue-sonner';
 import { experienceToRank, getExperience } from '../../controllers/ExperienceController';
 import AwardPointsModal from '../../components/modals/awardPointsModal.vue';
 import grouperModal from '../../components/modals/GrouperModal.vue';
+import CreateItemModal from '../../components/modals/CreateItemModal.vue';
 
 const router = useRouter();
 const { id } = useRoute().params;
@@ -111,6 +136,12 @@ const awardClassPointsModal = ref(false);
 const selectedStudents = ref([]);
 const grouperModalOpen = ref(false);
 const actionsMenuOpen = ref(false);
+const createShopItemModalOpen = ref(false);
+const shopItemToEdit = ref(null);
+const shopItemContextMenuOpen = ref(false);
+const shopItemContextMenuX = ref(0);
+const shopItemContextMenuY = ref(0);
+const shopItemContextTarget = ref(null);
 let breadcrumbs = computed(() => [
     { title: 'Home', to: '/' },
     { title: 'Classes', to: '/Classes' },
@@ -246,6 +277,49 @@ function openGrouperModal() {
 function onGroupsUpdated(updatedStudents) {
     // Reload the class data to get the latest state with groups
     loadClass();
+}
+
+function openCreateShopItemModal() {
+    shopItemToEdit.value = null;
+    createShopItemModalOpen.value = true;
+}
+
+function openShopItemContextMenu(e, item) {
+    shopItemContextTarget.value = item;
+    shopItemContextMenuX.value = e.clientX;
+    shopItemContextMenuY.value = e.clientY;
+    shopItemContextMenuOpen.value = true;
+}
+
+function openEditShopItemModal() {
+    if (shopItemContextTarget.value) {
+        shopItemToEdit.value = shopItemContextTarget.value;
+        shopItemContextMenuOpen.value = false;
+        createShopItemModalOpen.value = true;
+    }
+    shopItemContextTarget.value = null;
+}
+
+async function deleteShopItemFromMenu() {
+    const item = shopItemContextTarget.value;
+    shopItemContextMenuOpen.value = false;
+    shopItemContextTarget.value = null;
+    if (!item) return;
+    const itemId = item._id != null ? String(item._id) : item.id;
+    if (!itemId) return;
+    if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+    try {
+        await Server.deleteShopItem(itemId);
+        loadShopItems();
+    } catch (err) {
+        console.error('Failed to delete shop item:', err);
+        alert('Could not delete shop item. Please try again.');
+    }
+}
+
+function onShopItemSaved() {
+    shopItemToEdit.value = null;
+    loadShopItems();
 }
 
 function handleAwardClassPoints() {
@@ -796,5 +870,44 @@ function handleCreateGroups() {
 
 .shopModal {
     margin-bottom: 20px;
+    width: 100%;
+}
+
+.shopHeader {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.createShopItemButton {
+    font-family: var(--font) !important;
+    text-transform: none !important;
+    color: var(--white) !important;
+    background-color: var(--seaGreen) !important;
+    border-radius: 12px !important;
+}
+
+.createShopItemButton:hover {
+    filter: brightness(1.1);
+}
+
+.shopContextMenuList {
+    background-color: var(--inkBlack) !important;
+    border: 1px solid var(--white);
+    border-radius: 12px;
+    padding: 0.25rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.shopContextMenuList .v-list-item {
+    font-family: var(--font);
+    color: var(--white);
+    min-height: 40px;
+}
+
+@media (hover: hover) {
+    .shopContextMenuList .v-list-item:hover {
+        background-color: var(--seaGreen) !important;
+    }
 }
 </style>

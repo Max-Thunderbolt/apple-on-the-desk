@@ -27,9 +27,15 @@ router.put('/classes/:id/students/:studentId/constraints', classController.updat
 
 // POINTS CATEGORIES ROUTES
 router.get('/points-categories', pointsCategoryController.getAllPointsCategories);
+router.post('/points-categories', pointsCategoryController.createPointsCategory);
+router.put('/points-categories/:id', pointsCategoryController.updatePointsCategory);
+router.delete('/points-categories/:id', pointsCategoryController.deletePointsCategory);
 
 // SHOP ITEMS ROUTES
 router.get('/shop-items', shopItemsController.getShopItems);
+router.post('/shop-items', shopItemsController.createShopItem);
+router.put('/shop-items/:id', shopItemsController.updateShopItem);
+router.delete('/shop-items/:id', shopItemsController.deleteShopItem);
 
 // API root endpoint
 router.get('/', (req, res) => {

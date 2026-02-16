@@ -4,7 +4,8 @@
     </div>
     <div v-else class="shopGrid">
         <button v-for="item in shopItemsList" :key="item._id || item.id || item.name" type="button" class="shopItemCard"
-            :class="{ selected: selectedIds.has(item._id || item.id || item.name) }" @click="toggleSelect(item)">
+            :class="{ selected: selectedIds.has(item._id || item.id || item.name) }" @click="toggleSelect(item)"
+            @contextmenu.prevent="emit('item-context-menu', $event, item)">
             <span class="shopItemName">{{ item.name }}</span>
             <span class="shopItemCost">{{ formatCost(item.cost) }}</span>
         </button>
@@ -29,7 +30,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['cost-updated']);
+const emit = defineEmits(['cost-updated', 'item-context-menu']);
 
 const shopItemsList = computed(() => props.shopItems);
 

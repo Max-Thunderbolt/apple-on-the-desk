@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const http = axios.create({
-    baseURL: 'https://apple-on-the-desk-api.onrender.com/api/', //'http://localhost:3001/api/', //'http://13.246.227.85/api/', //'https://apple-on-the-desk-api.onrender.com/api/', //localhost:3001/api/
+    baseURL: 'http://localhost:3001/api/', //'http://localhost:3001/api/', //'http://13.246.227.85/api/', //'https://apple-on-the-desk-api.onrender.com/api/', //localhost:3001/api/
     headers: {
         'Content-Type': 'application/json',
     },
@@ -81,12 +81,72 @@ class Server {
         }
     }
 
+    async createPointsCategory(data) {
+        try {
+            const response = await this.http.post('/points-categories', data);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating points category:', error);
+            throw error;
+        }
+    }
+
+    async updatePointsCategory(id, data) {
+        try {
+            const response = await this.http.put(`/points-categories/${encodeURIComponent(id)}`, data);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating points category:', error);
+            throw error;
+        }
+    }
+
+    async deletePointsCategory(id) {
+        try {
+            const response = await this.http.delete(`/points-categories/${encodeURIComponent(id)}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error deleting points category:', error);
+            throw error;
+        }
+    }
+
     async getShopItems() {
         try {
             const response = await this.http.get('/shop-items');
             return response.data;
         } catch (error) {
             console.error('Error getting shop items:', error);
+            throw error;
+        }
+    }
+
+    async createShopItem(data) {
+        try {
+            const response = await this.http.post('/shop-items', data);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating shop item:', error);
+            throw error;
+        }
+    }
+
+    async updateShopItem(id, data) {
+        try {
+            const response = await this.http.put(`/shop-items/${encodeURIComponent(id)}`, data);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating shop item:', error);
+            throw error;
+        }
+    }
+
+    async deleteShopItem(id) {
+        try {
+            const response = await this.http.delete(`/shop-items/${encodeURIComponent(id)}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error deleting shop item:', error);
             throw error;
         }
     }

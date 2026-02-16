@@ -38,7 +38,6 @@
                         @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
                         <div class="studentNameContainer">
                             <span class="studentName">{{ student.name }}</span>
-                            <span v-if="student.group" class="groupBadge">{{ student.group }}</span>
                         </div>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts <span
                                 v-if="selectedStudents?.some((s) => s.id === student.id)"><v-icon>mdi-check</v-icon></span></span>
@@ -47,7 +46,6 @@
                         @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
                         <div class="studentNameContainer">
                             <span class="studentName">{{ student.name }}</span>
-                            <span v-if="student.group" class="groupBadge">{{ student.group }}</span>
                         </div>
                         <span class="studentPoints"> {{ student.points ?? 0 }} pts ({{ formatCost(student.points -
                             props.shopCost) }}) <span
