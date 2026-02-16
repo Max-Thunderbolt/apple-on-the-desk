@@ -1,6 +1,8 @@
 <template>
     <div v-if="!shopItemsList.length && !shopItemsLoading" class="emptyShop">
-        No shop items available.
+        No shop items available. Create some some in the actions menu below.
+        <v-icon size="100"
+            style="text-align: center; font-family: var(--font); font-size: 1.5rem;">mdi-arrow-down</v-icon>
     </div>
     <div v-else class="shopGrid">
         <button v-for="item in shopItemsList" :key="item._id || item.id || item.name" type="button" class="shopItemCard"
@@ -139,7 +141,10 @@ function calcCost(selectedIds) {
     color: var(--white);
     opacity: 0.8;
     text-align: center;
-    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .shopGrid {

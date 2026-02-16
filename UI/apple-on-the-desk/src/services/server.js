@@ -7,6 +7,22 @@ const http = axios.create({
     },
 });
 
+/** Set a function that returns the current Firebase ID token (for API auth). */
+export function setAuthGetter(getToken) {
+    _authGetter = getToken;
+}
+let _authGetter = null;
+
+http.interceptors.request.use(async (config) => {
+    if (_authGetter) {
+        try {
+            const token = await _authGetter();
+            if (token) config.headers.Authorization = `Bearer ${token}`;
+        } catch (_) {}
+    }
+    return config;
+});
+
 class Server {
     constructor() {
         this.http = http;
@@ -211,6 +227,16 @@ class Server {
             return response.data;
         } catch (error) {
             console.error('Error updating student constraints:', error);
+            throw error;
+        }
+    }
+
+    async deleteAccount() {
+        try {
+            const response = await this.http.delete('/account');
+            return response.data;
+        } catch (error) {
+            console.error('Error deleting account:', error);
             throw error;
         }
     }

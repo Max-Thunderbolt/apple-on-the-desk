@@ -1,9 +1,11 @@
 const { getDB } = require('../config/database');
 const { generateGroups, clearGroups, getStudentsByGroup } = require('../utils/groupingAlgorithm');
 
+const userOrDefaultFilter = (userId) => ({ $or: [{ userId }, { default: true }] });
+
 const getAllClasses = async (req, res) => {
     try {
-        const classes = await getDB().collection('Class').find().toArray();
+        const classes = await getDB().collection('Class').find(userOrDefaultFilter(req.userId)).toArray();
         res.json({
             success: true,
             message: 'Classes found successfully',
@@ -20,7 +22,7 @@ const getAllClasses = async (req, res) => {
 
 const getClassNames = async (req, res) => {
     try {
-        const classData = await getDB().collection('Class').find().sort({ name: 1 }).toArray();
+        const classData = await getDB().collection('Class').find(userOrDefaultFilter(req.userId)).sort({ name: 1 }).toArray();
         let classesData = [];
         for (const classItem of classData) {
             classesData.push({
@@ -46,9 +48,12 @@ const getClassNames = async (req, res) => {
 
 const getClassById = async (req, res) => {
     try {
-        const classData = await getDB().collection('Class').findOne({ id: req.params.id });
+        const classData = await getDB().collection('Class').findOne({
+            id: req.params.id,
+            ...userOrDefaultFilter(req.userId)
+        });
         if (!classData) {
-            res.status(404).json({
+            return res.status(404).json({
                 success: false,
                 message: 'Class not found'
             });
@@ -71,11 +76,12 @@ const getClassById = async (req, res) => {
 
 const createClass = async (req, res) => {
     try {
-        const result = await getDB().collection('Class').insertOne(req.body);
+        const doc = { ...req.body, userId: req.userId, default: req.body.default === true };
+        const result = await getDB().collection('Class').insertOne(doc);
         res.status(201).json({
             success: true,
             message: 'Class created successfully',
-            class: { _id: result.insertedId, ...req.body }
+            class: { _id: result.insertedId, ...doc }
         });
     } catch (err) {
         res.status(500).json({
@@ -89,7 +95,7 @@ const createClass = async (req, res) => {
 const updateClass = async (req, res) => {
     try {
         const result = await getDB().collection('Class').updateOne(
-            { id: req.params.id },
+            { id: req.params.id, userId: req.userId },
             { $set: req.body }
         );
         if (result.matchedCount === 0) {
@@ -114,7 +120,7 @@ const updateClass = async (req, res) => {
 
 const deleteClass = async (req, res) => {
     try {
-        const result = await getDB().collection('Class').deleteOne({ id: req.params.id });
+        const result = await getDB().collection('Class').deleteOne({ id: req.params.id, userId: req.userId });
         if (result.deletedCount === 0) {
             res.status(404).json({
                 success: false,
@@ -139,7 +145,7 @@ const updateStudentPoints = async (req, res) => {
         if (Array.isArray(req.body.students)) {
             // This is the full student array, so we need to update Class.students with the new array
             const result = await getDB().collection('Class').updateOne(
-                { id: req.params.id },
+                { id: req.params.id, userId: req.userId },
                 { $set: { students: req.body.students } }
             );
             if (result.matchedCount === 0) {
@@ -154,7 +160,7 @@ const updateStudentPoints = async (req, res) => {
             });
         } else {
             // This is a single student, so we need to update Class.students with the new student
-            const classDoc = await getDB().collection('Class').findOne({ id: req.params.id }, { projection: { students: 1 } });
+            const classDoc = await getDB().collection('Class').findOne({ id: req.params.id, userId: req.userId }, { projection: { students: 1 } });
             if (!classDoc) {
                 return res.status(404).json({
                     success: false,
@@ -162,7 +168,7 @@ const updateStudentPoints = async (req, res) => {
                 });
             }
             await getDB().collection('Class').updateOne(
-                { id: req.params.id },
+                { id: req.params.id, userId: req.userId },
                 { $set: { students: [...classDoc.students, req.body.students] } }
             );
             return res.json({
@@ -186,7 +192,7 @@ const awardPoints = async (req, res) => {
         const classId = req.params.id;
 
         // Get the class
-        const classDoc = await getDB().collection('Class').findOne({ id: classId });
+        const classDoc = await getDB().collection('Class').findOne({ id: classId, userId: req.userId });
         if (!classDoc) {
             return res.status(404).json({
                 success: false,
@@ -194,13 +200,12 @@ const awardPoints = async (req, res) => {
             });
         }
 
-        // Get the points category (check both id and _id fields)
-        let category = await getDB().collection('PointCategory').findOne({ id: categoryId });
+        // Get the points category (check both id and _id fields), scoped to user
+        const { ObjectId } = require('mongodb');
+        let category = await getDB().collection('PointCategory').findOne({ id: categoryId, userId: req.userId });
         if (!category) {
-            // Try finding by _id (MongoDB ObjectId)
-            const { ObjectId } = require('mongodb');
             if (ObjectId.isValid(categoryId)) {
-                category = await getDB().collection('PointCategory').findOne({ _id: new ObjectId(categoryId) });
+                category = await getDB().collection('PointCategory').findOne({ _id: new ObjectId(categoryId), userId: req.userId });
             }
         }
         if (!category) {
@@ -249,7 +254,7 @@ const awardPoints = async (req, res) => {
         // Update class with new student points and experience
         const newExperience = (classDoc.experience || 0) + experienceToAward;
         await getDB().collection('Class').updateOne(
-            { id: classId },
+            { id: classId, userId: req.userId },
             { 
                 $set: { 
                     students: updatedStudents,
@@ -288,7 +293,7 @@ const generateGroupsForClass = async (req, res) => {
         }
 
         // Get the class
-        const classDoc = await getDB().collection('Class').findOne({ id: classId });
+        const classDoc = await getDB().collection('Class').findOne({ id: classId, userId: req.userId });
         if (!classDoc) {
             return res.status(404).json({
                 success: false,
@@ -318,7 +323,7 @@ const generateGroupsForClass = async (req, res) => {
 
             // Update the class with new student data
             await getDB().collection('Class').updateOne(
-                { id: classId },
+                { id: classId, userId: req.userId },
                 { $set: { students: studentsWithGroups } }
             );
 
@@ -347,7 +352,7 @@ const getGroups = async (req, res) => {
         const classId = req.params.id;
 
         // Get the class
-        const classDoc = await getDB().collection('Class').findOne({ id: classId });
+        const classDoc = await getDB().collection('Class').findOne({ id: classId, userId: req.userId });
         if (!classDoc) {
             return res.status(404).json({
                 success: false,
@@ -376,7 +381,7 @@ const clearGroupsForClass = async (req, res) => {
         const classId = req.params.id;
 
         // Get the class
-        const classDoc = await getDB().collection('Class').findOne({ id: classId });
+        const classDoc = await getDB().collection('Class').findOne({ id: classId, userId: req.userId });
         if (!classDoc) {
             return res.status(404).json({
                 success: false,
@@ -389,7 +394,7 @@ const clearGroupsForClass = async (req, res) => {
 
         // Update the class
         await getDB().collection('Class').updateOne(
-            { id: classId },
+            { id: classId, userId: req.userId },
             { $set: { students: studentsWithoutGroups } }
         );
 
@@ -422,7 +427,7 @@ const updateStudentConstraints = async (req, res) => {
         }
 
         // Get the class
-        const classDoc = await getDB().collection('Class').findOne({ id: classId });
+        const classDoc = await getDB().collection('Class').findOne({ id: classId, userId: req.userId });
         if (!classDoc) {
             return res.status(404).json({
                 success: false,
@@ -446,7 +451,7 @@ const updateStudentConstraints = async (req, res) => {
 
         // Update the class
         await getDB().collection('Class').updateOne(
-            { id: classId },
+            { id: classId, userId: req.userId },
             { $set: { students: students } }
         );
 

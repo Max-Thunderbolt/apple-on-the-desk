@@ -37,7 +37,7 @@
                     <div v-if="props.isViewingShop && canAffordPoints(student)" class="studentRowCanAffordPoints"
                         @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
                         <div class="studentNameContainer">
-                            <span class="studentName">{{ student.name }}</span>
+                            <span class="studentName" :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{ student.name }}</span>
                         </div>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts <span
                                 v-if="selectedStudents?.some((s) => s.id === student.id)"><v-icon>mdi-check</v-icon></span></span>
@@ -45,7 +45,7 @@
                     <div v-else-if="props.isViewingShop && !canAffordPoints(student)" class="studentRowCantAffordPoints"
                         @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
                         <div class="studentNameContainer">
-                            <span class="studentName">{{ student.name }}</span>
+                            <span class="studentName" :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{ student.name }}</span>
                         </div>
                         <span class="studentPoints"> {{ student.points ?? 0 }} pts ({{ formatCost(student.points -
                             props.shopCost) }}) <span
@@ -54,7 +54,7 @@
                     <div v-else class="studentRow" @click="selectAction(student)"
                         @contextmenu.prevent="openContextMenu($event, student)">
                         <div class="studentNameContainer">
-                            <span class="studentName">{{ student.name }}</span>
+                            <span class="studentName" :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{ student.name }}</span>
                             <span v-if="student.group" class="groupBadge">{{ student.group }}</span>
                         </div>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts </span>
@@ -197,6 +197,9 @@ watch(() => props.isViewingShop, (viewingShop) => {
 
 watch(() => props.shopCost, (shopCost) => {
     console.log('shopCost', shopCost);
+    if (Number(shopCost) === 0) {
+        selectedStudents.value = [];
+    }
     for (const student of props.students) {
         canAffordPoints(student);
     }
@@ -533,7 +536,11 @@ async function checkout() {
     font-weight: 500;
     color: var(--white);
     flex: 1;
-    min-width: 0;
+}
+
+.studentName.zeroPoints {
+    text-decoration: line-through;
+    opacity: 0.85;
 }
 
 .studentName.clickable {
@@ -570,6 +577,7 @@ async function checkout() {
     display: flex;
     justify-content: center;
     margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
 .checkoutButton {

@@ -11,6 +11,12 @@
             </v-btn>
         </div>
         <div class="classContainer">
+            <div v-if="classes.length === 0">
+                <div class="emptyState" style="text-align: center; font-family: var(--font); font-size: 1.5rem;">
+                    No classes yet! Let's create one by clicking the + button above.
+                </div>
+
+            </div>
             <template v-for="classItem in classes" :key="classItem.name">
                 <v-card class="classCard" :style="{ '--card-glass-color': getCardColorRgba(classItem) }"
                     @click="navigateTo(`/Class/${classItem.id}`)"
@@ -368,6 +374,7 @@ const navigateTo = (path) => {
 }
 
 @media (min-width: 768px) {
+
     .editClassModalCard,
     .addClassModalCard {
         padding: 2rem !important;

@@ -3,6 +3,9 @@ const cors = require('cors');
 const morgan = require('morgan');
 require('dotenv').config();
 const { connectDB } = require('./config/database');
+const { initializeFirebaseAdmin } = require('./config/firebaseAdmin');
+
+initializeFirebaseAdmin();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

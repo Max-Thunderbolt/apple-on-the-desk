@@ -21,8 +21,9 @@
                     <div class="previewText">
                         <v-icon class="previewIcon">mdi-information-outline</v-icon>
                         {{ totalStudents }} student{{ totalStudents !== 1 ? 's' : '' }} will be divided into
-                        {{ numberOfGroups }} group{{ numberOfGroups !== 1 ? 's' : '' }} of approximately
-                        {{ groupSize }} student{{ groupSize !== 1 ? 's' : '' }} each
+                        {{ numberOfGroups }} group{{ numberOfGroups !== 1 ? 's' : '' }} of {{ groupSize === 2 ?
+                            'exactly' : 'approximately' }} {{ groupSize }} student{{ groupSize !== 1 ? 's' : '' }}
+                        each
                     </div>
                 </div>
 
@@ -102,7 +103,7 @@ const dialogOpen = computed({
     set: (value) => emit('update:modelValue', value),
 });
 
-const numberOfGroups = ref(2);
+const numberOfGroups = ref(13);
 const loading = ref(false);
 const errorMessage = ref('');
 const currentGroups = ref({});

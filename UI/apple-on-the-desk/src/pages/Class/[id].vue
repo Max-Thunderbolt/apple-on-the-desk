@@ -235,6 +235,9 @@ const loadShopItems = async () => {
 
 function onShopCostUpdated(cost) {
     console.log('cost', cost);
+    if (Number(cost) === 0) {
+        selectedStudents.value = [];
+    }
     shopCost.value = Number(cost);
 }
 

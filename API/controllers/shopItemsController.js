@@ -1,9 +1,11 @@
 const { getDB } = require('../config/database');
 const { ObjectId } = require('mongodb');
 
+const userOrDefaultFilter = (userId) => ({ $or: [{ userId }, { default: true }] });
+
 const getShopItems = async (req, res, next) => {
     try {
-        const shopItems = await getDB().collection('ShopItem').find().sort({ cost: 1 }).toArray();
+        const shopItems = await getDB().collection('ShopItem').find(userOrDefaultFilter(req.userId)).sort({ cost: 1 }).toArray();
         res.json({
             success: true,
             message: 'Shop items found successfully',
@@ -32,7 +34,9 @@ const createShopItem = async (req, res, next) => {
         }
         const doc = {
             name: name.trim(),
-            cost: numCost
+            cost: numCost,
+            userId: req.userId,
+            default: req.body.default === true
         };
         const result = await getDB().collection('ShopItem').insertOne(doc);
         const shopItem = { ...doc, _id: result.insertedId };
@@ -52,7 +56,7 @@ const updateShopItem = async (req, res, next) => {
         if (!ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: 'Invalid shop item id' });
         }
-        const existing = await getDB().collection('ShopItem').findOne({ _id: new ObjectId(id) });
+        const existing = await getDB().collection('ShopItem').findOne({ _id: new ObjectId(id), userId: req.userId });
         if (!existing) {
             return res.status(404).json({ success: false, message: 'Shop item not found' });
         }
@@ -65,7 +69,7 @@ const updateShopItem = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Cost must be a non-negative number' });
         }
         await getDB().collection('ShopItem').updateOne(
-            { _id: new ObjectId(id) },
+            { _id: new ObjectId(id), userId: req.userId },
             { $set: { name: name.trim(), cost: numCost } }
         );
         const shopItem = { ...existing, name: name.trim(), cost: numCost };
@@ -81,7 +85,7 @@ const deleteShopItem = async (req, res, next) => {
         if (!ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: 'Invalid shop item id' });
         }
-        const result = await getDB().collection('ShopItem').deleteOne({ _id: new ObjectId(id) });
+        const result = await getDB().collection('ShopItem').deleteOne({ _id: new ObjectId(id), userId: req.userId });
         if (result.deletedCount === 0) {
             return res.status(404).json({ success: false, message: 'Shop item not found' });
         }
