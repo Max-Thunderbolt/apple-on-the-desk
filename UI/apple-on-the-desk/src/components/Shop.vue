@@ -145,21 +145,39 @@ function calcCost(selectedIds) {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 1rem;
 }
 
 .shopGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
     width: 100%;
     max-width: 800px;
     margin: 0 auto;
+    padding: 0 0.5rem;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+@media (min-width: 400px) {
+    .shopGrid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.75rem;
+    }
 }
 
 @media (min-width: 768px) {
     .shopGrid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: 1rem;
+        padding: 0;
+    }
+}
+
+@media (min-width: 1024px) {
+    .shopGrid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     }
 }
 
@@ -169,7 +187,9 @@ function calcCost(selectedIds) {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 1.25rem 1rem;
+    padding: 0.9rem 0.75rem;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     background: linear-gradient(135deg,
@@ -189,6 +209,12 @@ function calcCost(selectedIds) {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.1),
         0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 768px) {
+    .shopItemCard {
+        padding: 1.25rem 1rem;
+    }
 }
 
 @media (hover: hover) {
@@ -230,14 +256,23 @@ function calcCost(selectedIds) {
 
 .selectedSummary {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    margin-top: 1.5rem;
-    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 0.6rem 0.75rem;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (min-width: 768px) {
+    .selectedSummary {
+        margin-top: 1.5rem;
+        padding: 0.75rem 1rem;
+        gap: 1rem;
+    }
 }
 
 .selectedCount {

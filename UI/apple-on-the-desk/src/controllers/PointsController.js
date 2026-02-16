@@ -11,12 +11,12 @@ export default class PointsController {
         return response.pointsCategories ?? [];
     }
 
-    async awardPoints(categoryId, selectedStudents, allStudents) {
+    async awardPoints(categoryId, selectedStudents, allStudents, isForGroup = false) {
         // Extract student IDs from the selected students
         const selectedStudentIds = selectedStudents.map(s => s.id);
         
         // Call the backend endpoint which handles all the logic
-        const response = await Server.awardPoints(this.classId, categoryId, selectedStudentIds);
+        const response = await Server.awardPoints(this.classId, categoryId, selectedStudentIds, isForGroup);
         
         return response.students;
     }

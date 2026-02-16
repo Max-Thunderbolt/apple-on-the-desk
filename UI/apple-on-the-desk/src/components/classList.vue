@@ -28,7 +28,7 @@
         <!-- Group View -->
         <ClassGroupView v-else-if="actualViewMode === 'groups'" :students="props.students" :shopCost="props.shopCost"
             :isViewingShop="props.isViewingShop" :selectedStudents="selectedStudents" @student-click="selectAction"
-            @student-context-menu="openContextMenu" />
+            @student-context-menu="openContextMenu" @group-click="openPointsDialogForGroup" />
 
         <!-- List View -->
         <div v-else class="studentGrid">
@@ -37,7 +37,9 @@
                     <div v-if="props.isViewingShop && canAffordPoints(student)" class="studentRowCanAffordPoints"
                         @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
                         <div class="studentNameContainer">
-                            <span class="studentName" :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{ student.name }}</span>
+                            <span class="studentName"
+                                :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{
+                                student.name }}</span>
                         </div>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts <span
                                 v-if="selectedStudents?.some((s) => s.id === student.id)"><v-icon>mdi-check</v-icon></span></span>
@@ -45,7 +47,9 @@
                     <div v-else-if="props.isViewingShop && !canAffordPoints(student)" class="studentRowCantAffordPoints"
                         @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
                         <div class="studentNameContainer">
-                            <span class="studentName" :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{ student.name }}</span>
+                            <span class="studentName"
+                                :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{
+                                student.name }}</span>
                         </div>
                         <span class="studentPoints"> {{ student.points ?? 0 }} pts ({{ formatCost(student.points -
                             props.shopCost) }}) <span
@@ -54,8 +58,9 @@
                     <div v-else class="studentRow" @click="selectAction(student)"
                         @contextmenu.prevent="openContextMenu($event, student)">
                         <div class="studentNameContainer">
-                            <span class="studentName" :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{ student.name }}</span>
-                            <span v-if="student.group" class="groupBadge">{{ student.group }}</span>
+                            <span class="studentName"
+                                :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{
+                                student.name }}</span>
                         </div>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts </span>
                     </div>
@@ -99,7 +104,8 @@
         </v-menu>
 
         <award-points-modal v-model:pointsDialogOpen="pointsDialogOpen" v-model:selectedStudents="selectedStudents"
-            :all-students="props.students" :class-id="props.classId" @studentsUpdated="onStudentsUpdated" />
+            :all-students="props.students" :class-id="props.classId" :is-for-group="awardPointsIsForGroup"
+            @studentsUpdated="onStudentsUpdated" />
 
         <student-constraints-modal v-model="constraintsModalOpen" :class-id="props.classId"
             :student="selectedStudentForConstraints" :all-students="props.students"
@@ -142,6 +148,7 @@ const emit = defineEmits(['students-updated', 'experience-updated']);
 
 const pointsDialogOpen = ref(false);
 const selectedStudents = ref([]);
+const awardPointsIsForGroup = ref(false);
 const contextMenuOpen = ref(false);
 const contextMenuX = ref(0);
 const contextMenuY = ref(0);
@@ -244,13 +251,22 @@ function onStudentsUpdated(updatedStudents) {
 }
 
 function openPointsDialog(student) {
+    awardPointsIsForGroup.value = false;
     selectedStudents.value = [student];
     pointsDialogOpen.value = props.isViewingShop ? false : true;
+}
+
+function openPointsDialogForGroup(groupStudents) {
+    if (!groupStudents?.length) return;
+    awardPointsIsForGroup.value = true;
+    selectedStudents.value = [...groupStudents];
+    pointsDialogOpen.value = true;
 }
 
 function closePointsDialog() {
     pointsDialogOpen.value = false;
     selectedStudents.value = [];
+    awardPointsIsForGroup.value = false;
 }
 
 function canAffordPoints(student) {
@@ -426,22 +442,31 @@ async function checkout() {
 
 .studentGrid {
     display: grid;
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: 1fr;
     gap: 0.5rem;
     width: 100%;
     max-width: 1000px;
     margin: 0 auto;
     padding-bottom: 2rem;
+    min-width: 0;
 }
 
-@media (min-width: 768px) {
+/* Step columns by width – 1 → 2 → 3 → 4 so we never force too many columns on small screens */
+@media (min-width: 600px) {
     .studentGrid {
         grid-template-columns: repeat(2, 1fr);
         gap: 0.75rem 1rem;
     }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
+    .studentGrid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem 1.25rem;
+    }
+}
+
+@media (min-width: 1200px) {
     .studentGrid {
         grid-template-columns: repeat(4, 1fr);
         gap: 1rem 2rem;
@@ -575,9 +600,21 @@ async function checkout() {
 
 .checkoutContainer {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .checkoutContainer {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        padding: 0;
+    }
 }
 
 .checkoutButton {
@@ -603,15 +640,22 @@ async function checkout() {
 
 .checkoutTotal {
     font-family: var(--font);
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: var(--white);
     opacity: 0.8;
     background-color: var(--inkBlack);
     border: 1px solid var(--white);
     border-radius: 12px;
-    margin-right: 1rem;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
+}
+
+@media (min-width: 768px) {
+    .checkoutTotal {
+        font-size: 1rem;
+        margin-right: 1rem;
+        padding: 0.5rem 1rem;
+    }
 }
 
 .checkoutShortfall {

@@ -16,7 +16,21 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// Debug: log every request (method, path, url)
+app.use((req, res, next) => {
+  console.log('[ROUTE DEBUG]', req.method, 'path:', req.path, 'url:', req.url, 'originalUrl:', req.originalUrl);
+  next();
+});
+
+// Routes – register award-points on the app so it always matches (avoids router path quirks)
+const { requireAuth } = require('./middleware/auth');
+const classController = require('./controllers/classController');
+
+app.post('/api/classes/:id/award-points', requireAuth, (req, res, next) => {
+  console.log('[ROUTE DEBUG] award-points route HIT, params.id:', req.params.id);
+  next();
+}, classController.awardPoints);
+
 app.use('/api', require('./routes/index'));
 
 // Health check endpoint
@@ -26,6 +40,7 @@ app.get('/health', (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
+  console.log('[ROUTE DEBUG] 404 – no match for', req.method, req.originalUrl);
   res.status(404).json({ error: 'Route not found' });
 });
 

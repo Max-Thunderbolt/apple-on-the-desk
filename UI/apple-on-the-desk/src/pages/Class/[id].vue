@@ -54,30 +54,33 @@
                         <v-list class="actionsMenuList">
                             <v-list-item class="actionMenuItem" @click="viewShop()">
                                 <template v-slot:prepend>
-                                    <v-icon :color="viewShopModal ? 'timer' : 'store'">{{ viewShopModal ? 'mdi-timer' :
-                                        'mdi-store' }}</v-icon>
+                                    <v-icon style="color: var(--freshSky);"
+                                        :color="viewShopModal ? 'timer' : 'store'">{{
+                                            viewShopModal ? 'mdi-timer' :
+                                                'mdi-store' }}</v-icon>
                                 </template>
                                 <v-list-item-title>{{ viewShopModal ? 'Timer' : 'Shop' }}</v-list-item-title>
                             </v-list-item>
                             <v-list-item v-if="viewShopModal" class="actionMenuItem" @click="openCreateShopItemModal">
                                 <template v-slot:prepend>
-                                    <v-icon color="seaGreen">mdi-plus</v-icon>
+                                    <v-icon style="color: var(--seaGreen);">mdi-plus</v-icon>
                                 </template>
                                 <v-list-item-title>Create shop item</v-list-item-title>
                             </v-list-item>
                             <v-divider v-if="!viewShopModal" />
                             <v-list-item v-if="!viewShopModal" class="actionMenuItem" @click="handleAwardClassPoints()">
                                 <template v-slot:prepend>
-                                    <span class="actionItemIcon">🏆</span>
+                                    <v-icon style="color: gold;">mdi-medal</v-icon>
                                 </template>
                                 <v-list-item-title>Award Class Points</v-list-item-title>
                             </v-list-item>
                             <v-divider v-if="!viewShopModal" />
                             <v-list-item v-if="!viewShopModal" class="actionMenuItem" @click="handleCreateGroups()">
                                 <template v-slot:prepend>
-                                    <v-icon color="seaGreen">mdi-account-group</v-icon>
+                                    <v-icon style="color: orange;">mdi-account-group</v-icon>
                                 </template>
-                                <v-list-item-title>Create Groups</v-list-item-title>
+                                <v-list-item-title>{{ classData?.students[0].group ? 'Manage Groups' :
+                                    'Create Groups' }}</v-list-item-title>
                             </v-list-item>
                         </v-list>
                     </v-card>

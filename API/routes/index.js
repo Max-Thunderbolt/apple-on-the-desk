@@ -17,21 +17,20 @@ router.get('/', (req, res) => {
 // All data routes require auth and are scoped by userId
 router.use(requireAuth);
 
-// CLASSES ROUTES
+// CLASSES ROUTES – specific /classes/:id/... routes first so they match before generic /classes/:id
 router.get('/classes', classController.getAllClasses);
 router.get('/classes/names', classController.getClassNames);
-router.get('/classes/:id', classController.getClassById);
 router.post('/classes', classController.createClass);
-router.put('/classes/:id', classController.updateClass);
-router.put('/classes/:id/students', classController.updateStudentPoints);
-router.post('/classes/:id/award-points', classController.awardPoints);
-router.delete('/classes/:id', classController.deleteClass);
-
-// GROUPING ROUTES
+// award-points is registered on the app in server.js so it always matches
 router.post('/classes/:id/generate-groups', classController.generateGroupsForClass);
 router.get('/classes/:id/groups', classController.getGroups);
 router.put('/classes/:id/clear-groups', classController.clearGroupsForClass);
+router.put('/classes/:id/students/:studentId/group', classController.assignStudentToGroup);
 router.put('/classes/:id/students/:studentId/constraints', classController.updateStudentConstraints);
+router.get('/classes/:id', classController.getClassById);
+router.put('/classes/:id', classController.updateClass);
+router.put('/classes/:id/students', classController.updateStudentPoints);
+router.delete('/classes/:id', classController.deleteClass);
 
 // POINTS CATEGORIES ROUTES
 router.get('/points-categories', pointsCategoryController.getAllPointsCategories);

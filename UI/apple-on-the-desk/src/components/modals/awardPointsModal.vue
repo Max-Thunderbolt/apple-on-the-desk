@@ -84,6 +84,10 @@ const props = defineProps({
         type: String,
         required: true,
     },
+    isForGroup: {
+        type: Boolean,
+        default: false,
+    },
 });
 let pointsManager = null;
 
@@ -138,7 +142,7 @@ async function awardPoints(category) {
     console.log('============================');
     const selectedStudents = props.selectedStudents;
     const allStudents = props.allStudents;
-    const updatedStudents = await pointsManager.awardPoints(categoryId, selectedStudents, allStudents);
+    const updatedStudents = await pointsManager.awardPoints(categoryId, selectedStudents, allStudents, props.isForGroup);
     emit('update:selectedStudents', []);
     emit('studentsUpdated', updatedStudents);
     closePointsDialog();

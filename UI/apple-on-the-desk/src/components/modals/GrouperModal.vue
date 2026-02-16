@@ -1,5 +1,5 @@
 <template>
-    <v-dialog v-model="dialogOpen" max-width="500" persistent transition="dialog-transition" class="grouperDialog"
+    <v-dialog v-model="dialogOpen" max-width="720" persistent transition="dialog-transition" class="grouperDialog"
         @click:outside="closeDialog">
         <v-card class="grouperDialogCard">
             <v-card-title class="grouperDialogTitle">
@@ -33,11 +33,25 @@
                         <v-icon>mdi-account-group</v-icon>
                         Current Groups
                     </div>
+                    <p class="dragHint">Drag students between groups to reassign.</p>
                     <div class="existingGroupsList">
-                        <div v-for="(students, groupName) in currentGroups" :key="groupName" class="groupItem">
-                            <span class="groupName">{{ groupName }}</span>
-                            <span class="groupCount">{{ students.length }} student{{ students.length !== 1 ? 's' : ''
-                                }}</span>
+                        <div v-for="[groupName, students] in sortedGroupEntries" :key="groupName" class="groupCard"
+                            :class="{ 'groupCard--drag-over': dragOverGroup === groupName }"
+                            @dragover.prevent="onGroupDragover($event, groupName)"
+                            @dragleave="onGroupDragleave(groupName)" @drop.prevent="onGroupDrop($event, groupName)">
+                            <div class="groupCardHeader">
+                                <span class="groupName">{{ groupName }}</span>
+                                <span class="groupCount">{{ students.length }} student{{ students.length !== 1 ? 's' :
+                                    '' }}</span>
+                            </div>
+                            <div class="groupStudentsList">
+                                <div v-for="student in students" :key="student.id" class="studentChip" draggable="true"
+                                    @dragstart="onStudentDragstart($event, student, groupName)"
+                                    @dragend="onStudentDragend">
+                                    <v-icon size="small" class="studentChipIcon">mdi-drag</v-icon>
+                                    <span class="studentChipName">{{ student.name }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -63,7 +77,7 @@
                     </v-btn>
                     <v-btn class="generateButton" variant="text" @click="handleGenerateGroups"
                         :disabled="!isValidInput || loading">
-                        Generate
+                        {{ hasExistingGroups ? 'Regenerate' : 'Generate' }}
                     </v-btn>
                     <v-btn class="cancelButton" variant="text" @click="closeDialog" :disabled="loading">
                         Close
@@ -107,6 +121,9 @@ const numberOfGroups = ref(13);
 const loading = ref(false);
 const errorMessage = ref('');
 const currentGroups = ref({});
+const dragOverGroup = ref(null);
+const draggingStudent = ref(null);
+const assigningStudentId = ref(null);
 
 const totalStudents = computed(() => props.students.length);
 const maxGroups = computed(() => props.students.length);
@@ -121,6 +138,10 @@ const isValidInput = computed(() => {
 
 const hasExistingGroups = computed(() => {
     return Object.keys(currentGroups.value).length > 0;
+});
+
+const sortedGroupEntries = computed(() => {
+    return Object.entries(currentGroups.value).sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }));
 });
 
 watch(() => props.modelValue, async (newValue) => {
@@ -176,6 +197,51 @@ async function handleGenerateGroups() {
     }
 }
 
+function onStudentDragstart(event, student, groupName) {
+    draggingStudent.value = { studentId: student.id, groupName };
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('application/json', JSON.stringify({ studentId: student.id, groupName }));
+    event.dataTransfer.setData('text/plain', student.id);
+}
+
+function onStudentDragend() {
+    draggingStudent.value = null;
+    dragOverGroup.value = null;
+}
+
+function onGroupDragover(event, groupName) {
+    if (!draggingStudent.value) return;
+    if (draggingStudent.value.groupName === groupName) return;
+    dragOverGroup.value = groupName;
+}
+
+function onGroupDragleave(groupName) {
+    if (dragOverGroup.value === groupName) dragOverGroup.value = null;
+}
+
+async function onGroupDrop(event, targetGroupName) {
+    dragOverGroup.value = null;
+    const payload = draggingStudent.value;
+    if (!payload || payload.groupName === targetGroupName) return;
+
+    assigningStudentId.value = payload.studentId;
+    try {
+        const response = await Server.assignStudentToGroup(props.classId, payload.studentId, targetGroupName);
+        if (response.success) {
+            toast.success('Student moved to ' + targetGroupName);
+            emit('groupsUpdated', response.students);
+            await loadCurrentGroups();
+        } else {
+            toast.error(response.message || 'Failed to move student');
+        }
+    } catch (error) {
+        console.error('Error assigning student to group:', error);
+        toast.error(error.response?.data?.message || 'Failed to move student.');
+    } finally {
+        assigningStudentId.value = null;
+    }
+}
+
 async function handleClearGroups() {
     loading.value = true;
     errorMessage.value = '';
@@ -210,8 +276,8 @@ function closeDialog() {
 .grouperDialogCard {
     background-color: var(--inkBlack);
     border-radius: 25px;
-    border: 1px solid var(--white);
-    padding: 0 0 0.5rem;
+    border: 2px solid rgba(var(--amethyst-rgb), 0.1);
+    box-shadow: 0 0 10px 0 rgba(var(--amethyst-rgb), 0.5);
 }
 
 .grouperDialogTitle {
@@ -294,19 +360,40 @@ function closeDialog() {
     gap: 0.5rem;
 }
 
-.existingGroupsList {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+.dragHint {
+    font-family: var(--font);
+    font-size: 0.8rem;
+    color: var(--white);
+    opacity: 0.7;
+    margin: 0 0 0.75rem 0;
 }
 
-.groupItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.existingGroupsList {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.groupCard {
     padding: 0.5rem 0.75rem;
     background-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
+    border: 2px solid transparent;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.groupCard--drag-over {
+    border-color: var(--seaGreen);
+    background-color: rgba(var(--seaGreen-rgb), 0.15);
+}
+
+.groupCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
 }
 
 .groupName {
@@ -320,6 +407,42 @@ function closeDialog() {
     font-size: 0.85rem;
     color: var(--white);
     opacity: 0.7;
+}
+
+.groupStudentsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.studentChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    color: var(--white);
+    cursor: grab;
+    user-select: none;
+}
+
+.studentChip:active {
+    cursor: grabbing;
+}
+
+.studentChipIcon {
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.studentChipName {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .errorMessage {
