@@ -10,7 +10,11 @@
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
         </div>
-        <div class="classContainer">
+        <div v-if="classesLoading" class="classesLoading">
+            <v-progress-circular indeterminate color="primary" size="64" width="6" />
+            <span class="classesLoadingText">Loading classes...</span>
+        </div>
+        <div v-else class="classContainer">
             <div v-if="classes.length === 0">
                 <div class="emptyState" style="text-align: center; font-family: var(--font); font-size: 1.5rem;">
                     No classes yet! Let's create one by clicking the + button above.
@@ -88,6 +92,7 @@ const contextMenuY = ref(0);
 const editClassModal = ref(false);
 const addClassModal = ref(false);
 const classToEdit = ref(null);
+const classesLoading = ref(true);
 
 const CARD_COLOURS = [
     '#493657ff',
@@ -177,8 +182,12 @@ function onAddSaved() {
     loadClasses();
 }
 
-onMounted(() => {
-    loadClasses();
+onMounted(async () => {
+    try {
+        await loadClasses();
+    } finally {
+        classesLoading.value = false;
+    }
 });
 
 onUnmounted(() => {
@@ -192,6 +201,23 @@ const navigateTo = (path) => {
 
 <style>
 @import '../styles/style.css';
+
+.classesLoading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 40vh;
+    padding: 2rem;
+}
+
+.classesLoadingText {
+    font-family: var(--font);
+    color: var(--white);
+    font-size: 1rem;
+    opacity: 0.9;
+}
 
 .classContainer {
     display: flex;

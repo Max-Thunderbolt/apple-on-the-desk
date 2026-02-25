@@ -4,7 +4,11 @@
             <v-icon>mdi-chevron-right</v-icon>
         </template>
     </v-breadcrumbs>
-    <div class="container" style="justify-content: flex-start !important;">
+    <div v-if="dataLoading" class="dataLoading">
+        <v-progress-circular indeterminate color="primary" size="64" width="6" />
+        <span class="dataLoadingText">Loading class...</span>
+    </div>
+    <div v-else class="container" style="justify-content: flex-start !important;">
         <!-- ROYAL RANK HEADER -->
         <div class="classRankContainer">
             <div class="rankOrnament rankOrnamentLeft">✦</div>
@@ -145,10 +149,11 @@ const shopItemContextMenuOpen = ref(false);
 const shopItemContextMenuX = ref(0);
 const shopItemContextMenuY = ref(0);
 const shopItemContextTarget = ref(null);
+const dataLoading = ref(true);
 let breadcrumbs = computed(() => [
     { title: 'Home', to: '/' },
     { title: 'Classes', to: '/Classes' },
-    { title: classData.value?.name, to: `/Class/${id}` },
+    { title: dataLoading.value ? 'Loading...' : (classData.value?.name ?? 'Class'), to: `/Class/${id}` },
 ]);
 
 // Rank thresholds
@@ -245,8 +250,13 @@ function onShopCostUpdated(cost) {
 }
 
 onMounted(async () => {
-    await loadClass();
-    await loadShopItems();
+    dataLoading.value = true;
+    try {
+        await loadClass();
+        await loadShopItems();
+    } finally {
+        dataLoading.value = false;
+    }
 });
 
 const navigateTo = (path) => {
@@ -340,6 +350,23 @@ function handleCreateGroups() {
 
 <style>
 @import '../../styles/style.css';
+
+.dataLoading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 50vh;
+    padding: 2rem;
+}
+
+.dataLoadingText {
+    font-family: var(--font);
+    color: var(--white);
+    font-size: 1rem;
+    opacity: 0.9;
+}
 
 .rankTopRow {
     display: flex;
