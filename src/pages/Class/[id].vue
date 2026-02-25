@@ -242,7 +242,7 @@ watch(classData, (newClassData) => {
 
 const loadShopItems = async () => {
     try {
-        const response = await Server.getShopItems();
+        const response = await Server.getShopItems(id);
         shopItems.value = response.shopItems ?? [];
     } catch (error) {
         console.error('Error loading shop items:', error);

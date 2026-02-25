@@ -134,9 +134,10 @@ class Server {
         }
     }
 
-    async getShopItems() {
+    async getShopItems(classId) {
         try {
-            const response = await this.http.get('/shop-items');
+            const params = classId ? { classId } : {};
+            const response = await this.http.get('/shop-items', { params });
             return response.data;
         } catch (error) {
             console.error('Error getting shop items:', error);
