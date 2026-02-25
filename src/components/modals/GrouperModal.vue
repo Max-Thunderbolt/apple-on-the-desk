@@ -20,10 +20,7 @@
                 <div v-if="numberOfGroups > 0 && numberOfGroups <= maxGroups" class="previewContainer">
                     <div class="previewText">
                         <v-icon class="previewIcon">mdi-information-outline</v-icon>
-                        {{ totalStudents }} student{{ totalStudents !== 1 ? 's' : '' }} will be divided into
-                        {{ numberOfGroups }} group{{ numberOfGroups !== 1 ? 's' : '' }} of {{ groupSize === 2 ?
-                            'exactly' : 'approximately' }} {{ groupSize }} student{{ groupSize !== 1 ? 's' : '' }}
-                        each
+                        {{ groupDistributionPreview }}
                     </div>
                 </div>
 
@@ -130,6 +127,32 @@ const maxGroups = computed(() => props.students.length);
 const groupSize = computed(() => {
     if (numberOfGroups.value <= 0) return 0;
     return Math.ceil(totalStudents.value / numberOfGroups.value);
+});
+
+/** Accurate description of how many students will be in each group */
+const groupDistributionPreview = computed(() => {
+    const n = totalStudents.value;
+    const g = numberOfGroups.value;
+    if (g <= 0 || n <= 0) return '';
+    const baseSize = Math.floor(n / g);
+    const remainder = n % g;
+    const countLarger = remainder;
+    const countSmaller = g - remainder;
+    const largerSize = baseSize + 1;
+    const smallerSize = baseSize;
+
+    const studentWord = (count) => count === 1 ? 'student' : 'students';
+    if (remainder === 0) {
+        return `${n} ${studentWord(n)} will be divided into ${g} group${g !== 1 ? 's' : ''} of ${smallerSize} ${studentWord(smallerSize)} each.`;
+    }
+    const parts = [];
+    if (countLarger > 0) {
+        parts.push(`${countLarger} group${countLarger !== 1 ? 's' : ''} of ${largerSize} ${studentWord(largerSize)}`);
+    }
+    if (countSmaller > 0) {
+        parts.push(`${countSmaller} group${countSmaller !== 1 ? 's' : ''} of ${smallerSize} ${studentWord(smallerSize)}`);
+    }
+    return `${n} ${studentWord(n)} will be divided into ${g} groups: ${parts.join(' and ')}.`;
 });
 
 const isValidInput = computed(() => {

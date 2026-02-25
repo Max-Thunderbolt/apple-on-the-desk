@@ -145,7 +145,8 @@ function calcCost(selectedIds) {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 1rem;
+    padding: 1rem 0.75rem;
+    min-height: 120px;
 }
 
 .shopGrid {
@@ -155,7 +156,7 @@ function calcCost(selectedIds) {
     width: 100%;
     max-width: 800px;
     margin: 0 auto;
-    padding: 0 0.5rem;
+    padding: 0 0.75rem;
     min-width: 0;
     box-sizing: border-box;
 }
@@ -186,9 +187,10 @@ function calcCost(selectedIds) {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.9rem 0.75rem;
+    gap: 0.35rem;
+    padding: 0.75rem 0.6rem;
     min-height: 44px;
+    min-width: 0;
     -webkit-tap-highlight-color: transparent;
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.18);
@@ -213,6 +215,7 @@ function calcCost(selectedIds) {
 
 @media (min-width: 768px) {
     .shopItemCard {
+        gap: 0.5rem;
         padding: 1.25rem 1rem;
     }
 }
@@ -240,14 +243,29 @@ function calcCost(selectedIds) {
 }
 
 .shopItemName {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 600;
+    text-align: center;
+    word-break: break-word;
+    line-height: 1.2;
+}
+
+@media (min-width: 768px) {
+    .shopItemName {
+        font-size: 1.1rem;
+    }
 }
 
 .shopItemCost {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     opacity: 0.9;
     color: var(--freshSky);
+}
+
+@media (min-width: 768px) {
+    .shopItemCost {
+        font-size: 0.95rem;
+    }
 }
 
 .shopItemCard.selected .shopItemCost {
@@ -259,16 +277,20 @@ function calcCost(selectedIds) {
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.5rem 0.75rem;
     margin-top: 1rem;
     padding: 0.6rem 0.75rem;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
 }
 
 @media (min-width: 768px) {
     .selectedSummary {
+        margin-left: 0;
+        margin-right: 0;
         margin-top: 1.5rem;
         padding: 0.75rem 1rem;
         gap: 1rem;
@@ -277,12 +299,19 @@ function calcCost(selectedIds) {
 
 .selectedCount {
     font-family: var(--font);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: var(--white);
 }
 
+@media (min-width: 768px) {
+    .selectedCount {
+        font-size: 0.95rem;
+    }
+}
+
 .clearSelectionBtn {
-    padding: 0.4rem 0.75rem;
+    padding: 0.5rem 0.85rem;
+    min-height: 44px;
     font-family: var(--font);
     font-size: 0.9rem;
     font-weight: 500;
@@ -292,6 +321,7 @@ function calcCost(selectedIds) {
     border-radius: 8px;
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
 @media (hover: hover) {

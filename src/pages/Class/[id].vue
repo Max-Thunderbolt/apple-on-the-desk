@@ -44,55 +44,25 @@
                 <Shop :shopItems="shopItems" @cost-updated="onCostUpdated"
                     @item-context-menu="(e, item) => openShopItemContextMenu(e, item)" />
             </div>
-            <!-- ACTION BUTTONS -->
-            <div class="shopContainer">
-                <v-menu v-model="actionsMenuOpen" :close-on-content-click="true" location="bottom">
-                    <template v-slot:activator="{ props }">
-                        <v-btn class="actionsButton" v-bind="props">
-                            <v-icon>mdi-dots-vertical</v-icon>
-                            Actions
-                            <v-icon>{{ actionsMenuOpen ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-                        </v-btn>
-                    </template>
-                    <v-card class="actionsMenu">
-                        <v-list class="actionsMenuList">
-                            <v-list-item class="actionMenuItem" @click="viewShop()">
-                                <template v-slot:prepend>
-                                    <v-icon style="color: var(--freshSky);"
-                                        :color="viewShopModal ? 'timer' : 'store'">{{
-                                            viewShopModal ? 'mdi-timer' :
-                                                'mdi-store' }}</v-icon>
-                                </template>
-                                <v-list-item-title>{{ viewShopModal ? 'Timer' : 'Shop' }}</v-list-item-title>
-                            </v-list-item>
-                            <v-list-item v-if="viewShopModal" class="actionMenuItem" @click="openCreateShopItemModal">
-                                <template v-slot:prepend>
-                                    <v-icon style="color: var(--seaGreen);">mdi-plus</v-icon>
-                                </template>
-                                <v-list-item-title>Create shop item</v-list-item-title>
-                            </v-list-item>
-                            <v-divider v-if="!viewShopModal" />
-                            <v-list-item v-if="!viewShopModal" class="actionMenuItem" @click="handleAwardClassPoints()">
-                                <template v-slot:prepend>
-                                    <v-icon style="color: gold;">mdi-medal</v-icon>
-                                </template>
-                                <v-list-item-title>Award Class Points</v-list-item-title>
-                            </v-list-item>
-                            <v-divider v-if="!viewShopModal" />
-                            <v-list-item v-if="!viewShopModal" class="actionMenuItem" @click="handleCreateGroups()">
-                                <template v-slot:prepend>
-                                    <v-icon style="color: orange;">mdi-account-group</v-icon>
-                                </template>
-                                <v-list-item-title>{{ classData?.students[0].group ? 'Manage Groups' :
-                                    'Create Groups' }}</v-list-item-title>
-                            </v-list-item>
-                        </v-list>
-                    </v-card>
-                </v-menu>
+            <!-- CONTROLS: search, actions, list/group view -->
+            <div class="controlsWrapper">
+                <Controls
+                    v-model:search-query="searchQuery"
+                    v-model:view-mode="viewMode"
+                    :view-shop-modal="viewShopModal"
+                    :has-groups="hasGroups"
+                    :has-existing-groups="hasExistingGroups"
+                    :has-students="hasStudents"
+                    @view-shop="viewShop()"
+                    @create-shop-item="openCreateShopItemModal"
+                    @award-class-points="handleAwardClassPoints"
+                    @create-groups="handleCreateGroups"
+                />
             </div>
             <!-- CLASS LIST -->
             <ClassList v-if="classData && id" :shopCost="shopCost" :isViewingShop="viewShopModal" :class-id="id"
                 :students="classData.students || []" :experience="classData.experience || 0"
+                :view-mode="viewMode" :search-query="searchQuery"
                 @students-updated="onStudentsUpdated" @shopCostUpdated="onShopCostUpdated" />
         </div>
     </div>
@@ -126,6 +96,7 @@ import { useRoute, useRouter } from 'vue-router';
 import Timer from '../../components/Timer.vue';
 import ClassList from '../../components/classList.vue';
 import Shop from '../../components/Shop.vue';
+import Controls from '../../components/controls.vue';
 import Server from '../../services/server';
 import { toast } from 'vue-sonner';
 import { experienceToRank, getExperience } from '../../composables/useExperience';
@@ -142,7 +113,8 @@ const shopCost = ref(0);
 const awardClassPointsModal = ref(false);
 const selectedStudents = ref([]);
 const grouperModalOpen = ref(false);
-const actionsMenuOpen = ref(false);
+const searchQuery = ref('');
+const viewMode = ref('list');
 const createShopItemModalOpen = ref(false);
 const shopItemToEdit = ref(null);
 const shopItemContextMenuOpen = ref(false);
@@ -195,6 +167,15 @@ const progressToNextRank = computed(() => {
     const expNeededForNextRank = nextRank.experience - currentRank.experience;
 
     return Math.min(100, Math.floor((expInCurrentRank / expNeededForNextRank) * 100));
+});
+
+const hasGroups = computed(() => classData.value?.students?.some((s) => s.group) ?? false);
+const hasExistingGroups = computed(() => hasGroups.value);
+const hasStudents = computed(() => (classData.value?.students?.length ?? 0) > 0);
+
+watch(hasGroups, (newVal) => {
+    if (newVal && viewMode.value === 'list') viewMode.value = 'groups';
+    if (!newVal) viewMode.value = 'list';
 });
 
 const emit = defineEmits(['shopCostUpdated']);
@@ -399,6 +380,12 @@ function handleCreateGroups() {
     justify-content: center;
     gap: 10px;
     margin-bottom: 20px;
+}
+
+.controlsWrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
 }
 
 .shopButton {
@@ -904,6 +891,14 @@ function handleCreateGroups() {
 .shopModal {
     margin-bottom: 20px;
     width: 100%;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .shopModal {
+        padding: 0;
+    }
 }
 
 .shopHeader {

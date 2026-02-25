@@ -11,8 +11,11 @@
                 <div class="groupHeader" role="button" tabindex="0" @click="onGroupClick(groupStudents)"
                     @keydown.enter="onGroupClick(groupStudents)" @keydown.space.prevent="onGroupClick(groupStudents)">
                     <h3 class="groupTitle">{{ groupName }}</h3>
-                    <span class="groupCount">{{ groupStudents.length }} student{{ groupStudents.length !== 1 ? 's' : ''
-                        }}</span>
+                    <div class="groupMeta">
+                        <span class="groupCount">{{ groupStudents.length }} student{{ groupStudents.length !== 1 ? 's' :
+                            '' }}</span>
+                        <span class="groupTotal">{{ formatCost(groupPoints(groupStudents)) }}</span>
+                    </div>
                     <v-icon class="groupAwardIcon" title="Award points to this group">mdi-trophy-outline</v-icon>
                 </div>
                 <div class="groupStudents">
@@ -99,6 +102,14 @@ const hasGroups = computed(() => {
     return props.students.some(s => s.group);
 });
 
+const classTotalPoints = computed(() => {
+    return (props.students ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
+});
+
+function groupPoints(students) {
+    return (students ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
+}
+
 function formatCost(cost) {
     const n = Number(cost);
     if (Number.isNaN(n)) return String(cost ?? '—');
@@ -136,8 +147,8 @@ function onGroupClick(groupStudents) {
 .classGroupView {
     width: 100%;
     margin-top: 1rem;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
     box-sizing: border-box;
 }
 
@@ -170,6 +181,56 @@ function onGroupClick(groupStudents) {
     margin: 0 auto;
     padding-bottom: 1.5rem;
     min-width: 0;
+}
+
+.classTotalRow {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.25rem;
+    padding: 0 0.5rem;
+}
+
+.classTotalRow .classTotalLabel {
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--white);
+    opacity: 0.9;
+    background-color: var(--inkBlack);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    padding: 0.5rem 0.75rem;
+}
+
+@media (min-width: 768px) {
+    .classTotalRow .classTotalLabel {
+        font-size: 0.95rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+.groupMeta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    flex-shrink: 0;
+    justify-content: flex-end;
+}
+
+.groupTotal {
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--white);
+    opacity: 0.9;
+}
+
+@media (min-width: 768px) {
+    .groupTotal {
+        font-size: 0.85rem;
+    }
 }
 
 /* Single column until enough width – avoid forcing 2+ columns on narrow screens */
@@ -380,7 +441,7 @@ function onGroupClick(groupStudents) {
 }
 
 .studentPoints {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     opacity: 0.9;
     color: var(--white);
     white-space: nowrap;
