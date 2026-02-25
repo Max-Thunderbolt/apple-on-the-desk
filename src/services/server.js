@@ -174,13 +174,15 @@ class Server {
         }
     }
 
-    async updateStudentPoints(classId, data) {
+    async purchaseItems(classId, studentIds, shopItemIds) {
         try {
-            const response = await this.http.put(`/classes/${classId}/students`, data);
-            console.log('response', response);
+            const response = await this.http.post(`/classes/${classId}/purchase`, {
+                studentIds,
+                shopItemIds
+            });
             return response.data;
         } catch (error) {
-            console.error('Error updating student points:', error);
+            console.error('Error purchasing items:', error);
             throw error;
         }
     }

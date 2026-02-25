@@ -5,11 +5,15 @@
             style="text-align: center; font-family: var(--font); font-size: 1.5rem;">mdi-arrow-down</v-icon>
     </div>
     <div v-else class="shopGrid">
-        <button v-for="item in shopItemsList" :key="item._id || item.id || item.name" type="button" class="shopItemCard"
-            :class="{ selected: selectedIds.has(item._id || item.id || item.name) }" @click="toggleSelect(item)"
+        <button v-for="item in shopItemsList" :key="getItemId(item)" type="button" class="shopItemCard"
+            :class="{ selected: selectedIds.has(getItemId(item)), outOfStock: isOutOfStock(item) }"
+            :disabled="isOutOfStock(item)"
+            @click="toggleSelect(item)"
             @contextmenu.prevent="emit('item-context-menu', $event, item)">
             <span class="shopItemName">{{ item.name }}</span>
             <span class="shopItemCost">{{ formatCost(item.cost) }}</span>
+            <span v-if="isOutOfStock(item)" class="shopItemStock outOfStockLabel">Out of stock</span>
+            <span v-else-if="item.stock != null && item.remainingStock != null" class="shopItemStock">{{ item.remainingStock }} left</span>
         </button>
     </div>
     <div v-if="selectedIds.size > 0" class="selectedSummary">
@@ -32,7 +36,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['cost-updated', 'item-context-menu']);
+const emit = defineEmits(['cost-updated', 'selection-updated', 'item-context-menu']);
 
 const shopItemsList = computed(() => props.shopItems);
 
@@ -48,32 +52,49 @@ function formatCost(cost) {
 }
 
 function getItemId(item) {
-    return item._id ?? item.id ?? item.name;
+    if (item._id != null) return typeof item._id === 'string' ? item._id : String(item._id);
+    if (item.id != null) return String(item.id);
+    return String(item.name ?? '');
+}
+
+function isOutOfStock(item) {
+    if (item.stock == null) return false;
+    const remaining = item.remainingStock;
+    if (remaining !== undefined && remaining !== null) return remaining <= 0;
+    const purchased = item.purchasedCount;
+    return (purchased ?? 0) >= (item.stock ?? 0);
+}
+
+function emitSelection(cost, ids) {
+    emit('cost-updated', cost);
+    const idList = ids ? [...ids] : [...selectedIds.value];
+    const selectedItemIds = idList.map(id => typeof id === 'string' ? id : String(id));
+    const selectedItems = selectedItemIds.map(id => shopItemsList.value.find(i => getItemId(i) === id)).filter(Boolean);
+    emit('selection-updated', { cost: Number(cost), selectedItemIds, selectedItems });
 }
 
 function toggleSelect(item) {
+    if (isOutOfStock(item)) return;
     const key = getItemId(item);
     const next = new Set(selectedIds.value);
     if (next.has(key)) next.delete(key);
     else next.add(key);
     selectedIds.value = next;
-    console.log('calcCost(next)', calcCost(next));
-    console.log('Number(calcCost(next))', Number(calcCost(next)));
-    emit('cost-updated', Number(calcCost(next)));
+    const cost = calcCost(next);
+    emitSelection(cost, next);
 }
 
 function clearSelection() {
     selectedIds.value = new Set();
-    emit('cost-updated', Number(0));
+    emitSelection(0, new Set());
 }
 
-function calcCost(selectedIds) {
+function calcCost(selectedIdSet) {
     let cost = 0;
-    for (const id of selectedIds) {
-        const item = shopItemsList.value.find(item => item._id === id);
-        if (item) {
-            cost += item.cost;
-        }
+    for (const id of selectedIdSet) {
+        const sid = typeof id === 'string' ? id : String(id);
+        const item = shopItemsList.value.find(i => getItemId(i) === sid);
+        if (item) cost += Number(item.cost) || 0;
     }
     return Number(cost);
 }
@@ -270,6 +291,26 @@ function calcCost(selectedIds) {
 
 .shopItemCard.selected .shopItemCost {
     color: var(--white);
+}
+
+.shopItemCard.outOfStock {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.shopItemCard.outOfStock:hover {
+    transform: none;
+}
+
+.shopItemStock {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    color: var(--freshSky);
+}
+
+.shopItemStock.outOfStockLabel {
+    color: var(--intenseCherry);
+    font-weight: 500;
 }
 
 .selectedSummary {

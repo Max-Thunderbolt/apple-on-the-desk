@@ -43,13 +43,34 @@ export function useShopSelection(shopCostRef) {
         selectedStudents.value = [];
     }
 
-    async function checkout(classId, allStudents, updateClass) {
+    async function checkout(classId, allStudents, updateClass, purchaseOptions = {}) {
         const selected = Array.isArray(selectedStudents.value) ? selectedStudents.value : [];
         if (!selected.length) return;
 
         const totalCost = Number(shopCostRef?.value ?? 0) || 0;
+        const { selectedShopItemIds, purchaseItemsApi, onPurchaseSuccess } = purchaseOptions;
+        const useApi = selectedShopItemIds?.length > 0 && typeof purchaseItemsApi === 'function';
+
+        if (useApi) {
+            try {
+                const studentIds = selected.map(s => s.id);
+                const res = await purchaseItemsApi(classId, studentIds, selectedShopItemIds);
+                selectedStudents.value = [];
+                onPurchaseSuccess?.(res.students);
+                toast.success('Purchase completed', {
+                    description: `Deducted ${formatCost(res.totalCost ?? totalCost)} from selected students`,
+                    duration: 3000,
+                });
+            } catch (err) {
+                console.error('Failed to checkout', err);
+                const msg = err.response?.data?.message || 'Checkout failed';
+                toast.error(msg);
+            }
+            return;
+        }
+
         if (totalCost <= 0) {
-            toast.error('No cost to pay');
+            toast.error('No items selected. Select shop items above.');
             return;
         }
 

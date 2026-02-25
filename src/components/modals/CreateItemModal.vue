@@ -18,6 +18,11 @@
                     <input v-model.number="numberValue" type="number" class="formInput" min="0" step="1"
                         :placeholder="numberPlaceholder" />
                 </div>
+                <div v-if="type === 'shopItem'" class="formGroup">
+                    <label class="formLabel">Stock</label>
+                    <input v-model="stockInput" type="number" class="formInput" min="0" step="1"
+                        placeholder="Leave empty for unlimited" />
+                </div>
                 <p v-if="submitError" class="formError">{{ submitError }}</p>
             </v-card-text>
             <v-card-actions>
@@ -59,6 +64,7 @@ const emit = defineEmits(['update:modelValue', 'saved']);
 
 const name = ref('');
 const numberValue = ref('');
+const stockInput = ref('');
 const submitError = ref('');
 const submitting = ref(false);
 
@@ -85,7 +91,15 @@ const namePlaceholder = computed(() =>
 const canSubmit = computed(() => {
     const n = name.value?.trim();
     const num = Number(numberValue.value);
-    return !!n && n.length > 0 && !Number.isNaN(num) && num >= 0;
+    if (!n || n.length === 0 || Number.isNaN(num) || num < 0) return false;
+    if (props.type === 'shopItem') {
+        const s = stockInput.value;
+        if (s !== '' && s != null) {
+            const sn = Number(s);
+            if (Number.isNaN(sn) || sn < 0 || Math.floor(sn) !== sn) return false;
+        }
+    }
+    return true;
 });
 
 watch(() => [props.modelValue, props.editingItem], ([open, item]) => {
@@ -94,9 +108,11 @@ watch(() => [props.modelValue, props.editingItem], ([open, item]) => {
         if (item) {
             name.value = item.name ?? '';
             numberValue.value = props.type === 'pointsCategory' ? (item.value ?? '') : (item.cost ?? '');
+            stockInput.value = props.type === 'shopItem' && item.stock != null ? String(item.stock) : '';
         } else {
             name.value = '';
             numberValue.value = '';
+            stockInput.value = '';
         }
     }
 }, { deep: true });
@@ -130,11 +146,16 @@ async function submit() {
                 emit('saved', response.pointsCategory);
             }
         } else {
+            const stockVal = stockInput.value;
+            const stock = stockVal === '' || stockVal == null ? null : Number(stockVal);
+            const payload = { name: trimmedName, cost: num };
+            if (stock !== null && !Number.isNaN(stock) && stock >= 0) payload.stock = Math.floor(stock);
+            else if (stock === null && editId) payload.stock = null;
             if (editId) {
-                const response = await Server.updateShopItem(editId, { name: trimmedName, cost: num });
+                const response = await Server.updateShopItem(editId, payload);
                 emit('saved', response.shopItem);
             } else {
-                const response = await Server.createShopItem({ name: trimmedName, cost: num });
+                const response = await Server.createShopItem(payload);
                 emit('saved', response.shopItem);
             }
         }

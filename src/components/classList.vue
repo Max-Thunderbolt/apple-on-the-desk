@@ -67,7 +67,9 @@
                     ({{ formatCost(-pointsRemaining) }} excess)
                 </span>
             </span>
-            <v-btn class="checkoutButton" :disabled="!canAffordShop" @click="checkout">
+            <v-btn class="checkoutButton"
+                :disabled="!canCheckout"
+                @click="checkout">
                 Checkout
             </v-btn>
         </div>
@@ -113,6 +115,7 @@ import { useContextMenu } from '../composables/useContextMenu';
 import { useShopSelection } from '../composables/useShopSelection';
 import { useStudentListColumns } from '../composables/useStudentListColumns';
 import { Toaster, toast } from 'vue-sonner';
+import Server from '../services/server';
 import AwardPointsModal from './modals/awardPointsModal.vue';
 import StudentConstraintsModal from './modals/StudentConstraintsModal.vue';
 import ClassGroupView from './ClassGroupView.vue';
@@ -129,6 +132,10 @@ const props = defineProps({
     classId: {
         type: String,
         required: true,
+    },
+    selectedShopItemIds: {
+        type: Array,
+        default: () => [],
     },
     students: {
         type: Array,
@@ -149,7 +156,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['students-updated', 'experience-updated']);
+const emit = defineEmits(['students-updated', 'experience-updated', 'purchase-completed']);
 
 const { updateClass } = useClasses();
 const { formatCost } = useFormat();
@@ -201,6 +208,23 @@ const {
     clearSelection,
     checkout: doCheckout,
 } = useShopSelection(shopCostRef);
+
+const canCheckout = computed(() => {
+    if (!canAffordShop.value) return false;
+    if (props.isViewingShop && (!props.selectedShopItemIds || props.selectedShopItemIds.length === 0)) return false;
+    return true;
+});
+
+function checkout() {
+    doCheckout(props.classId, props.students, updateClass, {
+        selectedShopItemIds: props.selectedShopItemIds || [],
+        purchaseItemsApi: Server.purchaseItems.bind(Server),
+        onPurchaseSuccess(students) {
+            emit('students-updated', { students });
+            emit('purchase-completed');
+        },
+    });
+}
 
 watch(() => props.isViewingShop, (viewingShop) => {
     if (viewingShop) {
@@ -286,10 +310,6 @@ function onConstraintsUpdated(updatedStudent) {
         s.id === updatedStudent.id ? { ...s, cannotPairWith: updatedStudent.cannotPairWith } : { ...s }
     );
     emit('students-updated', updated);
-}
-
-function checkout() {
-    doCheckout(props.classId, props.students, updateClass);
 }
 </script>
 

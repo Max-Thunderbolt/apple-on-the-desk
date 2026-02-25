@@ -41,7 +41,9 @@
             </div>
             <!-- SHOP -->
             <div v-show="viewShopModal" class="shopModal">
-                <Shop :shopItems="shopItems" @cost-updated="onCostUpdated"
+                <Shop :shopItems="shopItems"
+                    @cost-updated="onCostUpdated"
+                    @selection-updated="onShopSelectionUpdated"
                     @item-context-menu="(e, item) => openShopItemContextMenu(e, item)" />
             </div>
             <!-- CONTROLS: search, actions, list/group view -->
@@ -60,10 +62,12 @@
                 />
             </div>
             <!-- CLASS LIST -->
-            <ClassList v-if="classData && id" :shopCost="shopCost" :isViewingShop="viewShopModal" :class-id="id"
+            <ClassList v-if="classData && id" :shopCost="shopCost" :selected-shop-item-ids="selectedShopItemIds"
+                :isViewingShop="viewShopModal" :class-id="id"
                 :students="classData.students || []" :experience="classData.experience || 0"
                 :view-mode="viewMode" :search-query="searchQuery"
-                @students-updated="onStudentsUpdated" @shopCostUpdated="onShopCostUpdated" />
+                @students-updated="onStudentsUpdated" @shopCostUpdated="onShopCostUpdated"
+                @purchase-completed="onPurchaseCompleted" />
         </div>
     </div>
     <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
@@ -110,6 +114,7 @@ const classData = ref(null);
 const viewShopModal = ref(false);
 const shopItems = ref([]);
 const shopCost = ref(0);
+const selectedShopItemIds = ref([]);
 const awardClassPointsModal = ref(false);
 const selectedStudents = ref([]);
 const grouperModalOpen = ref(false);
@@ -191,11 +196,14 @@ function formatCost(cost) {
 }
 
 function onStudentsUpdated(payload) {
-    const updatedStudents = Array.isArray(payload) ? payload : payload?.updatedStudents;
+    if (payload?.students) {
+        if (classData.value) classData.value = { ...classData.value, students: payload.students };
+    }
+    const updatedStudents = Array.isArray(payload) ? payload : payload?.updatedStudents ?? payload?.students;
     loadClass();
     const allCount = classData.value?.students?.length ?? 0;
     let message = 'Points awarded successfully';
-    if (payload && !Array.isArray(payload) && payload.selectedStudents?.length) {
+    if (payload && !Array.isArray(payload) && payload.selectedStudents?.length && !payload.students) {
         const selected = payload.selectedStudents;
         const isWholeClass = allCount > 0 && selected.length >= allCount;
         if (isWholeClass) {
@@ -211,8 +219,8 @@ function onStudentsUpdated(payload) {
                 message = `Points awarded to ${names.slice(0, 2).join(', ')} and ${names.length - 2} more`;
             }
         }
+        toast?.success?.(message);
     }
-    toast?.success?.(message);
 }
 
 const loadClass = async () => {
@@ -267,12 +275,23 @@ const navigateTo = (path) => {
 const viewShop = () => {
     viewShopModal.value = !viewShopModal.value;
     shopCost.value = 0;
+    selectedShopItemIds.value = [];
 }
 
 function onCostUpdated(cost) {
-    console.log('cost', cost);
     shopCost.value = Number(cost);
     emit('shopCost', cost);
+}
+
+function onShopSelectionUpdated(payload) {
+    shopCost.value = Number(payload?.cost ?? 0);
+    selectedShopItemIds.value = Array.isArray(payload?.selectedItemIds) ? payload.selectedItemIds : (payload?.selectedItemIds ? [payload.selectedItemIds] : []);
+}
+
+function onPurchaseCompleted() {
+    selectedShopItemIds.value = [];
+    shopCost.value = 0;
+    loadShopItems();
 }
 
 function openAwardClassPointsModal() {
