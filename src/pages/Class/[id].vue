@@ -190,10 +190,29 @@ function formatCost(cost) {
     }
 }
 
-function onStudentsUpdated(updatedStudents) {
-    // Reload the class data to get the latest state
+function onStudentsUpdated(payload) {
+    const updatedStudents = Array.isArray(payload) ? payload : payload?.updatedStudents;
     loadClass();
-    toast?.success?.('Points awarded successfully');
+    const allCount = classData.value?.students?.length ?? 0;
+    let message = 'Points awarded successfully';
+    if (payload && !Array.isArray(payload) && payload.selectedStudents?.length) {
+        const selected = payload.selectedStudents;
+        const isWholeClass = allCount > 0 && selected.length >= allCount;
+        if (isWholeClass) {
+            message = 'Points awarded to the class';
+        } else if (payload.isForGroup && selected.length) {
+            const groupName = selected[0]?.group || 'Group';
+            message = `Points awarded to group: ${groupName}`;
+        } else {
+            const names = selected.map((s) => s.name || 'Student').filter(Boolean);
+            if (names.length <= 3) {
+                message = `Points awarded to ${names.join(', ')}`;
+            } else {
+                message = `Points awarded to ${names.slice(0, 2).join(', ')} and ${names.length - 2} more`;
+            }
+        }
+    }
+    toast?.success?.(message);
 }
 
 const loadClass = async () => {

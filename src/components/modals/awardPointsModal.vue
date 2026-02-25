@@ -128,11 +128,17 @@ async function loadPointsCategories() {
 
 async function awardPointsHandler(category) {
     const categoryId = category.id || category._id;
-    const selectedStudents = props.selectedStudents;
+    const selectedStudents = [...(props.selectedStudents || [])];
     const allStudents = props.allStudents;
-    const updatedStudents = await awardPointsApi(categoryId, selectedStudents, allStudents, props.isForGroup);
+    const isForGroup = !!props.isForGroup;
+    const updatedStudents = await awardPointsApi(categoryId, selectedStudents, allStudents, isForGroup);
     emit('update:selectedStudents', []);
-    emit('studentsUpdated', updatedStudents);
+    emit('studentsUpdated', {
+        updatedStudents,
+        selectedStudents,
+        isForGroup,
+        categoryName: category.name,
+    });
     closePointsDialog();
 }
 

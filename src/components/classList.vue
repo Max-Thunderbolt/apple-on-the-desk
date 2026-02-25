@@ -222,8 +222,8 @@ function selectAction(student) {
     }
 }
 
-function onStudentsUpdated(updatedStudents) {
-    emit('students-updated', updatedStudents);
+function onStudentsUpdated(payload) {
+    emit('students-updated', payload);
 }
 
 function openPointsDialog(student) {
