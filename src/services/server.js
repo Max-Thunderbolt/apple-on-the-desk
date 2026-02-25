@@ -12,6 +12,8 @@ const http = axios.create({
     },
 });
 
+console.log('apiBase', apiBase);
+
 /** Set a function that returns the current Firebase ID token (for API auth). */
 export function setAuthGetter(getToken) {
     _authGetter = getToken;
