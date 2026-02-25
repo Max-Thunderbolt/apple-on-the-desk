@@ -1,6 +1,6 @@
 <template>
-  <div class="container">
-    <div class="title">
+  <div class="profileRoot" :class="{ 'profileRoot--embedded': embedded }">
+    <div v-if="!embedded" class="title">
       <span class="titleAccent">Profile</span>
     </div>
 
@@ -31,8 +31,8 @@
       </template>
     </div>
 
-    <v-btn variant="text" class="backLink" @click="navigateTo('/')">
-      ← Back to home
+    <v-btn v-if="!embedded" variant="text" class="backLink" @click="navigateTo('/Teacher')">
+      ← Back
     </v-btn>
 
     <v-dialog v-model="confirmDeleteOpen" max-width="400" persistent>
@@ -61,6 +61,10 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { toast } from 'vue-sonner'
 import server from '@/services/server'
+
+defineProps({
+  embedded: { type: Boolean, default: false }
+})
 
 const router = useRouter()
 const { user, authReady, signOut } = useAuth()
@@ -110,6 +114,58 @@ function navigateTo(path) {
 
 <style scoped>
 @import '../styles/style.css';
+
+.profileRoot {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+.profileRoot--embedded {
+  min-height: 0;
+  justify-content: flex-start;
+  padding: 0;
+  width: 100%;
+}
+
+.profileRoot--embedded .profileCard {
+  max-width: 100%;
+  padding: 0.75rem 0;
+  gap: 1rem;
+}
+
+.profileRoot--embedded .userInfo {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+}
+
+.profileRoot--embedded .avatar {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.profileRoot--embedded .avatarText {
+  font-size: 1.25rem;
+}
+
+.profileRoot--embedded .displayName {
+  font-size: 1.1rem;
+}
+
+.profileRoot--embedded .email {
+  font-size: 0.875rem;
+}
+
+.profileRoot--embedded .signOutButton,
+.profileRoot--embedded .submitButton {
+  height: 44px !important;
+  border-radius: 12px !important;
+}
 
 .profileCard {
   width: 100%;

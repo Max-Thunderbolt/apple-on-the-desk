@@ -16,6 +16,7 @@ declare module 'vue' {
     ClassForm: typeof import('./src/components/modals/ClassForm.vue')['default']
     ClassGroupView: typeof import('./src/components/ClassGroupView.vue')['default']
     ClassList: typeof import('./src/components/classList.vue')['default']
+    ClassPerformance: typeof import('./src/components/ClassPerformance.vue')['default']
     Controls: typeof import('./src/components/controls.vue')['default']
     CreateItemModal: typeof import('./src/components/modals/CreateItemModal.vue')['default']
     GrouperModal: typeof import('./src/components/modals/GrouperModal.vue')['default']

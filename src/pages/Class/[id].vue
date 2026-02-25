@@ -128,7 +128,7 @@ const shopItemContextMenuY = ref(0);
 const shopItemContextTarget = ref(null);
 const dataLoading = ref(true);
 let breadcrumbs = computed(() => [
-    { title: 'Home', to: '/' },
+    { title: 'Teacher', to: '/Teacher' },
     { title: 'Classes', to: '/Classes' },
     { title: dataLoading.value ? 'Loading...' : (classData.value?.name ?? 'Class'), to: `/Class/${id}` },
 ]);

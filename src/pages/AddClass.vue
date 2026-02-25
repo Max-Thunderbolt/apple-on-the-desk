@@ -14,7 +14,7 @@ import ClassForm from '../components/modals/ClassForm.vue';
 const router = useRouter();
 
 const breadcrumbs = [
-    { title: 'Home', to: '/' },
+    { title: 'Teacher', to: '/Teacher' },
     { title: 'Classes', to: '/Classes' },
     { title: 'Add class', to: '/AddClass' },
 ];

@@ -16,8 +16,8 @@
                     <v-btn class="viewClassesButton" @click="navigateTo('/Classes')">
                         View Classes
                     </v-btn>
-                    <v-btn class="profileButton" @click="navigateTo('/Profile')">
-                        Profile
+                    <v-btn class="profileButton" @click="navigateTo('/Teacher')">
+                        Teacher
                     </v-btn>
                 </template>
             </template>

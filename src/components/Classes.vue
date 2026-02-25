@@ -1,5 +1,6 @@
 <template>
-    <v-breadcrumbs density="compact" :items="[{ title: 'Home', to: '/' }, { title: 'Classes', to: '/classes' }]"
+    <v-breadcrumbs density="compact"
+        :items="[{ title: 'Home', to: '/' }, { title: 'Teacher', to: '/Teacher' }, { title: 'Classes', to: '/classes' }]"
         class="breadcrumbs">
         <template v-slot:divider>
             <v-icon>mdi-chevron-right</v-icon>
