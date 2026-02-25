@@ -187,6 +187,16 @@ class Server {
         }
     }
 
+    async getPurchaseHistory(classId) {
+        try {
+            const response = await this.http.get(`/classes/${classId}/purchase-history`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching purchase history:', error);
+            throw error;
+        }
+    }
+
     async awardPoints(classId, categoryId, selectedStudentIds, isForGroup = false) {
         try {
             const response = await this.http.post(`/classes/${classId}/award-points`, {

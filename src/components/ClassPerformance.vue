@@ -80,15 +80,31 @@
             <th class="tableHeader">Z-score</th>
             <th class="tableHeader">Effort index</th>
             <th class="tableHeader">Label</th>
+            <th class="tableHeader">Purchases</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="row in studentComparisonRows" :key="row.id">
             <td class="tableCell">{{ row.name }}</td>
-            <td class="tableCell">{{ row.points }}</td>
+            <td class="tableCell">
+              <span v-if="row.totalSpent != null && row.totalSpent > 0">
+                {{ row.points }} ({{ row.pointsEarned }} earned)
+              </span>
+              <span v-else>{{ row.points }}</span>
+            </td>
             <td class="tableCell">{{ formatZ(row.zScore) }}</td>
             <td class="tableCell">{{ row.effortIndex.toFixed(1) }}</td>
             <td class="tableCell">{{ row.effortLabel }}</td>
+            <td class="tableCell purchasesCell">
+              <template v-if="row.purchases && row.purchases.length > 0">
+                <ul class="purchasesList">
+                  <li v-for="(p, i) in row.purchases" :key="i">
+                    {{ p.itemName }} ({{ p.contributed }} pts)
+                  </li>
+                </ul>
+              </template>
+              <span v-else>—</span>
+            </td>
           </tr>
         </tbody>
       </v-table>
@@ -106,6 +122,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useClasses } from '@/composables/useClasses';
+import server from '@/services/server';
 
 const { getClassNames, getClassById } = useClasses();
 
@@ -117,6 +134,7 @@ const comparisonLoading = ref(false);
 const selectedClassIdForStudents = ref(null);
 const studentDetail = ref(null);
 const studentsLoading = ref(false);
+const purchaseHistoryMap = ref({});
 
 const EFFORT_LABELS = {
   5.0: 'Top 2% of all students',
@@ -153,17 +171,32 @@ function computeStd(arr, mean) {
 const studentComparisonRows = computed(() => {
   const cls = studentDetail.value;
   if (!cls?.students?.length) return [];
-  const points = cls.students.map((s) => s.points ?? 0);
-  const mean = computeMean(points);
-  const std = computeStd(points, mean);
+  const purchaseStudents = (purchaseHistoryMap.value[cls?.id]?.purchaseHistory?.students) || [];
+  const byStudentId = new Map(purchaseStudents.map((p) => [p.studentId, p]));
+
+  const pointsEarnedList = cls.students.map((s) => {
+    const current = s.points ?? 0;
+    const hist = byStudentId.get(s.id);
+    const totalSpent = hist?.totalSpent ?? 0;
+    return current + totalSpent;
+  });
+  const mean = computeMean(pointsEarnedList);
+  const std = computeStd(pointsEarnedList, mean);
+
   const rows = cls.students.map((s) => {
-    const p = s.points ?? 0;
-    const z = std > 0 ? (p - mean) / std : 0;
+    const current = s.points ?? 0;
+    const hist = byStudentId.get(s.id);
+    const totalSpent = hist?.totalSpent ?? 0;
+    const pointsEarned = current + totalSpent;
+    const z = std > 0 ? (pointsEarned - mean) / std : 0;
     const effortIndex = zToEffortIndex(z);
     return {
       id: s.id,
       name: s.name || 'Unknown',
-      points: p,
+      points: current,
+      pointsEarned,
+      totalSpent: totalSpent > 0 ? totalSpent : null,
+      purchases: hist?.purchases ?? [],
       zScore: z,
       effortIndex,
       effortLabel: EFFORT_LABELS[effortIndex] || '',
@@ -220,14 +253,23 @@ async function onClassSelectionChange() {
 async function onStudentClassChange() {
   if (!selectedClassIdForStudents.value) {
     studentDetail.value = null;
+    purchaseHistoryMap.value = {};
     return;
   }
   studentsLoading.value = true;
   try {
-    studentDetail.value = await getClassById(selectedClassIdForStudents.value);
+    const [classData, historyData] = await Promise.all([
+      getClassById(selectedClassIdForStudents.value),
+      server.getPurchaseHistory(selectedClassIdForStudents.value).catch(() => ({ purchaseHistory: { students: [] } })),
+    ]);
+    studentDetail.value = classData;
+    purchaseHistoryMap.value = {
+      [selectedClassIdForStudents.value]: { purchaseHistory: (historyData && historyData.purchaseHistory) ? historyData.purchaseHistory : { students: [] } },
+    };
   } catch (e) {
     console.error('Failed to load class for students', e);
     studentDetail.value = null;
+    purchaseHistoryMap.value = {};
   } finally {
     studentsLoading.value = false;
   }
@@ -394,6 +436,21 @@ loadClassList();
 
 .studentTable {
   margin-top: 0.5rem;
+}
+
+.purchasesCell {
+  max-width: 200px;
+}
+
+.purchasesList {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.purchasesList li {
+  margin: 0.15rem 0;
 }
 
 .emptyState {
