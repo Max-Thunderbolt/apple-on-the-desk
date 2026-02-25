@@ -35,12 +35,12 @@
             <div class="rankOrnament rankOrnamentRight">✦</div>
         </div>
         <div class="classContent">
-            <!-- TIMER -->
-            <div v-if="!viewShopModal" class="timer">
+            <!-- TIMER (kept in DOM with v-show so it keeps counting when Shop is visible) -->
+            <div v-show="!viewShopModal" class="timer">
                 <Timer :initialSeconds="300" :autoRepeat="false" />
             </div>
             <!-- SHOP -->
-            <div v-if="viewShopModal" class="shopModal">
+            <div v-show="viewShopModal" class="shopModal">
                 <Shop :shopItems="shopItems" @cost-updated="onCostUpdated"
                     @item-context-menu="(e, item) => openShopItemContextMenu(e, item)" />
             </div>

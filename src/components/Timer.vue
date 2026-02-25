@@ -1,9 +1,14 @@
 <template>
     <div class="timer">
-        <div class="timerInput" v-if="!isRunning">
-            <v-text-field v-model.number="enteredDuration" type="text" inputmode="numeric" min="1" variant="plain"
-                density="compact" hide-details class="durationInput" placeholder="Enter duration in seconds"
-                prepend-inner-icon="mdi-timer" />
+        <div class="timerInputOrProgress">
+            <div class="timerInput" v-if="!isRunning">
+                <v-text-field v-model.number="enteredDuration" type="text" inputmode="numeric" min="1" variant="plain"
+                    density="compact" hide-details class="durationInput" placeholder="Enter duration in seconds"
+                    prepend-inner-icon="mdi-timer" />
+            </div>
+            <div v-else class="progressBarBg">
+                <div class="progressBarFill" :style="{ width: progress + '%' }"></div>
+            </div>
         </div>
         <div class="timerDisplay">
             <div class="timeWrapper">
@@ -11,9 +16,6 @@
                     {{ formattedTime }}
                 </div>
             </div>
-        </div>
-        <div class="progressBarBg">
-            <div class="progressBarFill" :style="{ width: progress + '%' }"></div>
         </div>
         <div class="stats" v-if="totalIterations > 0 || totalTimeSeconds > 0">
             <span class="stat">Iterations: {{ totalIterations }}</span>
@@ -108,14 +110,15 @@ const playSwapSound = () => {
 const startTimer = () => {
     const duration = Math.max(1, Math.floor(Number(enteredDuration.value) || 60));
     enteredDuration.value = duration;
-    const isResuming = !isRunning.value && timeRemaining.value > 0 && durationPerIteration.value > 0;
+    // Always update durationPerIteration from current input so next repetition and total time use it
+    durationPerIteration.value = duration;
+    const isResuming = !isRunning.value && timeRemaining.value > 0;
     if (!isResuming) {
-        durationPerIteration.value = duration;
         timeRemaining.value = duration;
         progress.value = 0;
     } else {
-        progress.value = durationPerIteration.value > 0
-            ? ((durationPerIteration.value - timeRemaining.value) / durationPerIteration.value) * 100
+        progress.value = duration > 0
+            ? ((duration - timeRemaining.value) / duration) * 100
             : 0;
     }
     isRunning.value = true;
@@ -134,6 +137,7 @@ const resetTimer = () => {
     stopTimer();
     timeRemaining.value = 0;
     progress.value = 0;
+    durationPerIteration.value = 0;
     totalIterations.value = 0;
     totalTimeSeconds.value = 0;
 };
@@ -190,6 +194,14 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+}
+
+.timerInputOrProgress {
+    width: 100%;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .inputLabel {
