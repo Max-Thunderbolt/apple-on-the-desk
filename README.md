@@ -61,6 +61,25 @@ yarn build
 
 Once the build process is completed, your application will be ready for deployment in a production environment.
 
+### Deploying on Render
+
+This app uses Vue Router in **history mode**. On Render, refreshing a route (e.g. `/Class/123`) can return 404 unless the server serves `index.html` for all paths.
+
+**Option A – Using the Blueprint (recommended)**  
+The repo includes a `render.yaml` that defines a static site and a **rewrite** so all routes serve `index.html`. If you deploy from this repo as a Render Blueprint, that rewrite is applied automatically and refresh will work.
+
+**Option B – Manual static site**  
+If the site was created without a Blueprint:
+
+1. Open [Render Dashboard](https://dashboard.render.com/) → your **static site**.
+2. Go to **Redirects/Rewrites**.
+3. Add a **Rewrite** rule:
+   - **Source:** `/*`
+   - **Destination:** `/index.html`
+   - **Action:** Rewrite  
+
+After saving, redeploy if needed. Refreshing any route will then load the app correctly.
+
 ## 💪 Support Vuetify Development
 
 This project is built with [Vuetify](https://vuetifyjs.com/en/), a UI Library with a comprehensive collection of Vue components. Vuetify is an MIT licensed Open Source project that has been made possible due to the generous contributions by our [sponsors and backers](https://vuetifyjs.com/introduction/sponsors-and-backers/). If you are interested in supporting this project, please consider:

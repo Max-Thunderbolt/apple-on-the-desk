@@ -1,0 +1,14 @@
+# Render Blueprint – static site with SPA routing support
+# See https://render.com/docs/blueprint-spec
+# This ensures refresh on any route (e.g. /Class/123) serves index.html instead of 404.
+
+services:
+  - type: web
+    name: apple-on-the-desk
+    runtime: static
+    buildCommand: npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
