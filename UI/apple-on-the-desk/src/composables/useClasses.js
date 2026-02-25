@@ -1,11 +1,14 @@
+import { ref } from 'vue';
 import Server from '../services/server';
 
-export default class ClassController {
-    constructor(classId) {
-        this.classId = classId;
-    }
+/**
+ * Composable for class list and CRUD. Use in components that need to load,
+ * create, update, or delete classes.
+ */
+export function useClasses() {
+    const classes = ref([]);
 
-    async getClasses() {
+    async function getClasses() {
         try {
             const response = await Server.getClasses();
             return response.classes ?? [];
@@ -15,7 +18,7 @@ export default class ClassController {
         }
     }
 
-    async getClassNames() {
+    async function getClassNames() {
         try {
             const response = await Server.getClassNames();
             return response.classes ?? [];
@@ -25,7 +28,7 @@ export default class ClassController {
         }
     }
 
-    async getClassById(id) {
+    async function getClassById(id) {
         try {
             const response = await Server.getClassById(id);
             return response.class;
@@ -35,7 +38,7 @@ export default class ClassController {
         }
     }
 
-    async createClass(data) {
+    async function createClass(data) {
         try {
             const response = await Server.createClass(data);
             return response.class ?? response;
@@ -45,7 +48,7 @@ export default class ClassController {
         }
     }
 
-    async updateClass(id, data) {
+    async function updateClass(id, data) {
         try {
             const response = await Server.updateClass(id, data);
             return response;
@@ -55,7 +58,7 @@ export default class ClassController {
         }
     }
 
-    async deleteClass(id) {
+    async function deleteClass(id) {
         try {
             const response = await Server.deleteClass(id);
             return response;
@@ -64,4 +67,19 @@ export default class ClassController {
             throw error;
         }
     }
+
+    async function loadClasses() {
+        classes.value = await getClassNames();
+    }
+
+    return {
+        classes,
+        loadClasses,
+        getClasses,
+        getClassNames,
+        getClassById,
+        createClass,
+        updateClass,
+        deleteClass,
+    };
 }

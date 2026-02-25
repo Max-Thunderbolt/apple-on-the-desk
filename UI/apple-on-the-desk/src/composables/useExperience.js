@@ -7,7 +7,7 @@ const EXPERIENCE_ICONS = {
     rank4: '💜',
     rank5: '💎',
     rank6: '👑',
-}
+};
 
 const EXPERIENCE_NAMES = {
     rank1: 'Beginner',
@@ -16,8 +16,13 @@ const EXPERIENCE_NAMES = {
     rank4: 'Expert',
     rank5: 'Master',
     rank6: 'Grandmaster',
-}
+};
 
+/**
+ * Map experience number to rank display (icon + name).
+ * @param {number} experience
+ * @returns {{ icon: string, name: string }}
+ */
 export function experienceToRank(experience) {
     if (experience >= 0 && experience < 100) {
         return { icon: EXPERIENCE_ICONS.rank1, name: EXPERIENCE_NAMES.rank1 };
@@ -40,6 +45,11 @@ export function experienceToRank(experience) {
     return { icon: EXPERIENCE_ICONS.rank1, name: EXPERIENCE_NAMES.rank1 };
 }
 
+/**
+ * Fetch experience for a class by id.
+ * @param {string} classId
+ * @returns {Promise<number>}
+ */
 export async function getExperience(classId) {
     try {
         const response = await Server.getClassById(classId);
@@ -50,16 +60,17 @@ export async function getExperience(classId) {
     }
 }
 
-export default class ExperienceController {
-    constructor(classId) {
-        this.classId = classId;
+/**
+ * Composable for experience/rank logic. Use when you need getExperience with reactive classId.
+ * For pure experienceToRank(exp), import the function directly.
+ */
+export function useExperience(classIdRef) {
+    async function fetchExperience(id) {
+        return getExperience(id ?? (classIdRef && typeof classIdRef === 'object' && 'value' in classIdRef ? classIdRef.value : classIdRef));
     }
 
-    experienceToRank(experience) {
-        return experienceToRank(experience);
-    }
-
-    async getExperience(id) {
-        return getExperience(id ?? this.classId);
-    }
+    return {
+        experienceToRank,
+        getExperience: fetchExperience,
+    };
 }

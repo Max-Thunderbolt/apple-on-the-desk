@@ -50,8 +50,8 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue';
-import PointsController from '../../controllers/PointsController';
+import { ref, watch, computed, toRef } from 'vue';
+import { usePoints } from '../../composables/usePoints';
 import CreateItemModal from './CreateItemModal.vue';
 
 const pointsCategories = ref([]);
@@ -62,7 +62,6 @@ const categoryContextMenuOpen = ref(false);
 const categoryContextMenuX = ref(0);
 const categoryContextMenuY = ref(0);
 const categoryContextTarget = ref(null);
-
 
 const props = defineProps({
     selectedStudents: {
@@ -89,7 +88,8 @@ const props = defineProps({
         default: false,
     },
 });
-let pointsManager = null;
+
+const { getPointsCategories, awardPoints: awardPointsApi, deletePointsCategory } = usePoints(toRef(props, 'classId'));
 
 const emit = defineEmits(['update:pointsDialogOpen', 'update:selectedStudents', 'studentsUpdated']);
 
@@ -98,22 +98,17 @@ const pointsDialogOpen = computed({
     set: (value) => emit('update:pointsDialogOpen', value),
 });
 
-watch(() => props.classId, (classId) => {
-    console.log('classId', classId);
-    if (classId) {
-        pointsManager = new PointsController(classId);
+watch(() => props.classId, () => {
+    if (props.classId) {
         loadPointsCategories();
     }
 }, { immediate: true });
 
 watch(pointsCategories, (categories) => {
-    console.log('pointsCategories', categories);
     if (categories.length > 0) {
-        console.log('pointsCategories is not empty');
         pointsCategoriesLoading.value = false;
         pointsCategories.value = categories;
     } else {
-        console.log('pointsCategories is empty');
         pointsCategoriesLoading.value = false;
     }
 });
@@ -122,7 +117,7 @@ async function loadPointsCategories() {
     pointsCategoriesLoading.value = true;
     pointsCategories.value = [];
     try {
-        const data = await pointsManager.getPointsCategories();
+        const data = await getPointsCategories();
         pointsCategories.value = data ?? [];
     } catch (err) {
         console.error('Failed to load points categories:', err);
@@ -131,22 +126,18 @@ async function loadPointsCategories() {
     }
 }
 
-async function awardPoints(category) {
-    console.log('=== FRONTEND AWARD POINTS ===');
-    console.log('Category:', category);
+async function awardPointsHandler(category) {
     const categoryId = category.id || category._id;
-    console.log('Category ID:', categoryId);
-    console.log('Category Value:', category.value);
-    console.log('Selected students count:', props.selectedStudents.length);
-    console.log('All students count:', props.allStudents.length);
-    console.log('============================');
     const selectedStudents = props.selectedStudents;
     const allStudents = props.allStudents;
-    const updatedStudents = await pointsManager.awardPoints(categoryId, selectedStudents, allStudents, props.isForGroup);
+    const updatedStudents = await awardPointsApi(categoryId, selectedStudents, allStudents, props.isForGroup);
     emit('update:selectedStudents', []);
     emit('studentsUpdated', updatedStudents);
     closePointsDialog();
 }
+
+// Template calls awardPoints(category)
+const awardPoints = awardPointsHandler;
 
 function formatCost(cost) {
     const n = Number(cost);
@@ -193,11 +184,11 @@ async function deleteCategoryFromMenu() {
     const cat = categoryContextTarget.value;
     categoryContextMenuOpen.value = false;
     categoryContextTarget.value = null;
-    if (!cat || !pointsManager) return;
+    if (!cat) return;
     const categoryId = cat.id || cat._id;
     if (!confirm(`Delete category "${cat.name}"? This cannot be undone.`)) return;
     try {
-        await pointsManager.deletePointsCategory(categoryId);
+        await deletePointsCategory(categoryId);
         loadPointsCategories();
     } catch (err) {
         console.error('Failed to delete category:', err);

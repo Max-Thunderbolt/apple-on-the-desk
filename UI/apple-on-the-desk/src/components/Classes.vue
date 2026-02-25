@@ -76,12 +76,11 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import { ref, onMounted, onUnmounted } from 'vue';
-import ClassController from '../controllers/ClassController';
-import { experienceToRank } from '../controllers/ExperienceController';
-import Server from '../services/server';
+import { useClasses } from '../composables/useClasses';
+import { experienceToRank } from '../composables/useExperience';
 import ClassForm from './modals/ClassForm.vue';
 
-const classes = ref([]);
+const { classes, loadClasses, getClassById, deleteClass } = useClasses();
 const router = useRouter();
 const contextMenuClass = ref(null);
 const contextMenuX = ref(0);
@@ -89,13 +88,6 @@ const contextMenuY = ref(0);
 const editClassModal = ref(false);
 const addClassModal = ref(false);
 const classToEdit = ref(null);
-const classManager = new ClassController();
-
-
-const loadClasses = async () => {
-    console.log('Getting classes...');
-    classes.value = await classManager.getClassNames();
-}
 
 const CARD_COLOURS = [
     '#493657ff',
@@ -142,7 +134,7 @@ async function deleteSelectedClass() {
     if (!contextMenuClass.value) return;
     const id = contextMenuClass.value.id;
     try {
-        await Server.deleteClass(id);
+        await deleteClass(id);
         classes.value = classes.value.filter((c) => c.id !== id);
     } catch (err) {
         console.error('Failed to delete class:', err);
@@ -155,7 +147,7 @@ async function openEditClassModal() {
     closeContextMenu();
     if (!id) return;
     try {
-        classToEdit.value = await classManager.getClassById(id);
+        classToEdit.value = await getClassById(id);
         editClassModal.value = true;
     } catch (err) {
         console.error('Failed to load class for edit:', err);

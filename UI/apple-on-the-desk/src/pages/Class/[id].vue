@@ -124,7 +124,7 @@ import ClassList from '../../components/classList.vue';
 import Shop from '../../components/Shop.vue';
 import Server from '../../services/server';
 import { toast } from 'vue-sonner';
-import { experienceToRank, getExperience } from '../../controllers/ExperienceController';
+import { experienceToRank, getExperience } from '../../composables/useExperience';
 import AwardPointsModal from '../../components/modals/awardPointsModal.vue';
 import grouperModal from '../../components/modals/GrouperModal.vue';
 import CreateItemModal from '../../components/modals/CreateItemModal.vue';
