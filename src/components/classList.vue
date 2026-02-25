@@ -39,7 +39,7 @@
                         <div class="studentNameContainer">
                             <span class="studentName"
                                 :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{
-                                student.name }}</span>
+                                    student.name }}</span>
                         </div>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts <span
                                 v-if="selectedStudents?.some((s) => s.id === student.id)"><v-icon>mdi-check</v-icon></span></span>
@@ -49,7 +49,7 @@
                         <div class="studentNameContainer">
                             <span class="studentName"
                                 :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{
-                                student.name }}</span>
+                                    student.name }}</span>
                         </div>
                         <span class="studentPoints"> {{ student.points ?? 0 }} pts ({{ formatCost(student.points -
                             props.shopCost) }}) <span
@@ -60,7 +60,7 @@
                         <div class="studentNameContainer">
                             <span class="studentName"
                                 :class="{ zeroPoints: (student.points ?? 0) === 0 && props.isViewingShop && props.shopCost > 0 }">{{
-                                student.name }}</span>
+                                    student.name }}</span>
                         </div>
                         <span class="studentPoints">{{ student.points ?? 0 }} pts </span>
                     </div>
@@ -173,7 +173,7 @@ watch(hasGroups, (newHasGroups) => {
 });
 /** Split students into 4 columns */
 const columns = computed(() => {
-    const list = props.students || [];
+    const list = props.isViewingShop ? props.students.sort((a, b) => (b.points ?? 0) - (a.points ?? 0)) : props.students.sort((a, b) => a.name.localeCompare(b.name)) || [];
     const cols = [[], [], [], []];
     list.forEach((student, index) => {
         cols[index % 4].push(student);
@@ -212,15 +212,6 @@ watch(() => props.shopCost, (shopCost) => {
     }
 });
 
-watch(() => pointsDialogOpen.value, (open) => {
-    console.log('pointsDialogOpen', open);
-    if (open) {
-        console.log('pointsDialogOpen is true');
-    } else {
-        console.log('pointsDialogOpen is false');
-    }
-});
-
 function formatCost(cost) {
     const n = Number(cost);
     if (Number.isNaN(n)) return String(cost ?? '—');
@@ -233,8 +224,8 @@ function formatCost(cost) {
 }
 
 function selectAction(student) {
-    console.log('selectAction', student);
-    console.log('isViewingShop', props.isViewingShop);
+    // console.log('selectAction', student);
+    // console.log('isViewingShop', props.isViewingShop);
     if (!props.isViewingShop) {
         openPointsDialog(student);
     } else {
