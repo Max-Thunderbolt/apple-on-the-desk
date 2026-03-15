@@ -1,29 +1,47 @@
 <template>
   <div class="classPerformance">
+    <h2 class="sectionTitle">Class leaderboard</h2>
+    <p class="sectionHint">Classes ranked by experience (highest rank first).</p>
+    <div class="leaderboardSection">
+      <div v-if="classesLoading" class="loadingRow">
+        <v-progress-circular indeterminate color="primary" size="32" width="3" />
+        <span>Loading classes...</span>
+      </div>
+      <div v-else-if="leaderboardRows.length === 0" class="emptyState">
+        No classes yet. Create a class from the Classes page.
+      </div>
+      <ul v-else class="leaderboardList">
+        <li v-for="(row, index) in leaderboardRows" :key="row.id" class="leaderboardItem">
+          <div class="leaderboardCard" :style="getLeaderboardCardStyle(row)">
+            <span class="leaderboardPosition">{{ index + 1 }}</span>
+            <span class="leaderboardIcon" :title="row.rankName">{{ row.rankIcon }}</span>
+            <span class="leaderboardName">{{ row.name }}</span>
+            <span class="leaderboardRank">{{ row.rankName }}</span>
+          </div>
+          <div v-if="row.topStudents && row.topStudents.length" class="leaderboardTopThree">
+            <span v-for="(student, si) in row.topStudents" :key="row.id + '-top-' + si" class="topStudentChip" :class="[
+              si === 0 ? 'topStudentGold' : si === 1 ? 'topStudentSilver' : 'topStudentBronze'
+            ]" :title="`${student.name}: ${student.points} pts`">
+              {{ student.name }}
+            </span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
     <h2 class="sectionTitle">Class comparison</h2>
     <p class="sectionHint">Select one or more classes to compare. No limit on how many you can select.</p>
     <div class="selectRow">
-      <v-select
-        v-model="selectedClassIds"
-        :items="classList"
-        item-title="name"
-        item-value="id"
-        label="Classes to compare"
-        multiple
-        chips
-        closable-chips
-        class="classSelect classSelectMulti"
-        density="comfortable"
-        hide-details
-        :loading="classesLoading"
-        :menu-props="{ contentClass: 'classPerformanceMenu' }"
-        @update:model-value="onClassSelectionChange"
-      />
+      <v-select v-model="selectedClassIds" :items="classList" item-title="name" item-value="id"
+        label="Classes to compare" multiple chips closable-chips class="classSelect classSelectMulti"
+        density="comfortable" hide-details :loading="classesLoading"
+        :menu-props="{ contentClass: 'classPerformanceMenu' }" @update:model-value="onClassSelectionChange" />
       <div class="selectAllActions">
         <v-btn size="small" variant="text" class="selectAllBtn" @click="selectAllClasses">
           Select all
         </v-btn>
-        <v-btn size="small" variant="text" class="clearAllBtn" :disabled="selectedClassIds.length === 0" @click="clearAllClasses">
+        <v-btn size="small" variant="text" class="clearAllBtn" :disabled="selectedClassIds.length === 0"
+          @click="clearAllClasses">
           Clear
         </v-btn>
       </div>
@@ -56,20 +74,10 @@
 
     <h2 class="sectionTitle studentSectionTitle">Student comparison</h2>
     <p class="sectionHint">Choose a class to see student effort ratings (Z-score normalized).</p>
-    <v-select
-      v-model="selectedClassIdForStudents"
-      :items="classList"
-      item-title="name"
-      item-value="id"
-      label="Class for student comparison"
-      class="classSelect classSelectSingle"
-      density="comfortable"
-      hide-details
-      clearable
-      :loading="classesLoading"
-      :menu-props="{ contentClass: 'classPerformanceMenu' }"
-      @update:model-value="onStudentClassChange"
-    />
+    <v-select v-model="selectedClassIdForStudents" :items="classList" item-title="name" item-value="id"
+      label="Class for student comparison" class="classSelect classSelectSingle" density="comfortable" hide-details
+      clearable :loading="classesLoading" :menu-props="{ contentClass: 'classPerformanceMenu' }"
+      @update:model-value="onStudentClassChange" />
 
     <div v-if="selectedClassIdForStudents && studentComparisonRows.length > 0" class="studentSection">
       <v-table class="comparisonTable studentTable">
@@ -113,7 +121,8 @@
       <v-progress-circular indeterminate color="primary" size="32" width="3" />
       <span>Loading students...</span>
     </div>
-    <div v-else-if="selectedClassIdForStudents && !studentsLoading && studentComparisonRows.length === 0" class="emptyState">
+    <div v-else-if="selectedClassIdForStudents && !studentsLoading && studentComparisonRows.length === 0"
+      class="emptyState">
       No students in this class.
     </div>
   </div>
@@ -122,9 +131,46 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useClasses } from '@/composables/useClasses';
+import { experienceToRank } from '@/composables/useExperience';
 import server from '@/services/server';
 
 const { getClassNames, getClassById } = useClasses();
+
+/** Classes sorted by experience (rank) descending for the leaderboard */
+const leaderboardRows = computed(() => {
+  const list = classList.value ?? [];
+  return [...list]
+    .map((c) => {
+      const exp = c.experience ?? 0;
+      const { icon: rankIcon, name: rankName } = experienceToRank(exp);
+      return {
+        id: c.id,
+        name: c.name,
+        experience: exp,
+        rankIcon,
+        rankName,
+        topStudents: c.topStudents ?? [],
+      };
+    })
+    .sort((a, b) => b.experience - a.experience);
+});
+
+const maxLeaderboardExperience = computed(() => {
+  const rows = leaderboardRows.value;
+  if (rows.length === 0) return 1;
+  return Math.max(...rows.map((r) => r.experience), 1);
+});
+
+/** Base width fits position + icon + class name + rank name; width scales with experience so higher rank = wider card */
+const LEADERBOARD_CARD_BASE_PX = 240;
+const LEADERBOARD_CARD_EXPERIENCE_PX = 220;
+
+function getLeaderboardCardStyle(row) {
+  const max = maxLeaderboardExperience.value;
+  const ratio = max > 0 ? row.experience / max : 0;
+  const widthPx = LEADERBOARD_CARD_BASE_PX + ratio * LEADERBOARD_CARD_EXPERIENCE_PX;
+  return { width: `${widthPx}px`, minWidth: `${widthPx}px` };
+}
 
 const classList = ref([]);
 const classesLoading = ref(true);
@@ -313,6 +359,111 @@ loadClassList();
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.7);
   margin: 0 0 1rem 0;
+}
+
+.leaderboardSection {
+  margin-bottom: 2rem;
+}
+
+.leaderboardList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 900px;
+}
+
+.leaderboardItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font);
+}
+
+.leaderboardCard {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-shrink: 0;
+  min-width: 0;
+  padding: 0.75rem 1.15rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: background 0.2s ease, border-color 0.2s ease, width 0.25s ease;
+}
+
+.leaderboardCard:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.leaderboardPosition {
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gold, #f7b707);
+}
+
+.leaderboardIcon {
+  flex-shrink: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.leaderboardName {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--white);
+  font-size: 1rem;
+}
+
+.leaderboardRank {
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.leaderboardTopThree {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.topStudentChip {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topStudentGold {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.5), rgba(184, 134, 11, 0.5));
+  color: #fff;
+  border: 1px solid rgba(212, 175, 55, 0.6);
+}
+
+.topStudentSilver {
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.45), rgba(128, 128, 128, 0.45));
+  color: #fff;
+  border: 1px solid rgba(192, 192, 192, 0.6);
+}
+
+.topStudentBronze {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.5), rgba(139, 90, 43, 0.5));
+  color: #fff;
+  border: 1px solid rgba(205, 127, 50, 0.6);
 }
 
 .classSelect {
