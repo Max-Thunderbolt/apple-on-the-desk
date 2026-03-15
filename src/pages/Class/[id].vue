@@ -41,31 +41,21 @@
             </div>
             <!-- SHOP -->
             <div v-show="viewShopModal" class="shopModal">
-                <Shop :shopItems="shopItems"
-                    @cost-updated="onCostUpdated"
-                    @selection-updated="onShopSelectionUpdated"
+                <Shop :shopItems="shopItems" @cost-updated="onCostUpdated" @selection-updated="onShopSelectionUpdated"
                     @item-context-menu="(e, item) => openShopItemContextMenu(e, item)" />
             </div>
             <!-- CONTROLS: search, actions, list/group view -->
             <div class="controlsWrapper">
-                <Controls
-                    v-model:search-query="searchQuery"
-                    v-model:view-mode="viewMode"
-                    :view-shop-modal="viewShopModal"
-                    :has-groups="hasGroups"
-                    :has-existing-groups="hasExistingGroups"
-                    :has-students="hasStudents"
-                    @view-shop="viewShop()"
-                    @create-shop-item="openCreateShopItemModal"
-                    @award-class-points="handleAwardClassPoints"
-                    @create-groups="handleCreateGroups"
-                />
+                <Controls v-model:search-query="searchQuery" v-model:view-mode="viewMode"
+                    :view-shop-modal="viewShopModal" :has-groups="hasGroups" :has-existing-groups="hasExistingGroups"
+                    :has-students="hasStudents" :shop-empty="shopItems.length === 0"
+                    @view-shop="viewShop()" @create-shop-item="openCreateShopItemModal"
+                    @award-class-points="handleAwardClassPoints" @create-groups="handleCreateGroups" />
             </div>
             <!-- CLASS LIST -->
             <ClassList v-if="classData && id" :shopCost="shopCost" :selected-shop-item-ids="selectedShopItemIds"
-                :isViewingShop="viewShopModal" :class-id="id"
-                :students="classData.students || []" :experience="classData.experience || 0"
-                :view-mode="viewMode" :search-query="searchQuery"
+                :isViewingShop="viewShopModal" :class-id="id" :students="classData.students || []"
+                :experience="classData.experience || 0" :view-mode="viewMode" :search-query="searchQuery"
                 @students-updated="onStudentsUpdated" @shopCostUpdated="onShopCostUpdated"
                 @purchase-completed="onPurchaseCompleted" />
         </div>
@@ -95,8 +85,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, defineEmits, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, defineEmits, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useActiveClass } from '../../composables/useActiveClass';
 import Timer from '../../components/Timer.vue';
 import ClassList from '../../components/classList.vue';
 import Shop from '../../components/Shop.vue';
@@ -109,7 +100,9 @@ import grouperModal from '../../components/modals/GrouperModal.vue';
 import CreateItemModal from '../../components/modals/CreateItemModal.vue';
 
 const router = useRouter();
-const { id } = useRoute().params;
+const route = useRoute();
+const { id } = route.params;
+const { setActiveClass, clearActiveClass } = useActiveClass();
 const classData = ref(null);
 const viewShopModal = ref(false);
 const shopItems = ref([]);
@@ -262,9 +255,22 @@ onMounted(async () => {
     try {
         await loadClass();
         await loadShopItems();
+        if (classData.value) {
+            setActiveClass(id, classData.value.name);
+        }
+        const viewParam = route.query.view;
+        if (viewParam === 'shop') {
+            viewShopModal.value = true;
+        } else if (viewParam === 'groups') {
+            viewMode.value = 'groups';
+        }
     } finally {
         dataLoading.value = false;
     }
+});
+
+onUnmounted(() => {
+    clearActiveClass();
 });
 
 const navigateTo = (path) => {

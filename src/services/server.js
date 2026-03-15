@@ -275,6 +275,46 @@ class Server {
             throw error
         }
     }
+
+    async upsertUser() {
+        try {
+            const response = await this.http.post('/user')
+            return response.data
+        } catch (error) {
+            console.error('Error upserting user:', error)
+            throw error
+        }
+    }
+
+    async getTutorialStructure() {
+        try {
+            const response = await this.http.get('/tutorial-structure')
+            return response.data
+        } catch (error) {
+            console.error('Error getting tutorial structure:', error)
+            throw error
+        }
+    }
+
+    async getOnboardingProgress() {
+        try {
+            const response = await this.http.get('/onboarding-progress')
+            return response.data
+        } catch (error) {
+            console.error('Error getting onboarding progress:', error)
+            throw error
+        }
+    }
+
+    async upsertOnboardingProgress(data) {
+        try {
+            const response = await this.http.post('/onboarding-progress', data)
+            return response.data
+        } catch (error) {
+            console.error('Error updating onboarding progress:', error)
+            throw error
+        }
+    }
 }
 
 const serverInstance = new Server()

@@ -1,19 +1,18 @@
 <template>
     <div v-if="!shopItemsList.length && !shopItemsLoading" class="emptyShop">
         No shop items available. Create some some in the actions menu below.
-        <v-icon size="100"
-            style="text-align: center; font-family: var(--font); font-size: 1.5rem;">mdi-arrow-down</v-icon>
+
     </div>
     <div v-else class="shopGrid">
         <button v-for="item in shopItemsList" :key="getItemId(item)" type="button" class="shopItemCard"
             :class="{ selected: selectedIds.has(getItemId(item)), outOfStock: isOutOfStock(item) }"
-            :disabled="isOutOfStock(item)"
-            @click="toggleSelect(item)"
+            :disabled="isOutOfStock(item)" @click="toggleSelect(item)"
             @contextmenu.prevent="emit('item-context-menu', $event, item)">
             <span class="shopItemName">{{ item.name }}</span>
             <span class="shopItemCost">{{ formatCost(item.cost) }}</span>
             <span v-if="isOutOfStock(item)" class="shopItemStock outOfStockLabel">Out of stock</span>
-            <span v-else-if="item.stock != null && item.remainingStock != null" class="shopItemStock">{{ item.remainingStock }} left</span>
+            <span v-else-if="item.stock != null && item.remainingStock != null" class="shopItemStock">{{
+                item.remainingStock }} left</span>
         </button>
     </div>
     <div v-if="selectedIds.size > 0" class="selectedSummary">

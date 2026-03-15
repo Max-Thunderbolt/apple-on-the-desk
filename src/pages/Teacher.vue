@@ -25,13 +25,21 @@
         <v-tabs v-model="activeTab" class="teacherTabs" bg-color="transparent" grow>
           <v-tab value="profile" class="teacherTab">Profile</v-tab>
           <v-tab value="performance" class="teacherTab">Class Performance</v-tab>
+          <v-tab value="settings" class="teacherTab">School</v-tab>
+          <v-tab value="Onboarding" class="teacherTab">Tutorials</v-tab>
         </v-tabs>
         <v-window v-model="activeTab" class="teacherWindow">
-          <v-window-item value="profile">
-            <Profile :embedded="true" />
+          <v-window-item value="profile" class="teacherWindowItem">
+            <Profile class="teacherWindowItemContent" :embedded="true" />
           </v-window-item>
-          <v-window-item value="performance">
-            <ClassPerformance />
+          <v-window-item value="performance" class="performanceWindowItem">
+            <ClassPerformance class="performanceWindowItemContent" />
+          </v-window-item>
+          <v-window-item value="school" class="teacherWindowItem">
+            <!-- <School /> -->
+          </v-window-item>
+          <v-window-item value="Onboarding" class="onboardingWindowItem">
+            <Onboarding :isChild="true" class="onboardingWindowItemContent" />
           </v-window-item>
         </v-window>
       </div>
@@ -45,6 +53,7 @@ import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import Profile from '@/pages/Profile.vue';
 import ClassPerformance from '@/components/ClassPerformance.vue';
+import Onboarding from '@/pages/Onboarding.vue';
 
 const router = useRouter();
 const { authReady, isSignedIn } = useAuth();
@@ -58,33 +67,46 @@ function navigateTo(path) {
 <style scoped>
 @import '../styles/style.css';
 
+.teacherWindowItem {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.teacherWindowItemContent {
+  width: 100%;
+  max-width: 420px;
+}
+
 .teacherPage {
   justify-content: flex-start !important;
   padding-top: 1rem;
 }
 
-/* .breadcrumbs {
-  margin-bottom: 1rem;
+.performanceWindowItem {
+  padding: 1rem;
+  display: flex;
 }
 
-.breadcrumbs :deep(.v-breadcrumbs-item) {
-  font-family: var(--font);
-  color: var(--white) !important;
-  opacity: 1 !important;
+.performanceWindowItemContent {
+  width: 100%;
+  /* max-width: 420px; */
 }
 
-.breadcrumbs :deep(.v-breadcrumbs-item--disabled) {
-  color: var(--white) !important;
-  opacity: 1 !important;
-} */
+.performancePage {
+  width: 100%;
+  height: 100%;
+}
 
 .loadingState,
 .signedOutState {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 1rem;
-  padding: 2rem;
+  /* gap: 1rem;
+  padding: 2rem; */
 }
 
 .loadingText,
@@ -117,6 +139,15 @@ function navigateTo(path) {
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0.02em;
+  border-radius: 16px 16px 0 0 !important;
+  border: 1px solid var(--freshSky) !important;
+}
+
+.teacherTabs :deep(.v-tab:hover) {
+  color: white !important;
+  opacity: 1 !important;
+  border-radius: 8px 8px 0 0 !important;
+  background-color: rgba(var(--freshSky-rgb), 0.1) !important;
 }
 
 .teacherTab {
@@ -132,6 +163,30 @@ function navigateTo(path) {
 }
 
 .teacherWindow {
-  margin-top: 1rem;
+  border-radius: 0 0 16px 16px;
+  border: 1px solid var(--freshSky);
+  margin-bottom: 1rem;
+  background-color: rgba(var(--freshSky-rgb), 0.1);
+}
+
+.onboardingWindowItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.comingSoonText {
+  font-family: var(--font);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.comingSoon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 </style>

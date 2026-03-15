@@ -14,7 +14,8 @@
         <!-- Group View -->
         <ClassGroupView v-else-if="viewMode === 'groups'" :students="displayedStudents" :shopCost="props.shopCost"
             :isViewingShop="props.isViewingShop" :selectedStudents="selectedStudents" @student-click="selectAction"
-            @student-context-menu="openContextMenu" @group-click="openPointsDialogForGroup" />
+            @student-context-menu="openContextMenu" @group-click="handleGroupClick"
+            @group-shop-select="handleGroupShopSelect" />
 
         <!-- List View -->
         <div v-else class="studentGrid">
@@ -56,6 +57,15 @@
 
         <div v-if="isViewingShop" class="shopTotalsContainer">
             <span class="classTotalLabel">Class total: {{ formatCost(classTotalPoints) }}</span>
+        </div>
+        <div v-if="isViewingShop" class="shopSelectionActions">
+            <button type="button" class="selectAllBtn" @click="handleSelectAll">
+                <v-icon size="small">{{ isAllSelected ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}</v-icon>
+                {{ isAllSelected ? 'Deselect All' : 'Select Entire Class' }}
+            </button>
+            <span v-if="selectedStudents.length > 0" class="selectionCount">
+                {{ selectedStudents.length }} / {{ (props.students || []).length }} selected
+            </span>
         </div>
         <div v-if="isViewingShop" class="checkoutContainer">
             <span class="checkoutTotal">
@@ -204,10 +214,17 @@ const {
     canAffordShop,
     canAffordPoints,
     toggleStudent,
+    toggleGroup,
+    selectAll,
     setSelection,
     clearSelection,
     checkout: doCheckout,
 } = useShopSelection(shopCostRef);
+
+const isAllSelected = computed(() => {
+    const all = props.students || [];
+    return all.length > 0 && all.every(s => selectedStudents.value.some(sel => sel.id === s.id));
+});
 
 const canCheckout = computed(() => {
     if (!canAffordShop.value) return false;
@@ -261,6 +278,19 @@ function openPointsDialogForGroup(groupStudents) {
     awardPointsIsForGroup.value = true;
     setSelection([...groupStudents]);
     pointsDialogOpen.value = true;
+}
+
+function handleGroupClick(groupStudents) {
+    openPointsDialogForGroup(groupStudents);
+}
+
+function handleGroupShopSelect(groupStudents) {
+    if (!groupStudents?.length) return;
+    toggleGroup(groupStudents);
+}
+
+function handleSelectAll() {
+    selectAll(props.students || []);
 }
 
 function openContextMenu(event, student) {
@@ -609,6 +639,48 @@ function onConstraintsUpdated(updatedStudent) {
         font-size: 0.95rem;
         padding: 0.5rem 1rem;
     }
+}
+
+.shopSelectionActions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0 0.75rem;
+    flex-wrap: wrap;
+}
+
+.selectAllBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 0.5rem 0.85rem;
+    min-height: 44px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+    .selectAllBtn:hover {
+        background: rgba(var(--seaGreen-rgb), 0.25);
+        border-color: var(--seaGreen);
+    }
+}
+
+.selectionCount {
+    font-family: var(--font);
+    font-size: 0.85rem;
+    color: var(--white);
+    opacity: 0.8;
 }
 
 .checkoutContainer {

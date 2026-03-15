@@ -15,8 +15,11 @@
             <p class="email">{{ user.email }}</p>
           </div>
         </div>
+        <v-btn class="billingButton" @click="navigateTo('/Billing')">
+          <v-icon>mdi-credit-card</v-icon> Billing
+        </v-btn>
         <v-btn class="signOutButton" @click="handleSignOut" :loading="signingOut">
-          Sign out
+          <v-icon>mdi-logout</v-icon> Sign out
         </v-btn>
         <v-btn class="signOutButton" variant="outlined" :loading="deletingAccount" :disabled="signingOut"
           @click="confirmDeleteOpen = true">
@@ -225,8 +228,9 @@ function navigateTo(path) {
 }
 
 .signOutButton,
-.submitButton {
-  width: 100%;
+.submitButton,
+.billingButton {
+  width: 75% !important;
   font-family: var(--font) !important;
   font-weight: 600 !important;
   text-transform: none !important;
@@ -235,10 +239,26 @@ function navigateTo(path) {
   height: 52px !important;
 }
 
+.signOutButton:hover,
+.submitButton:hover,
+.billingButton:hover {
+  transform: scale(1.02) translateY(-2px);
+  transition-duration: 0.1s;
+}
+
 .signOutButton {
   background: rgba(197, 40, 61, 0.5) !important;
   color: var(--white) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.billingButton {
+  background: linear-gradient(135deg,
+      rgba(0, 168, 232, 0.55) 0%,
+      rgba(0, 168, 232, 0.35) 50%,
+      rgba(0, 168, 232, 0.45) 100%) !important;
+  color: var(--white) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 .deleteAccountButton {
