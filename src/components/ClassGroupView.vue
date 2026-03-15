@@ -7,16 +7,30 @@
             No groups have been created yet. Click "Create Groups" to get started.
         </div>
         <div v-else class="groupsContainer">
-            <div v-for="(groupStudents, groupName) in groupedStudents" :key="groupName" class="groupCard">
+            <div v-for="(groupStudents, groupName) in groupedStudents" :key="groupName" class="groupCard"
+                :class="{
+                    'groupCard--canAfford': props.isViewingShop && props.shopCost > 0 && groupCanAfford(groupStudents),
+                    'groupCard--cantAfford': props.isViewingShop && props.shopCost > 0 && !groupCanAfford(groupStudents),
+                    'groupCard--allSelected': props.isViewingShop && isGroupFullySelected(groupStudents),
+                }">
                 <div class="groupHeader" role="button" tabindex="0" @click="onGroupClick(groupStudents)"
                     @keydown.enter="onGroupClick(groupStudents)" @keydown.space.prevent="onGroupClick(groupStudents)">
-                    <h3 class="groupTitle">{{ groupName }}</h3>
+                    <div class="groupHeaderLeft">
+                        <v-icon v-if="props.isViewingShop" class="groupSelectIcon" size="small">
+                            {{ isGroupFullySelected(groupStudents) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
+                        </v-icon>
+                        <h3 class="groupTitle">{{ groupName }}</h3>
+                    </div>
                     <div class="groupMeta">
                         <span class="groupCount">{{ groupStudents.length }} student{{ groupStudents.length !== 1 ? 's' :
                             '' }}</span>
                         <span class="groupTotal">{{ formatCost(groupPoints(groupStudents)) }}</span>
+                        <span v-if="props.isViewingShop && props.shopCost > 0" class="groupAffordLabel"
+                            :class="groupCanAfford(groupStudents) ? 'groupAffordLabel--yes' : 'groupAffordLabel--no'">
+                            {{ groupCanAfford(groupStudents) ? 'Can afford' : 'Short ' + formatCost(props.shopCost - groupPoints(groupStudents)) }}
+                        </span>
                     </div>
-                    <v-icon class="groupAwardIcon" title="Award points to this group">mdi-trophy-outline</v-icon>
+                    <v-icon v-if="!props.isViewingShop" class="groupAwardIcon" title="Award points to this group">mdi-trophy-outline</v-icon>
                 </div>
                 <div class="groupStudents">
                     <div v-for="student in groupStudents" :key="student.id">
@@ -75,7 +89,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['student-click', 'student-context-menu', 'group-click']);
+const emit = defineEmits(['student-click', 'student-context-menu', 'group-click', 'group-shop-select']);
 
 const groupedStudents = computed(() => {
     const groups = {};
@@ -120,6 +134,15 @@ function formatCost(cost) {
     }
 }
 
+function groupCanAfford(groupStudents) {
+    return groupPoints(groupStudents) >= props.shopCost;
+}
+
+function isGroupFullySelected(groupStudents) {
+    if (!groupStudents?.length) return false;
+    return groupStudents.every(gs => props.selectedStudents?.some(s => s.id === gs.id));
+}
+
 function canAffordPoints(student) {
     return student.points >= props.shopCost;
 }
@@ -137,7 +160,10 @@ function openContextMenu(event, student) {
 }
 
 function onGroupClick(groupStudents) {
-    if (!props.isViewingShop && groupStudents?.length) {
+    if (!groupStudents?.length) return;
+    if (props.isViewingShop) {
+        emit('group-shop-select', groupStudents);
+    } else {
         emit('group-click', groupStudents);
     }
 }
@@ -251,7 +277,7 @@ function onGroupClick(groupStudents) {
 
 .groupCard {
     background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 0.6rem 0.75rem;
     transition: all 0.3s ease;
@@ -271,6 +297,41 @@ function onGroupClick(groupStudents) {
         border-color: var(--seaGreen);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
+}
+
+.groupCard--canAfford {
+    border-color: rgba(var(--seaGreen-rgb), 0.5);
+    background: linear-gradient(135deg,
+        rgba(var(--seaGreen-rgb), 0.08) 0%,
+        rgba(var(--seaGreen-rgb), 0.03) 100%);
+    box-shadow: 0 0 12px rgba(var(--seaGreen-rgb), 0.15);
+}
+
+@media (hover: hover) {
+    .groupCard--canAfford:hover {
+        border-color: var(--seaGreen);
+        box-shadow: 0 0 20px rgba(var(--seaGreen-rgb), 0.3);
+    }
+}
+
+.groupCard--cantAfford {
+    border-color: rgba(197, 40, 61, 0.4);
+    background: linear-gradient(135deg,
+        rgba(197, 40, 61, 0.08) 0%,
+        rgba(197, 40, 61, 0.03) 100%);
+    box-shadow: 0 0 12px rgba(197, 40, 61, 0.1);
+}
+
+@media (hover: hover) {
+    .groupCard--cantAfford:hover {
+        border-color: var(--intenseCherry);
+        box-shadow: 0 0 20px rgba(197, 40, 61, 0.25);
+    }
+}
+
+.groupCard--allSelected {
+    border-color: var(--seaGreen);
+    box-shadow: 0 0 0 2px rgba(var(--seaGreen-rgb), 0.3), 0 4px 16px rgba(var(--seaGreen-rgb), 0.2);
 }
 
 .groupHeader {
@@ -299,6 +360,52 @@ function onGroupClick(groupStudents) {
 @media (hover: hover) {
     .groupHeader:hover {
         opacity: 0.9;
+    }
+}
+
+.groupHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+.groupSelectIcon {
+    color: var(--seaGreen);
+    flex-shrink: 0;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+@media (hover: hover) {
+    .groupHeader:hover .groupSelectIcon {
+        opacity: 1;
+    }
+}
+
+.groupAffordLabel {
+    font-family: var(--font);
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.groupAffordLabel--yes {
+    color: var(--seaGreen);
+    background: rgba(var(--seaGreen-rgb), 0.15);
+}
+
+.groupAffordLabel--no {
+    color: var(--intenseCherry);
+    background: rgba(197, 40, 61, 0.15);
+}
+
+@media (min-width: 768px) {
+    .groupAffordLabel {
+        font-size: 0.75rem;
     }
 }
 

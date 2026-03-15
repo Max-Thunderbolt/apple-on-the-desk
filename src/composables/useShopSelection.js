@@ -43,6 +43,33 @@ export function useShopSelection(shopCostRef) {
         selectedStudents.value = [];
     }
 
+    function toggleGroup(groupStudents) {
+        if (!groupStudents?.length) return;
+        const allSelected = groupStudents.every(gs =>
+            selectedStudents.value.some(s => s.id === gs.id)
+        );
+        if (allSelected) {
+            selectedStudents.value = selectedStudents.value.filter(
+                s => !groupStudents.some(gs => gs.id === s.id)
+            );
+        } else {
+            const currentIds = new Set(selectedStudents.value.map(s => s.id));
+            const toAdd = groupStudents.filter(gs => !currentIds.has(gs.id));
+            selectedStudents.value = [...selectedStudents.value, ...toAdd];
+        }
+    }
+
+    function selectAll(allStudents) {
+        if (!allStudents?.length) return;
+        const allSelected = allStudents.length === selectedStudents.value.length
+            && allStudents.every(s => selectedStudents.value.some(sel => sel.id === s.id));
+        if (allSelected) {
+            selectedStudents.value = [];
+        } else {
+            selectedStudents.value = [...allStudents];
+        }
+    }
+
     async function checkout(classId, allStudents, updateClass, purchaseOptions = {}) {
         const selected = Array.isArray(selectedStudents.value) ? selectedStudents.value : [];
         if (!selected.length) return;
@@ -124,6 +151,8 @@ export function useShopSelection(shopCostRef) {
         canAffordShop,
         canAffordPoints,
         toggleStudent,
+        toggleGroup,
+        selectAll,
         setSelection,
         clearSelection,
         checkout,

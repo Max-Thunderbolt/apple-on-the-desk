@@ -27,7 +27,7 @@
     max-width: 90vw !important;
   }
 
-  [data-sonner-toast][data-type="error"]{
+  [data-sonner-toast][data-type="error"] {
     background-color: var(--intenseCherry) !important;
     color: var(--white) !important;
     border: 1px solid var(--white) !important;
@@ -37,6 +37,7 @@
   }
 
   @media (min-width: 768px) {
+
     [data-sonner-toast][data-type="success"],
     [data-sonner-toast][data-type="error"] {
       padding: 1rem !important;
@@ -51,26 +52,19 @@
     justify-content: center;
     width: 100%;
     min-height: 100vh;
-    padding: 0 1rem;
     background-color: var(--inkBlack);
     background-image:
-      radial-gradient(
-        ellipse 120% 80% at 70% 10%,
+      radial-gradient(ellipse 120% 80% at 70% 10%,
         rgba(var(--freshSky-rgb), 0.12) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse 100% 60% at 20% 90%,
+        transparent 50%),
+      radial-gradient(ellipse 100% 60% at 20% 90%,
         rgba(var(--seaGreen-rgb), 0.08) 0%,
-        transparent 45%
-      ),
-      linear-gradient(
-        165deg,
+        transparent 45%),
+      linear-gradient(165deg,
         var(--inkBlack) 0%,
         #0a2530 40%,
         #061a22 70%,
-        var(--inkBlack) 100%
-      );
+        var(--inkBlack) 100%);
     color: var(--white);
   }
 
@@ -87,17 +81,18 @@
     font-weight: 600;
     font-style: normal;
     font-variation-settings:
-    "wdth" 147.8;
+      "wdth" 147.8;
     font-size: clamp(2.5rem, 5vw + 1rem, 6.25rem);
     text-align: center;
   }
+
   .subtitle {
     font-family: var(--font);
     font-optical-sizing: auto;
     font-weight: 600;
     font-style: normal;
     font-variation-settings:
-    "wdth" 147.8;
+      "wdth" 147.8;
     font-size: clamp(1.75rem, 3vw + 0.5rem, 4rem);
     color: grey;
     text-align: center;
@@ -109,7 +104,7 @@
 
   .menuContainer {
     display: flex;
-    flex-direction: column;   
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 20px;
@@ -122,10 +117,8 @@
     font-family: var(--font);
     color: var(--white) !important;
     background-color: var(--inkBlack) !important;
-}
+  }
 
-.breadcrumbs-item {
+  .breadcrumbs-item {
     color: var(--white) !important;
-}
-
-
+  }

@@ -41,10 +41,26 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useOnboarding } from '@/composables/useOnboarding'
 import { toast } from 'vue-sonner'
+import server from '@/services/server'
 
 const router = useRouter()
 const { signInWithEmail, registerWithEmail, signInWithGoogle } = useAuth()
+const { reset, loadOnboarding, needsOnboarding } = useOnboarding()
+
+async function postLoginRedirect() {
+  try {
+    await server.upsertUser()
+    reset()
+    await loadOnboarding()
+    if (needsOnboarding.value) {
+      router.push('/Onboarding')
+      return
+    }
+  } catch { /* fall through to home */ }
+  router.push('/')
+}
 
 const formRef = ref(null)
 const email = ref('')
@@ -71,13 +87,13 @@ async function handleSubmit() {
   try {
     await signInWithEmail(email.value, password.value)
     toast.success('Signed in!')
-    router.push('/')
+    await postLoginRedirect()
   } catch (err) {
     if (err?.code === 'auth/user-not-found') {
       try {
         await registerWithEmail(email.value, password.value)
         toast.success('Account created!')
-        router.push('/')
+        await postLoginRedirect()
       } catch (regErr) {
         errorMessage.value = regErr?.message?.replace('Firebase: ', '') || 'Could not create account.'
       }
@@ -95,7 +111,7 @@ async function handleGoogleSignIn() {
   try {
     await signInWithGoogle()
     toast.success('Signed in with Google!')
-    router.push('/')
+    await postLoginRedirect()
   } catch (err) {
     errorMessage.value = err?.message?.replace('Firebase: ', '') || 'Google sign in failed.'
   } finally {

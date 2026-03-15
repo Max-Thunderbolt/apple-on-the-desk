@@ -169,7 +169,11 @@ const sortedGroupEntries = computed(() => {
 
 watch(() => props.modelValue, async (newValue) => {
     if (newValue) {
-        // Dialog opened, load current groups
+        // Dialog opened: cap default to current student count so valid value is shown
+        const max = props.students.length || 1;
+        if (numberOfGroups.value > max || numberOfGroups.value < 1) {
+            numberOfGroups.value = Math.min(Math.max(1, numberOfGroups.value), max);
+        }
         await loadCurrentGroups();
         errorMessage.value = '';
     }
@@ -186,9 +190,15 @@ async function loadCurrentGroups() {
 }
 
 function validateInput() {
-    if (numberOfGroups.value < 1) {
+    const n = Number(numberOfGroups.value);
+    // Don't clamp while the user is typing (empty or invalid) — only clamp a valid number that's out of range
+    if (numberOfGroups.value === '' || Number.isNaN(n)) {
+        errorMessage.value = '';
+        return;
+    }
+    if (n < 1) {
         numberOfGroups.value = 1;
-    } else if (numberOfGroups.value > maxGroups.value) {
+    } else if (n > maxGroups.value) {
         numberOfGroups.value = maxGroups.value;
     }
     errorMessage.value = '';
