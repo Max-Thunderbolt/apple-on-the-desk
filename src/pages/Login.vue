@@ -89,13 +89,19 @@ async function handleSubmit() {
     toast.success('Signed in!')
     await postLoginRedirect()
   } catch (err) {
-    if (err?.code === 'auth/user-not-found') {
+    const tryRegister =
+      err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential'
+    if (tryRegister) {
       try {
         await registerWithEmail(email.value, password.value)
         toast.success('Account created!')
         await postLoginRedirect()
       } catch (regErr) {
-        errorMessage.value = regErr?.message?.replace('Firebase: ', '') || 'Could not create account.'
+        if (regErr?.code === 'auth/email-already-in-use') {
+          errorMessage.value = 'An account with this email already exists. Sign in with your password.'
+        } else {
+          errorMessage.value = regErr?.message?.replace('Firebase: ', '') || 'Could not create account.'
+        }
       }
     } else {
       errorMessage.value = err?.message?.replace('Firebase: ', '') || 'Sign in failed.'
