@@ -11,10 +11,27 @@ import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 // Utilities
 import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
+import { cpSync, existsSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+
+/** Copy demos/ into dist/demos so tutorial videos are available after build */
+function copyDemosPlugin() {
+  return {
+    name: 'copy-demos',
+    closeBundle() {
+      const root = dirname(fileURLToPath(import.meta.url))
+      const srcDir = join(root, 'demos')
+      const outDir = join(root, 'dist', 'demos')
+      if (!existsSync(srcDir)) return
+      cpSync(srcDir, outDir, { recursive: true })
+    },
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    copyDemosPlugin(),
     VueRouter(),
     Layouts(),
     Vue({
