@@ -24,7 +24,6 @@ http.interceptors.request.use(async config => {
     if (_authGetter) {
         try {
             const token = await _authGetter()
-            console.log('token', token)
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`
             }
@@ -282,6 +281,128 @@ class Server {
             return response.data
         } catch (error) {
             console.error('Error upserting user:', error)
+            throw error
+        }
+    }
+
+    async getUser() {
+        try {
+            const response = await this.http.get('/user')
+            return response.data
+        } catch (error) {
+            console.error('Error getting user:', error)
+            throw error
+        }
+    }
+
+    async getAdminOverview(params = {}) {
+        try {
+            const response = await this.http.get('/admin/overview', { params })
+            return response.data
+        } catch (error) {
+            console.error('Error loading admin overview:', error)
+            throw error
+        }
+    }
+
+    async createAdminSchool(data) {
+        try {
+            const response = await this.http.post('/admin/schools', data)
+            return response.data
+        } catch (error) {
+            console.error('Error creating school:', error)
+            throw error
+        }
+    }
+
+    async listAdminSchools() {
+        try {
+            const response = await this.http.get('/admin/schools')
+            return response.data
+        } catch (error) {
+            console.error('Error listing schools:', error)
+            throw error
+        }
+    }
+
+    async addAdminSchoolMember(schoolId, body) {
+        try {
+            const response = await this.http.post(
+                `/admin/schools/${encodeURIComponent(schoolId)}/members`,
+                body
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error adding school member:', error)
+            throw error
+        }
+    }
+
+    async createAdminSchoolJoinCode(schoolId, role) {
+        try {
+            const response = await this.http.post(
+                `/admin/schools/${encodeURIComponent(schoolId)}/join-codes`,
+                { role }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error creating school join code:', error)
+            throw error
+        }
+    }
+
+    async getAdminSchoolMembers(schoolId) {
+        try {
+            const response = await this.http.get(`/admin/schools/${encodeURIComponent(schoolId)}/members`)
+            return response.data
+        } catch (error) {
+            console.error('Error loading school members:', error)
+            throw error
+        }
+    }
+
+    async createSchoolJoinCode(schoolId, role) {
+        try {
+            const response = await this.http.post(
+                `/schools/${encodeURIComponent(schoolId)}/join-codes`,
+                { role }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error creating school join code:', error)
+            throw error
+        }
+    }
+
+    async getSchoolDashboard(schoolId, params = {}) {
+        try {
+            const response = await this.http.get(
+                `/schools/${encodeURIComponent(schoolId)}/dashboard`,
+                { params }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error loading school dashboard:', error)
+            throw error
+        }
+    }
+
+    async getSchoolTeachers(schoolId) {
+        try {
+            const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/teachers`)
+            return response.data
+        } catch (error) {
+            console.error('Error loading teachers:', error)
+            throw error
+        }
+    }
+
+    async joinSchoolByCode(code) {
+        try {
+            const response = await this.http.post(`/schools/join/${encodeURIComponent(code)}`)
+            return response.data
+        } catch (error) {
+            console.error('Error joining school with code:', error)
             throw error
         }
     }

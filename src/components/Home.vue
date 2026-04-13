@@ -19,6 +19,12 @@
                     <v-btn class="profileButton" @click="navigateTo('/Teacher')">
                         Teacher
                     </v-btn>
+                    <v-btn v-if="isPlatformAdmin" class="adminDashButton" @click="navigateTo('/AdminDashboard')">
+                        Admin dashboard
+                    </v-btn>
+                    <v-btn v-if="hasSchoolAdmin" class="schoolAdminDashButton" @click="navigateTo('/SchoolAdminDashboard')">
+                        School dashboard
+                    </v-btn>
                 </template>
             </template>
         </div>
@@ -27,15 +33,15 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
 import { computed } from 'vue'
-
+import { useAuth } from '@/composables/useAuth'
+import { useUserProfile } from '@/composables/useUserProfile'
 
 const router = useRouter()
-const { authReady, isSignedIn, user } = useAuth()
+const { authReady, isSignedIn } = useAuth()
+const { isPlatformAdmin, schoolAdminSchoolIds } = useUserProfile()
 
-const userId = computed(() => user.value?.uid)
-console.log(userId.value)
+const hasSchoolAdmin = computed(() => schoolAdminSchoolIds.value.length > 0)
 
 const navigateTo = (path) => {
     router.push(path)
@@ -44,6 +50,38 @@ const navigateTo = (path) => {
 
 <style>
 @import '../styles/style.css';
+
+.adminDashButton,
+.schoolAdminDashButton {
+    position: relative;
+    overflow: hidden;
+    padding: 12px 24px !important;
+    font-family: var(--font) !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    min-height: 52px !important;
+    width: 100% !important;
+    max-width: min(420px, 90vw);
+    border-radius: 20px !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    color: var(--white) !important;
+    text-transform: none !important;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.adminDashButton {
+    background: linear-gradient(135deg,
+            rgba(138, 43, 226, 0.45) 0%,
+            rgba(75, 0, 130, 0.35) 100%) !important;
+}
+
+.schoolAdminDashButton {
+    background: linear-gradient(135deg,
+            rgba(255, 152, 0, 0.45) 0%,
+            rgba(255, 87, 34, 0.35) 100%) !important;
+}
 
 .viewClassesButton,
 .addClassButton,

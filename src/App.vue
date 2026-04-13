@@ -14,7 +14,27 @@
 </template>
 
 <script setup>
-import { Toaster } from 'vue-sonner';
+import { watch } from 'vue'
+import { Toaster } from 'vue-sonner'
 import { useAuth } from '@/composables/useAuth'
-const { authReady } = useAuth()
+import { fetchUserProfile, clearUserProfile } from '@/composables/useUserProfile'
+
+const { authReady, isSignedIn } = useAuth()
+
+watch(
+  [authReady, isSignedIn],
+  async ([ready, signed]) => {
+    if (!ready) return
+    if (signed) {
+      try {
+        await fetchUserProfile()
+      } catch {
+        /* ignore */
+      }
+    } else {
+      clearUserProfile()
+    }
+  },
+  { immediate: true }
+)
 </script>

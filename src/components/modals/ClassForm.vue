@@ -3,6 +3,31 @@
         <h1 class="pageTitle">{{ isEdit ? 'Edit class' : 'Add a Class' }}</h1>
 
         <div class="addClassForm">
+            <div v-if="!isEdit && schoolAdminSchools.length" class="formGroup">
+                <label class="formLabel">Create as</label>
+                <v-radio-group v-model="schoolAdminCreateMode" inline density="compact" hide-details class="radioRow">
+                    <v-radio label="School class (assign teacher)" value="assign" color="primary" />
+                    <v-radio label="My personal class" value="personal" color="primary" />
+                </v-radio-group>
+            </div>
+            <div v-if="isSchoolAdminCreate" class="formGroup">
+                <label class="formLabel">School</label>
+                <v-select v-model="schoolAdminSchoolId" :items="schoolAdminSchools" item-title="schoolName"
+                    item-value="schoolId" density="comfortable" variant="outlined" hide-details class="rbacSelect"
+                    placeholder="Select school" />
+            </div>
+            <div v-if="isSchoolAdminCreate" class="formGroup">
+                <label class="formLabel">Teacher</label>
+                <v-select v-model="assignTeacherUserId" :items="teacherSelectItems" item-title="label" item-value="userId"
+                    density="comfortable" variant="outlined" hide-details class="rbacSelect" :disabled="!schoolAdminSchoolId"
+                    placeholder="Select teacher" />
+            </div>
+            <div v-else-if="!isEdit && teacherSchools.length" class="formGroup">
+                <label class="formLabel">School (optional)</label>
+                <v-select v-model="teacherOptionalSchoolId" :items="teacherSchoolItems" item-title="schoolName"
+                    item-value="schoolId" clearable density="comfortable" variant="outlined" hide-details
+                    class="rbacSelect" placeholder="Personal class (no school)" />
+            </div>
             <div class="formGroup">
                 <label class="formLabel">Class name</label>
                 <input v-model="className" type="text" class="formInput" placeholder="e.g. 4T" maxlength="120" />
@@ -29,12 +54,20 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import Server from '../../services/server';
+import { useUserProfile } from '@/composables/useUserProfile';
 
 const studentsText = ref('');
 const submitError = ref('');
 const submitting = ref(false);
 const placeholder = ref('Alice\nBob\nCharlie');
 const className = ref('');
+const { schoolAdminSchools, teacherSchools } = useUserProfile();
+
+const schoolAdminSchoolId = ref('');
+const assignTeacherUserId = ref('');
+const teachersList = ref([]);
+const teacherOptionalSchoolId = ref('');
+const schoolAdminCreateMode = ref('assign');
 
 const props = defineProps({
     classData: {
@@ -46,6 +79,36 @@ const props = defineProps({
 const emit = defineEmits(['saved', 'cancel']);
 
 const isEdit = computed(() => !!props.classData?.id);
+
+const isSchoolAdminCreate = computed(
+    () =>
+        !isEdit.value &&
+        schoolAdminSchools.value.length > 0 &&
+        schoolAdminCreateMode.value === 'assign'
+);
+
+const teacherSchoolItems = computed(() => teacherSchools.value);
+
+const teacherSelectItems = computed(() =>
+    (teachersList.value || []).map((t) => ({
+        userId: t.userId,
+        label: t.name || t.email || t.userId,
+    }))
+);
+
+watch(schoolAdminSchoolId, async (sid) => {
+    assignTeacherUserId.value = '';
+    if (!sid) {
+        teachersList.value = [];
+        return;
+    }
+    try {
+        const r = await Server.getSchoolTeachers(sid);
+        teachersList.value = r.teachers || [];
+    } catch {
+        teachersList.value = [];
+    }
+});
 
 watch(() => props.classData, (newClassData) => {
     if (newClassData?.name != null) {
@@ -62,7 +125,12 @@ watch(() => props.classData, (newClassData) => {
 const canSubmit = computed(() => {
     const name = className.value?.trim();
     const noDuplicates = duplicateStudentNames.value.length === 0;
-    return !!name && name.length > 0 && noDuplicates;
+    const base = !!name && name.length > 0 && noDuplicates;
+    if (!base) return false;
+    if (isSchoolAdminCreate.value) {
+        return !!(schoolAdminSchoolId.value && assignTeacherUserId.value);
+    }
+    return true;
 });
 
 function parseStudents() {
@@ -115,6 +183,12 @@ async function submit() {
         students,
         experience: props.classData?.experience ?? 0,
     };
+    if (!isEdit.value && isSchoolAdminCreate.value) {
+        payload.schoolId = schoolAdminSchoolId.value;
+        payload.userId = assignTeacherUserId.value;
+    } else if (!isEdit.value && teacherOptionalSchoolId.value) {
+        payload.schoolId = teacherOptionalSchoolId.value;
+    }
     try {
         if (isEdit.value) {
             payload.id = props.classData.id;
@@ -310,5 +384,14 @@ async function submit() {
 
 .submitButton:disabled {
     opacity: 0.6;
+}
+
+.rbacSelect {
+    width: 100%;
+}
+
+.radioRow {
+    color: var(--white);
+    font-family: var(--font);
 }
 </style>
