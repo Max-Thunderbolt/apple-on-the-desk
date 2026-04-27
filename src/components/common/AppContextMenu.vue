@@ -75,10 +75,10 @@ function onSelect(item) {
   z-index: 2001;
   padding: 0.25rem 0;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(135deg, rgba(0, 23, 31, 0.94) 0%, rgba(0, 23, 31, 0.88) 100%);
+  border: 1px solid var(--color-border-soft);
+  background: linear-gradient(135deg, var(--color-surface-elevated) 0%, var(--color-surface-elevated) 100%);
   backdrop-filter: blur(12px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+  box-shadow: 0 10px 28px var(--color-shadow);
 }
 
 .contextMenuItem {
@@ -88,7 +88,7 @@ function onSelect(item) {
   width: 100%;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--color-text);
   padding: 0.55rem 0.8rem;
   cursor: pointer;
   font-family: var(--font);
@@ -107,7 +107,7 @@ function onSelect(item) {
 
 @media (hover: hover) {
   .contextMenuItem:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--color-surface-hover);
   }
 
   .contextMenuItemDanger:hover:not(:disabled) {

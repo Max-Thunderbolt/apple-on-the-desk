@@ -91,8 +91,6 @@ watch([authReady, isSignedIn], ([ready, signed]) => {
 </script>
 
 <style scoped>
-@import '../../styles/style.css';
-
 .joinPage {
   align-items: center;
   justify-content: center;
@@ -104,8 +102,8 @@ watch([authReady, isSignedIn], ([ready, signed]) => {
   max-width: 520px;
   padding: 1.5rem;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(0, 23, 31, 0.5);
+  border: 1px solid rgba(var(--ink-rgb), 0.16);
+  background: rgba(var(--color-bg-rgb), 0.5);
 }
 
 .joinTitle {
@@ -117,7 +115,7 @@ watch([authReady, isSignedIn], ([ready, signed]) => {
 .joinSubtitle {
   margin: 0 0 1rem;
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(var(--ink-rgb), 0.7);
 }
 
 .joinAlert {
@@ -136,7 +134,7 @@ watch([authReady, isSignedIn], ([ready, signed]) => {
   flex-direction: column;
   gap: 0.75rem;
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
 }
 
 .joinBtn {

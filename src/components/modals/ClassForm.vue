@@ -218,8 +218,6 @@ async function submit() {
 </script>
 
 <style scoped>
-@import '../../styles/style.css';
-
 .classFormWrapper {
     display: flex;
     flex-direction: column;
@@ -251,16 +249,17 @@ async function submit() {
     max-width: 520px;
     padding: 1rem;
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid var(--color-border);
     background: linear-gradient(135deg,
-            rgba(0, 23, 31, 0.6) 0%,
-            rgba(0, 23, 31, 0.4) 50%,
-            rgba(0, 23, 31, 0.5) 100%);
+            var(--color-surface-elevated) 0%,
+            var(--color-surface) 50%,
+            var(--color-surface-elevated) 100%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        0 4px 24px rgba(0, 0, 0, 0.2);
+        inset 0 1px 0 var(--color-border-soft),
+        0 4px 24px var(--color-shadow);
+    margin-bottom: 1rem;
 }
 
 @media (min-width: 768px) {
@@ -288,9 +287,9 @@ async function submit() {
     padding: 0.75rem 1rem;
     font-family: var(--font);
     font-size: 1rem;
-    color: var(--white);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -299,14 +298,14 @@ async function submit() {
 
 .formInput::placeholder,
 .formTextarea::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--color-text-subtle);
 }
 
 @media (hover: hover) {
 
     .formInput:hover,
     .formTextarea:hover {
-        border-color: rgba(255, 255, 255, 0.3);
+        border-color: var(--color-border);
     }
 }
 
@@ -349,7 +348,7 @@ async function submit() {
     font-weight: 600 !important;
     border-radius: 16px !important;
     padding: 0.6rem 1.25rem !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid var(--color-border) !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition:
@@ -372,7 +371,7 @@ async function submit() {
             rgba(26, 147, 111, 0.35) 50%,
             rgba(26, 147, 111, 0.45) 100%) !important;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 var(--color-border-soft),
         0 4px 16px rgba(26, 147, 111, 0.2);
 }
 
@@ -385,9 +384,9 @@ async function submit() {
 
     .submitButton:hover:not(:disabled) {
         transform: scale(1.02) translateY(-2px);
-        border-color: rgba(255, 255, 255, 0.35) !important;
+        border-color: var(--color-border) !important;
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+            inset 0 1px 0 var(--color-border),
             0 8px 24px rgba(26, 147, 111, 0.35);
         filter: brightness(1.08);
     }

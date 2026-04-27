@@ -50,9 +50,9 @@
             <div class="controlsWrapper">
                 <Controls v-model:search-query="searchQuery" v-model:view-mode="viewMode"
                     :view-shop-modal="viewShopModal" :has-groups="hasGroups" :has-existing-groups="hasExistingGroups"
-                    :has-students="hasStudents" :shop-empty="shopItems.length === 0"
-                    @view-shop="viewShop()" @create-shop-item="openCreateShopItemModal"
-                    @award-class-points="handleAwardClassPoints" @create-groups="handleCreateGroups" />
+                    :has-students="hasStudents" :shop-empty="shopItems.length === 0" @view-shop="viewShop()"
+                    @create-shop-item="openCreateShopItemModal" @award-class-points="handleAwardClassPoints"
+                    @create-groups="handleCreateGroups" />
             </div>
             <!-- CLASS LIST -->
             <ClassList v-if="classData && id" :shopCost="shopCost" :selected-shop-item-ids="selectedShopItemIds"
@@ -380,7 +380,6 @@ function handleCreateGroups() {
 </script>
 
 <style>
-
 .dataLoadingPage {
     justify-content: flex-start !important;
 }
@@ -421,7 +420,7 @@ function handleCreateGroups() {
     color: var(--white);
     text-align: center;
     margin: 0;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6),
+    text-shadow: 0 4px 20px rgba(var(--shadow-rgb), 0.6),
         0 0 40px rgba(var(--gold-rgb), 0.3);
     letter-spacing: 1px;
 }
@@ -536,9 +535,9 @@ function handleCreateGroups() {
 
 .actionsMenu {
     background-color: var(--inkBlack) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(var(--ink-rgb), 0.2);
     border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.5);
     margin-top: 0.5rem;
     min-width: 200px;
     width: 90vw;
@@ -585,7 +584,7 @@ function handleCreateGroups() {
 }
 
 .actionsMenuList .v-divider {
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(var(--ink-rgb), 0.1);
     margin: 0.25rem 0;
 }
 
@@ -750,9 +749,9 @@ function handleCreateGroups() {
     justify-content: center;
     gap: 1rem;
     overflow: visible;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+    box-shadow: 0 8px 32px rgba(var(--shadow-rgb), 0.4),
         0 0 60px rgba(var(--gold-rgb), 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        inset 0 1px 0 rgba(var(--ink-rgb), 0.1);
     backdrop-filter: blur(10px);
     width: 100%;
     max-width: 550px;
@@ -787,7 +786,7 @@ function handleCreateGroups() {
     top: -25px;
     font-size: 2.5rem;
     animation: float 3s ease-in-out infinite;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 4px 8px rgba(var(--shadow-rgb), 0.3));
     z-index: 10;
 }
 
@@ -815,14 +814,14 @@ function handleCreateGroups() {
     align-items: center;
     gap: 0.75rem;
     padding: 0.5rem 1.5rem;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(var(--shadow-rgb), 0.2);
     border-radius: 50px;
     border: 1px solid rgba(var(--gold-rgb), 0.3);
 }
 
 .rankIcon {
     font-size: 2rem;
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 4px 12px rgba(var(--shadow-rgb), 0.5));
     animation: pulse 2s ease-in-out infinite;
     line-height: 1;
 }
@@ -848,9 +847,9 @@ function handleCreateGroups() {
     letter-spacing: 2px;
     line-height: 1.2;
     white-space: nowrap;
-    text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.8),
+    /* text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.8),
         0 0 20px rgba(var(--amethyst-rgb), 0.6),
-        0 2px 4px rgba(0, 0, 0, 0.5);
+        0 2px 4px rgba(var(--shadow-rgb), 0.5); */
 }
 
 @keyframes shimmer {
@@ -871,7 +870,7 @@ function handleCreateGroups() {
     flex-direction: column;
     gap: 0.5rem;
     padding: 1rem 1.5rem;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(var(--shadow-rgb), 0.3);
     border-radius: 20px;
     border: 1px solid rgba(var(--gold-rgb), 0.3);
 }
@@ -906,11 +905,11 @@ function handleCreateGroups() {
     position: relative;
     width: 100%;
     height: 20px;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(var(--shadow-rgb), 0.4);
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(var(--gold-rgb), 0.2);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 2px 4px rgba(var(--shadow-rgb), 0.5);
 }
 
 .progressBar {
@@ -935,7 +934,7 @@ function handleCreateGroups() {
     height: 100%;
     background: linear-gradient(90deg,
             transparent 0%,
-            rgba(255, 255, 255, 0.4) 50%,
+            rgba(var(--ink-rgb), 0.4) 50%,
             transparent 100%);
     animation: shine 2s infinite;
 }
@@ -972,4 +971,34 @@ function handleCreateGroups() {
     filter: brightness(1.1);
 }
 
+:root[data-theme='light'] .className {
+    text-shadow: 0 2px 8px rgba(13, 37, 48, 0.2), 0 0 14px rgba(var(--gold-rgb), 0.18);
+}
+
+:root[data-theme='light'] .actionsMenu,
+:root[data-theme='light'] .pointsDialogCard,
+:root[data-theme='light'] .rankDisplay,
+:root[data-theme='light'] .experienceProgress,
+:root[data-theme='light'] .progressBarContainer {
+    border-color: rgba(13, 37, 48, 0.2);
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow: 0 8px 22px rgba(13, 37, 48, 0.12);
+}
+
+:root[data-theme='light'] .actionMenuItem .v-list-item-title,
+:root[data-theme='light'] .pointsDialogTitle,
+:root[data-theme='light'] .pointsDialogSubtitle,
+:root[data-theme='light'] .progressInfo,
+:root[data-theme='light'] .nextRankLabel {
+    color: rgba(13, 37, 48, 0.88);
+}
+
+:root[data-theme='light'] .pointsCategoryItem {
+    background: rgba(13, 37, 48, 0.05);
+    color: rgba(13, 37, 48, 0.88);
+}
+
+:root[data-theme='light'] .classRankCard {
+    box-shadow: 0 10px 30px rgba(13, 37, 48, 0.14), 0 0 30px rgba(var(--gold-rgb), 0.22);
+}
 </style>

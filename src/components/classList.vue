@@ -1,5 +1,5 @@
 <template>
-    <Toaster position="top-right" theme="dark" :toast-options="{
+    <Toaster position="top-right" :theme="effectiveTheme" :toast-options="{
         classNames: {
             toast: 'error-toast',
             title: 'error-toast-title',
@@ -104,6 +104,7 @@ import { useFormat } from '../composables/useFormat';
 import { useContextMenu } from '../composables/useContextMenu';
 import { useShopSelection } from '../composables/useShopSelection';
 import { useStudentListColumns } from '../composables/useStudentListColumns';
+import { useTheme } from '@/composables/useTheme';
 import { Toaster, toast } from 'vue-sonner';
 import Server from '../services/server';
 import AwardPointsModal from './modals/awardPointsModal.vue';
@@ -148,6 +149,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['students-updated', 'experience-updated', 'purchase-completed']);
+const { effectiveTheme } = useTheme();
 
 const { updateClass } = useClasses();
 const { formatCost } = useFormat();
@@ -354,10 +356,10 @@ function onConstraintsUpdated(updatedStudent) {
 
 .viewToggleButtons {
     background-color: var(--inkBlack) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(var(--ink-rgb), 0.2);
     border-radius: 180px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(var(--shadow-rgb), 0.3);
 }
 
 .viewToggleBtn {
@@ -381,7 +383,7 @@ function onConstraintsUpdated(updatedStudent) {
             rgba(var(--seaGreen-rgb), 0.6) 0%,
             rgba(var(--seaGreen-rgb), 0.7) 100%) !important;
     color: var(--white) !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 2px 4px rgba(var(--shadow-rgb), 0.2);
 }
 
 .viewToggleBtn .v-icon {
@@ -444,7 +446,7 @@ function onConstraintsUpdated(updatedStudent) {
     padding: 0.5rem 0.6rem;
     background-color: var(--inkBlack);
     border-radius: 10px;
-    box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 8px 0 rgba(var(--shadow-rgb), 0.4);
     min-height: 48px;
     transition: all 0.3s ease;
     -webkit-tap-highlight-color: transparent;
@@ -455,7 +457,7 @@ function onConstraintsUpdated(updatedStudent) {
         gap: 0.75rem;
         padding: 0.5rem 0.75rem;
         border-radius: 12px;
-        box-shadow: 10px 10px 10px 0 rgba(0, 0, 0, 0.5);
+        box-shadow: 10px 10px 10px 0 rgba(var(--shadow-rgb), 0.5);
     }
 }
 
@@ -477,7 +479,7 @@ function onConstraintsUpdated(updatedStudent) {
     gap: 0.5rem;
     padding: 0.5rem 0.6rem;
     border-radius: 10px;
-    box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 8px 0 rgba(var(--shadow-rgb), 0.4);
     min-height: 48px;
     transition: all 0.3s ease;
     -webkit-tap-highlight-color: transparent;
@@ -488,7 +490,7 @@ function onConstraintsUpdated(updatedStudent) {
         gap: 0.75rem;
         padding: 0.5rem 0.75rem;
         border-radius: 12px;
-        box-shadow: 10px 10px 10px 0 rgba(0, 0, 0, 0.5);
+        box-shadow: 10px 10px 10px 0 rgba(var(--shadow-rgb), 0.5);
     }
 }
 
@@ -500,7 +502,7 @@ function onConstraintsUpdated(updatedStudent) {
     padding: 0.5rem 0.6rem;
     background-color: var(--intenseCherry) !important;
     border-radius: 10px;
-    box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 8px 0 rgba(var(--shadow-rgb), 0.4);
     min-height: 48px;
     transition: all 0.3s ease;
     color: var(--white) !important;
@@ -512,7 +514,7 @@ function onConstraintsUpdated(updatedStudent) {
         gap: 0.75rem;
         padding: 0.5rem 0.75rem;
         border-radius: 12px;
-        box-shadow: 10px 10px 10px 0 rgba(0, 0, 0, 0.5);
+        box-shadow: 10px 10px 10px 0 rgba(var(--shadow-rgb), 0.5);
     }
 }
 
@@ -586,7 +588,7 @@ function onConstraintsUpdated(updatedStudent) {
     padding: 0.2rem 0.5rem;
     border-radius: 8px;
     white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(var(--shadow-rgb), 0.2);
 }
 
 .studentPoints {
@@ -617,7 +619,7 @@ function onConstraintsUpdated(updatedStudent) {
     color: var(--white);
     opacity: 0.9;
     background-color: var(--inkBlack);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(var(--ink-rgb), 0.25);
     border-radius: 12px;
     padding: 0.5rem 0.75rem;
     text-align: center;
@@ -654,8 +656,8 @@ function onConstraintsUpdated(updatedStudent) {
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--white);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(var(--ink-rgb), 0.08);
+    border: 1px solid rgba(var(--ink-rgb), 0.2);
     border-radius: 10px;
     padding: 0.5rem 0.85rem;
     min-height: 44px;

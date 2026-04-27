@@ -9,10 +9,12 @@ import { registerPlugins } from '@/plugins'
 import { app, auth } from '@/firebase'
 import { getAnalytics } from 'firebase/analytics'
 import { initAuth } from '@/composables/useAuth'
+import { initTheme } from '@/composables/useTheme'
 import { setAuthGetter } from '@/services/server'
 
 getAnalytics(app)
 initAuth()
+initTheme()
 
 setAuthGetter(async () => {
   const user = auth.currentUser

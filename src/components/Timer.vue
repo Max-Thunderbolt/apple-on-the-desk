@@ -317,7 +317,7 @@ onUnmounted(() => {
 .controlButton {
     background-color: var(--inkBlack) !important;
     border-radius: 180px;
-    box-shadow: 10px 10px 10px 0 rgba(0, 0, 0, 0.5);
+    box-shadow: 10px 10px 10px 0 rgba(var(--shadow-rgb), 0.5);
     padding: 6px 20px;
     text-align: center;
     color: var(--white);
@@ -337,7 +337,7 @@ onUnmounted(() => {
 
     &:active {
         transform: scale(0.98);
-        box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, 0.5);
+        box-shadow: 5px 5px 5px 0 rgba(var(--shadow-rgb), 0.5);
     }
 
     &:focus {
@@ -353,7 +353,7 @@ onUnmounted(() => {
     background-color: var(--seaGreen) !important;
     max-width: 100px;
     border-radius: 180px;
-    box-shadow: 10px 10px 10px 0 rgba(0, 0, 0, 0.5);
+    box-shadow: 10px 10px 10px 0 rgba(var(--shadow-rgb), 0.5);
     padding: 6px 20px;
     text-align: center;
     color: var(--white);
@@ -369,7 +369,7 @@ onUnmounted(() => {
 
     &:active {
         transform: scale(0.98);
-        box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, 0.5);
+        box-shadow: 5px 5px 5px 0 rgba(var(--shadow-rgb), 0.5);
     }
 
     &:focus {
@@ -384,7 +384,7 @@ onUnmounted(() => {
 .controlButtonStop {
     background-color: var(--intenseCherry) !important;
     border-radius: 180px;
-    box-shadow: 10px 10px 10px 0 rgba(0, 0, 0, 0.5);
+    box-shadow: 10px 10px 10px 0 rgba(var(--shadow-rgb), 0.5);
     padding: 6px 20px;
     text-align: center;
     color: var(--white);
@@ -400,7 +400,7 @@ onUnmounted(() => {
 
     &:active {
         transform: scale(0.98);
-        box-shadow: 5px 5px 5px 0 rgba(0, 0, 0, 0.5);
+        box-shadow: 5px 5px 5px 0 rgba(var(--shadow-rgb), 0.5);
     }
 
     &:focus {

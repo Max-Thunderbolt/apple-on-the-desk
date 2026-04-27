@@ -242,7 +242,7 @@ const navigateTo = (path) => {
     width: 100%;
     max-width: 400px;
     border-radius: 20px !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
     background: linear-gradient(135deg,
             rgba(var(--card-glass-color), 0.55) 0%,
             rgba(var(--card-glass-color), 0.35) 50%,
@@ -250,8 +250,8 @@ const navigateTo = (path) => {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        0 4px 24px rgba(0, 0, 0, 0.2);
+        inset 0 1px 0 rgba(var(--ink-rgb), 0.2),
+        0 4px 24px rgba(var(--shadow-rgb), 0.2);
     transition:
         transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
         box-shadow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -267,11 +267,11 @@ const navigateTo = (path) => {
 @media (hover: hover) {
     .classCard:hover {
         transform: scale(1.02) translateY(-6px);
-        border-color: rgba(255, 255, 255, 0.35) !important;
+        border-color: rgba(var(--ink-rgb), 0.35) !important;
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.25),
-            0 12px 40px rgba(0, 0, 0, 0.25),
-            0 0 0 1px rgba(255, 255, 255, 0.1);
+            inset 0 1px 0 rgba(var(--ink-rgb), 0.25),
+            0 12px 40px rgba(var(--shadow-rgb), 0.25),
+            0 0 0 1px rgba(var(--ink-rgb), 0.1);
     }
 }
 
@@ -284,7 +284,7 @@ const navigateTo = (path) => {
 .classShopButton {
     color: var(--white) !important;
     border-radius: 16px !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(var(--ink-rgb), 0.2) !important;
     background: linear-gradient(135deg,
             rgba(26, 147, 111, 0.55) 0%,
             rgba(26, 147, 111, 0.35) 50%,
@@ -292,7 +292,7 @@ const navigateTo = (path) => {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(var(--ink-rgb), 0.2),
         0 2px 12px rgba(26, 147, 111, 0.2);
     gap: 10px;
     font-family: var(--font);
@@ -306,9 +306,9 @@ const navigateTo = (path) => {
 
 .classShopButton:hover {
     transform: scale(1.02) translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(var(--ink-rgb), 0.35) !important;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 1px 0 rgba(var(--ink-rgb), 0.3),
         0 8px 24px rgba(26, 147, 111, 0.35);
     filter: brightness(1.08);
 }
@@ -324,15 +324,15 @@ const navigateTo = (path) => {
     min-width: 160px;
     padding: 4px 0;
     background: linear-gradient(135deg,
-            rgba(0, 23, 31, 0.92) 0%,
-            rgba(0, 23, 31, 0.88) 100%);
+            rgba(var(--color-bg-rgb), 0.92) 0%,
+            rgba(var(--color-bg-rgb), 0.88) 100%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(var(--ink-rgb), 0.12);
     border-radius: 12px;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 8px 32px rgba(0, 0, 0, 0.4);
+        inset 0 1px 0 rgba(var(--ink-rgb), 0.08),
+        0 8px 32px rgba(var(--shadow-rgb), 0.4);
     z-index: 1001;
 }
 
@@ -355,7 +355,7 @@ const navigateTo = (path) => {
 
 @media (hover: hover) {
     .contextMenuItem:hover {
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(var(--ink-rgb), 0.08);
     }
 
     .contextMenuItemDanger:hover {
@@ -371,7 +371,7 @@ const navigateTo = (path) => {
             rgba(0, 168, 232, 0.35) 50%,
             rgba(0, 168, 232, 0.45) 100%) !important;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(var(--ink-rgb), 0.2),
         0 4px 24px rgba(0, 168, 232, 0.15);
     padding: 0.5rem 1rem !important;
     transition: all 0.3s ease !important;
@@ -390,7 +390,7 @@ const navigateTo = (path) => {
     width: 100%;
     text-align: center;
     font-family: var(--font);
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(var(--ink-rgb), 0.75);
     margin-bottom: 0.5rem;
 }
 
@@ -399,16 +399,16 @@ const navigateTo = (path) => {
     width: 100% !important;
     padding: 1rem !important;
     border-radius: 20px !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
     background: linear-gradient(135deg,
-            rgba(0, 23, 31, 0.6) 0%,
-            rgba(0, 23, 31, 0.4) 50%,
-            rgba(0, 23, 31, 0.5) 100%) !important;
+            rgba(var(--color-bg-rgb), 0.6) 0%,
+            rgba(var(--color-bg-rgb), 0.4) 50%,
+            rgba(var(--color-bg-rgb), 0.5) 100%) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        0 4px 24px rgba(0, 0, 0, 0.2) !important;
+        inset 0 1px 0 rgba(var(--ink-rgb), 0.12),
+        0 4px 24px rgba(var(--shadow-rgb), 0.2) !important;
 }
 
 @media (min-width: 768px) {

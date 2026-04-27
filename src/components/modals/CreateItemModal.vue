@@ -170,8 +170,6 @@ async function submit() {
 </script>
 
 <style scoped>
-@import '../../styles/style.css';
-
 .createItemDialogCard {
     background-color: var(--inkBlack);
     border-radius: 25px;
@@ -223,8 +221,8 @@ async function submit() {
     font-family: var(--font);
     font-size: 1rem;
     color: var(--white);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(var(--ink-rgb), 0.08);
+    border: 1px solid rgba(var(--ink-rgb), 0.2);
     border-radius: 12px;
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -232,7 +230,7 @@ async function submit() {
 }
 
 .formInput::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(var(--ink-rgb), 0.5);
 }
 
 .formInput:focus {

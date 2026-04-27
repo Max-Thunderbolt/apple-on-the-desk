@@ -211,11 +211,11 @@ function calcCost(selectedIdSet) {
     min-width: 0;
     -webkit-tap-highlight-color: transparent;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(var(--ink-rgb), 0.18);
     background: linear-gradient(135deg,
-            rgba(0, 23, 31, 0.5) 0%,
-            rgba(0, 23, 31, 0.35) 50%,
-            rgba(0, 23, 31, 0.45) 100%);
+            rgba(var(--color-bg-rgb), 0.5) 0%,
+            rgba(var(--color-bg-rgb), 0.35) 50%,
+            rgba(var(--color-bg-rgb), 0.45) 100%);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     color: var(--white);
@@ -227,8 +227,8 @@ function calcCost(selectedIdSet) {
         border-color 0.2s ease,
         background 0.2s ease;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-        0 4px 16px rgba(0, 0, 0, 0.15);
+        inset 0 1px 0 rgba(var(--ink-rgb), 0.1),
+        0 4px 16px rgba(var(--shadow-rgb), 0.15);
 }
 
 @media (min-width: 768px) {
@@ -241,9 +241,9 @@ function calcCost(selectedIdSet) {
 @media (hover: hover) {
     .shopItemCard:hover {
         transform: scale(1.02) translateY(-2px);
-        border-color: rgba(255, 255, 255, 0.3);
+        border-color: rgba(var(--ink-rgb), 0.3);
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.15),
+            inset 0 1px 0 rgba(var(--ink-rgb), 0.15),
             0 8px 24px rgba(0, 168, 232, 0.2);
     }
 }
@@ -255,7 +255,7 @@ function calcCost(selectedIdSet) {
             rgba(26, 147, 111, 0.25) 50%,
             rgba(26, 147, 111, 0.35) 100%);
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(var(--ink-rgb), 0.2),
         0 0 0 2px rgba(26, 147, 111, 0.5),
         0 6px 20px rgba(26, 147, 111, 0.25);
 }
@@ -319,8 +319,8 @@ function calcCost(selectedIdSet) {
     margin-top: 1rem;
     padding: 0.6rem 0.75rem;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(var(--ink-rgb), 0.06);
+    border: 1px solid rgba(var(--ink-rgb), 0.12);
     margin-left: 0.75rem;
     margin-right: 0.75rem;
 }
@@ -354,8 +354,8 @@ function calcCost(selectedIdSet) {
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--white);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(var(--ink-rgb), 0.1);
+    border: 1px solid rgba(var(--ink-rgb), 0.2);
     border-radius: 8px;
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
@@ -364,8 +364,8 @@ function calcCost(selectedIdSet) {
 
 @media (hover: hover) {
     .clearSelectionBtn:hover {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.3);
+        background: rgba(var(--ink-rgb), 0.15);
+        border-color: rgba(var(--ink-rgb), 0.3);
     }
 }
 </style>

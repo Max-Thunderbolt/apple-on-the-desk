@@ -194,7 +194,7 @@ function closeDialog() {
     opacity: 0.8;
     text-align: center;
     padding: 0.5rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(var(--ink-rgb), 0.2);
 }
 
 .constraintsDialogContent {
@@ -214,14 +214,14 @@ function closeDialog() {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem;
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(var(--ink-rgb), 0.05);
     border-radius: 12px;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
 
 .studentItem:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(var(--ink-rgb), 0.1);
 }
 
 .studentName {

@@ -158,8 +158,8 @@ function navigateTo(path) {
 
 .field :deep(.v-field) {
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(var(--ink-rgb), 0.06) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.18);
 }
 
 .field :deep(.v-field__input) {
@@ -180,8 +180,8 @@ function navigateTo(path) {
 .field :deep(input:-webkit-autofill:hover),
 .field :deep(input:-webkit-autofill:focus),
 .field :deep(input:-webkit-autofill:active) {
-  -webkit-box-shadow: 0 0 0 30px rgba(0, 23, 31, 0.95) inset !important;
-  box-shadow: 0 0 0 30px rgba(0, 23, 31, 0.95) inset !important;
+  -webkit-box-shadow: 0 0 0 30px rgba(var(--color-bg-rgb), 0.95) inset !important;
+  box-shadow: 0 0 0 30px rgba(var(--color-bg-rgb), 0.95) inset !important;
   -webkit-text-fill-color: var(--white);
 }
 
@@ -194,7 +194,7 @@ function navigateTo(path) {
   align-items: center;
   gap: 1rem;
   width: 100%;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
   font-family: var(--font);
 }
 
@@ -203,7 +203,7 @@ function navigateTo(path) {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(var(--ink-rgb), 0.2);
 }
 
 .submitButton,
@@ -223,18 +223,18 @@ function navigateTo(path) {
       rgba(0, 168, 232, 0.35) 50%,
       rgba(0, 168, 232, 0.45) 100%) !important;
   color: var(--white) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
 }
 
 .googleButton {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(var(--ink-rgb), 0.08) !important;
   color: var(--white) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.25) !important;
 }
 
 .backLink {
   margin-top: 1rem;
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: rgba(var(--ink-rgb), 0.7) !important;
   font-family: var(--font) !important;
   text-transform: none !important;
 }

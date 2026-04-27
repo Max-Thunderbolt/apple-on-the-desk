@@ -355,7 +355,7 @@ loadClassList();
 .sectionHint {
   font-family: var(--font);
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-muted);
   margin: 0 0 1rem 0;
 }
 
@@ -387,15 +387,15 @@ loadClassList();
   flex-shrink: 0;
   min-width: 0;
   padding: 0.75rem 1.15rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
   border-radius: 12px;
   transition: background 0.2s ease, border-color 0.2s ease, width 0.25s ease;
 }
 
 .leaderboardCard:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--color-surface-hover);
+  border-color: var(--color-border);
 }
 
 .leaderboardPosition {
@@ -424,7 +424,7 @@ loadClassList();
 .leaderboardRank {
   flex-shrink: 0;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-text-muted);
 }
 
 .leaderboardTopThree {
@@ -499,42 +499,42 @@ loadClassList();
 }
 
 .clearAllBtn {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: var(--color-text-muted) !important;
 }
 
 .clearAllBtn:hover:not(:disabled) {
-  color: var(--white) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text) !important;
+  background: var(--color-surface-hover) !important;
 }
 
 .classSelect :deep(.v-field) {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
   border-radius: 12px;
-  color: var(--white);
+  color: var(--color-text);
 }
 
 .classSelect :deep(.v-field__input) {
-  color: var(--white);
+  color: var(--color-text);
 }
 
 .classSelect :deep(.v-field .v-label) {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-muted);
 }
 
 .classSelect :deep(.v-field--focused .v-label),
 .classSelect :deep(.v-field--variant-filled .v-field__input) {
-  color: var(--white);
+  color: var(--color-text);
 }
 
 .classSelect :deep(.v-chip) {
   background: rgba(0, 168, 232, 0.25) !important;
   color: var(--white) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(var(--ink-rgb), 0.15);
 }
 
 .classSelect :deep(.v-chip .v-icon) {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: var(--color-text-muted) !important;
 }
 
 .classSelect :deep(.v-checkbox-btn .v-icon) {
@@ -550,19 +550,19 @@ loadClassList();
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 0;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--color-text);
   font-family: var(--font);
 }
 
 .comparisonTable {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--color-surface);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border-soft);
   overflow: hidden;
 }
 
 .comparisonTable :deep(thead) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-surface-hover);
 }
 
 .tableHeader {
@@ -575,7 +575,7 @@ loadClassList();
 
 .tableCell {
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-text);
   padding: 10px 16px;
 }
 
@@ -595,7 +595,7 @@ loadClassList();
   margin: 0;
   padding-left: 1rem;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--color-text);
 }
 
 .purchasesList li {
@@ -604,7 +604,7 @@ loadClassList();
 
 .emptyState {
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-muted);
   padding: 1rem 0;
 }
 </style>
@@ -612,10 +612,10 @@ loadClassList();
 <!-- Global styles for teleported dropdown menu (Vuetify overlays to body) -->
 <style>
 .classPerformanceMenu {
-  background: #1e2a30 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: var(--color-surface-elevated) !important;
+  border: 1px solid var(--color-border-soft) !important;
   border-radius: 12px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 8px 32px var(--color-shadow) !important;
 }
 
 .classPerformanceMenu .v-list {
@@ -623,20 +623,20 @@ loadClassList();
 }
 
 .classPerformanceMenu .v-list-item {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--color-text) !important;
 }
 
 .classPerformanceMenu .v-list-item:hover,
 .classPerformanceMenu .v-list-item--active {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--color-surface-hover) !important;
 }
 
 .classPerformanceMenu .v-list-item--active {
-  color: #fff !important;
+  color: var(--color-text) !important;
 }
 
 .classPerformanceMenu .v-list-item .v-icon {
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: var(--color-text-muted) !important;
 }
 
 .classPerformanceMenu .v-checkbox-btn .v-icon {
@@ -644,6 +644,6 @@ loadClassList();
 }
 
 .classPerformanceMenu .v-field__input {
-  color: #fff !important;
+  color: var(--color-text) !important;
 }
 </style>
