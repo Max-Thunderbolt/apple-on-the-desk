@@ -22,11 +22,22 @@
         <div class="title">
           <span class="titleAccent">Teacher</span>
         </div>
+        <div v-if="isPlatformAdmin || hasSchoolAdmin" class="dashLinks">
+          <v-btn v-if="isPlatformAdmin" size="small" variant="tonal" class="dashLink"
+            @click="navigateTo('/AdminDashboard')">
+            Admin dashboard
+          </v-btn>
+          <v-btn v-if="hasSchoolAdmin" size="small" variant="tonal" class="dashLink"
+            @click="navigateTo('/SchoolAdminDashboard')">
+            School dashboard
+          </v-btn>
+        </div>
         <v-tabs v-model="activeTab" class="teacherTabs" bg-color="transparent" grow>
           <v-tab value="profile" class="teacherTab">Profile</v-tab>
-          <v-tab value="performance" class="teacherTab">Class Performance</v-tab>
-          <v-tab value="settings" class="teacherTab">School</v-tab>
-          <v-tab value="Onboarding" class="teacherTab">Tutorials</v-tab>
+          <v-tab v-if="!hasSchoolAdmin || !isPlatformAdmin" value="performance" class="teacherTab">Class
+            Performance</v-tab>
+          <v-tab v-if="!hasSchoolAdmin || !isPlatformAdmin" value="settings" class="teacherTab">School</v-tab>
+          <v-tab v-if="!hasSchoolAdmin || !isPlatformAdmin" value="Onboarding" class="teacherTab">Tutorials</v-tab>
         </v-tabs>
         <v-window v-model="activeTab" class="teacherWindow">
           <v-window-item value="profile" class="teacherWindowItem">
@@ -35,7 +46,7 @@
           <v-window-item value="performance" class="performanceWindowItem">
             <ClassPerformance class="performanceWindowItemContent" />
           </v-window-item>
-          <v-window-item value="school" class="teacherWindowItem">
+          <v-window-item value="settings" class="teacherWindowItem">
             <!-- <School /> -->
           </v-window-item>
           <v-window-item value="Onboarding" class="onboardingWindowItem">
@@ -51,12 +62,15 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { useUserProfile } from '@/composables/useUserProfile';
 import Profile from '@/pages/Profile.vue';
 import ClassPerformance from '@/components/ClassPerformance.vue';
 import Onboarding from '@/pages/Onboarding.vue';
 
 const router = useRouter();
 const { authReady, isSignedIn } = useAuth();
+const { isPlatformAdmin, schoolAdminSchoolIds } = useUserProfile();
+const hasSchoolAdmin = computed(() => schoolAdminSchoolIds.value.length > 0);
 const activeTab = ref('profile');
 
 function navigateTo(path) {
@@ -65,8 +79,6 @@ function navigateTo(path) {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .teacherWindowItem {
   padding: 1rem;
   display: flex;
@@ -83,6 +95,19 @@ function navigateTo(path) {
 .teacherPage {
   justify-content: flex-start !important;
   padding-top: 1rem;
+}
+
+.dashLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.dashLink {
+  text-transform: none !important;
+  font-family: var(--font) !important;
 }
 
 .performanceWindowItem {

@@ -13,11 +13,19 @@
                     Join
                 </v-btn>
                 <template v-else>
-                    <v-btn class="viewClassesButton" @click="navigateTo('/Classes')">
+                    <v-btn v-if="!isPlatformAdmin && !hasSchoolAdmin" class="viewClassesButton"
+                        @click="navigateTo('/Classes')">
                         View Classes
                     </v-btn>
                     <v-btn class="profileButton" @click="navigateTo('/Teacher')">
                         Teacher
+                    </v-btn>
+                    <v-btn v-if="isPlatformAdmin" class="adminDashButton" @click="navigateTo('/AdminDashboard')">
+                        Admin dashboard
+                    </v-btn>
+                    <v-btn v-if="hasSchoolAdmin" class="schoolAdminDashButton"
+                        @click="navigateTo('/SchoolAdminDashboard')">
+                        School dashboard
                     </v-btn>
                 </template>
             </template>
@@ -27,15 +35,15 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
 import { computed } from 'vue'
-
+import { useAuth } from '@/composables/useAuth'
+import { useUserProfile } from '@/composables/useUserProfile'
 
 const router = useRouter()
-const { authReady, isSignedIn, user } = useAuth()
+const { authReady, isSignedIn } = useAuth()
+const { isPlatformAdmin, schoolAdminSchoolIds } = useUserProfile()
 
-const userId = computed(() => user.value?.uid)
-console.log(userId.value)
+const hasSchoolAdmin = computed(() => schoolAdminSchoolIds.value.length > 0)
 
 const navigateTo = (path) => {
     router.push(path)
@@ -43,11 +51,23 @@ const navigateTo = (path) => {
 </script>
 
 <style>
-@import '../styles/style.css';
+.adminDashButton {
+    background: linear-gradient(135deg,
+            rgba(138, 43, 226, 0.45) 0%,
+            rgba(75, 0, 130, 0.35) 100%) !important;
+}
+
+.schoolAdminDashButton {
+    background: linear-gradient(135deg,
+            rgba(255, 152, 0, 0.45) 0%,
+            rgba(255, 87, 34, 0.35) 100%) !important;
+}
 
 .viewClassesButton,
 .addClassButton,
 .createAccountButton,
+.adminDashButton,
+.schoolAdminDashButton,
 .profileButton {
     position: relative;
     overflow: hidden;
@@ -77,7 +97,9 @@ const navigateTo = (path) => {
     .viewClassesButton,
     .addClassButton,
     .createAccountButton,
-    .profileButton {
+    .profileButton,
+    .adminDashButton,
+    .schoolAdminDashButton {
         padding: 24px 40px !important;
         font-size: 2rem !important;
         height: 100px !important;
@@ -120,7 +142,9 @@ const navigateTo = (path) => {
     .viewClassesButton:hover,
     .addClassButton:hover,
     .createAccountButton:hover,
-    .profileButton:hover {
+    .profileButton:hover,
+    .adminDashButton:hover,
+    .schoolAdminDashButton:hover {
         transform: scale(1.02) translateY(-6px);
         border-color: rgba(255, 255, 255, 0.35) !important;
         color: var(--white) !important;
@@ -153,7 +177,9 @@ const navigateTo = (path) => {
 .viewClassesButton:active,
 .addClassButton:active,
 .createAccountButton:active,
-.profileButton:active {
+.profileButton:active,
+.adminDashButton:active,
+.schoolAdminDashButton:active {
     transform: scale(0.98) translateY(-2px);
     transition-duration: 0.1s;
 }
@@ -162,7 +188,9 @@ const navigateTo = (path) => {
 .viewClassesButton::after,
 .addClassButton::after,
 .createAccountButton::after,
-.profileButton::after {
+.profileButton::after,
+.adminDashButton::after,
+.schoolAdminDashButton::after {
     content: '';
     position: absolute;
     left: -60%;
@@ -183,7 +211,9 @@ const navigateTo = (path) => {
 .viewClassesButton:hover::after,
 .addClassButton:hover::after,
 .createAccountButton:hover::after,
-.profileButton:hover::after {
+.profileButton:hover::after,
+.adminDashButton:hover::after,
+.schoolAdminDashButton:hover::after {
     transform: skewX(-28deg) translateX(280%);
     transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }

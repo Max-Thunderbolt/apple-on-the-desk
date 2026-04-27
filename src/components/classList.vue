@@ -84,28 +84,8 @@
             </v-btn>
         </div>
 
-        <!-- Context Menu: custom overlay so open/close state stays reliable with dialogs -->
-        <Teleport to="body">
-            <div v-if="isContextMenuOpen" class="contextMenuBackdrop" @click="contextMenu.close()">
-                <div class="contextMenuPopover" :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
-                    @click.stop>
-                    <v-list class="contextMenu">
-                        <v-list-item @click="editStudentName(contextMenuTarget); contextMenu.close()">
-                            <template v-slot:prepend>
-                                <v-icon>mdi-pencil</v-icon>
-                            </template>
-                            <v-list-item-title>Edit Name</v-list-item-title>
-                        </v-list-item>
-                        <v-list-item @click="openConstraintsModal(contextMenuTarget); contextMenu.close()">
-                            <template v-slot:prepend>
-                                <v-icon>mdi-account-multiple-remove</v-icon>
-                            </template>
-                            <v-list-item-title>Manage Pairing Constraints</v-list-item-title>
-                        </v-list-item>
-                    </v-list>
-                </div>
-            </div>
-        </Teleport>
+        <AppContextMenu :open="isContextMenuOpen" :x="contextMenuX" :y="contextMenuY" :min-width="220"
+            :items="contextMenuItems" @close="contextMenu.close()" @select="handleContextMenuAction" />
 
         <award-points-modal v-model:pointsDialogOpen="pointsDialogOpen" v-model:selectedStudents="selectedStudents"
             :all-students="props.students" :class-id="props.classId" :is-for-group="awardPointsIsForGroup"
@@ -129,6 +109,7 @@ import Server from '../services/server';
 import AwardPointsModal from './modals/awardPointsModal.vue';
 import StudentConstraintsModal from './modals/StudentConstraintsModal.vue';
 import ClassGroupView from './ClassGroupView.vue';
+import AppContextMenu from './common/AppContextMenu.vue';
 
 const props = defineProps({
     shopCost: {
@@ -177,6 +158,10 @@ const isContextMenuOpen = computed(() => contextMenu.isOpen.value);
 const contextMenuX = computed(() => contextMenu.x.value);
 const contextMenuY = computed(() => contextMenu.y.value);
 const contextMenuTarget = computed(() => contextMenu.target.value);
+const contextMenuItems = computed(() => ([
+    { key: 'edit-name', label: 'Edit Name', icon: 'mdi-pencil' },
+    { key: 'manage-constraints', label: 'Manage Pairing Constraints', icon: 'mdi-account-multiple-remove' },
+]));
 const shopCostRef = toRef(props, 'shopCost');
 const studentsRef = toRef(props, 'students');
 const isViewingShopRef = toRef(props, 'isViewingShop');
@@ -297,6 +282,18 @@ function openContextMenu(event, student) {
     contextMenu.open(event, student);
 }
 
+function handleContextMenuAction(actionKey) {
+    const student = contextMenuTarget.value;
+    if (!student) return;
+    if (actionKey === 'edit-name') {
+        editStudentName(student);
+        return;
+    }
+    if (actionKey === 'manage-constraints') {
+        openConstraintsModal(student);
+    }
+}
+
 async function editStudentName(student) {
     contextMenu.close();
     if (!student) return;
@@ -344,8 +341,6 @@ function onConstraintsUpdated(updatedStudent) {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .classList {
     width: 100%;
     margin-top: 1rem;
@@ -761,35 +756,4 @@ function onConstraintsUpdated(updatedStudent) {
     cursor: not-allowed;
 }
 
-.contextMenuBackdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-}
-
-.contextMenuPopover {
-    position: fixed;
-    z-index: 2001;
-    min-width: 200px;
-}
-
-.contextMenu {
-    background-color: var(--inkBlack) !important;
-    border: 1px solid var(--white);
-    border-radius: 12px;
-    padding: 0.25rem 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.contextMenu .v-list-item {
-    font-family: var(--font);
-    color: var(--white);
-    min-height: 40px;
-}
-
-@media (hover: hover) {
-    .contextMenu .v-list-item:hover {
-        background-color: var(--seaGreen) !important;
-    }
-}
 </style>

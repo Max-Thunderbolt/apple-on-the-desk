@@ -20,11 +20,14 @@ declare module 'vue-router/auto-routes' {
   export interface RouteNamedMap {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/AddClass': RouteRecordInfo<'/AddClass', '/AddClass', Record<never, never>, Record<never, never>>,
+    '/AdminDashboard': RouteRecordInfo<'/AdminDashboard', '/AdminDashboard', Record<never, never>, Record<never, never>>,
     '/Class/[id]': RouteRecordInfo<'/Class/[id]', '/Class/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
     '/Classes': RouteRecordInfo<'/Classes', '/Classes', Record<never, never>, Record<never, never>>,
+    '/Join/[code]': RouteRecordInfo<'/Join/[code]', '/Join/:code', { code: ParamValue<true> }, { code: ParamValue<false> }>,
     '/Login': RouteRecordInfo<'/Login', '/Login', Record<never, never>, Record<never, never>>,
     '/Onboarding': RouteRecordInfo<'/Onboarding', '/Onboarding', Record<never, never>, Record<never, never>>,
     '/Profile': RouteRecordInfo<'/Profile', '/Profile', Record<never, never>, Record<never, never>>,
+    '/SchoolAdminDashboard': RouteRecordInfo<'/SchoolAdminDashboard', '/SchoolAdminDashboard', Record<never, never>, Record<never, never>>,
     '/Teacher': RouteRecordInfo<'/Teacher', '/Teacher', Record<never, never>, Record<never, never>>,
   }
 
@@ -47,12 +50,20 @@ declare module 'vue-router/auto-routes' {
       routes: '/AddClass'
       views: never
     }
+    'src/pages/AdminDashboard.vue': {
+      routes: '/AdminDashboard'
+      views: never
+    }
     'src/pages/Class/[id].vue': {
       routes: '/Class/[id]'
       views: never
     }
     'src/pages/Classes.vue': {
       routes: '/Classes'
+      views: never
+    }
+    'src/pages/Join/[code].vue': {
+      routes: '/Join/[code]'
       views: never
     }
     'src/pages/Login.vue': {
@@ -65,6 +76,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/Profile.vue': {
       routes: '/Profile'
+      views: never
+    }
+    'src/pages/SchoolAdminDashboard.vue': {
+      routes: '/SchoolAdminDashboard'
       views: never
     }
     'src/pages/Teacher.vue': {

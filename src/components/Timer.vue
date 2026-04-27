@@ -148,8 +148,6 @@ onUnmounted(() => {
 </script>
 
 <style>
-@import '../styles/style.css';
-
 .timer {
     display: flex;
     flex-direction: column;

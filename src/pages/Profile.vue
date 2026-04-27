@@ -116,8 +116,6 @@ function navigateTo(path) {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .profileRoot {
   min-height: 100vh;
   display: flex;

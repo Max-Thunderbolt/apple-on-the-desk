@@ -128,8 +128,6 @@ function calcCost(selectedIdSet) {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .shopPageContainer {
     justify-content: flex-start !important;
     padding-top: 1rem;

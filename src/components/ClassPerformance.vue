@@ -335,8 +335,6 @@ loadClassList();
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .classPerformance {
   width: 100%;
   font-family: var(--font);

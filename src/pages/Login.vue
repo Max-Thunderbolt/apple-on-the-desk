@@ -39,19 +39,27 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useOnboarding } from '@/composables/useOnboarding'
 import { toast } from 'vue-sonner'
 import server from '@/services/server'
+import { applyUserProfilePayload } from '@/composables/useUserProfile'
 
 const router = useRouter()
+const route = useRoute()
 const { signInWithEmail, registerWithEmail, signInWithGoogle } = useAuth()
 const { reset, loadOnboarding, needsOnboarding } = useOnboarding()
 
 async function postLoginRedirect() {
   try {
-    await server.upsertUser()
+    const profile = await server.upsertUser()
+    applyUserProfilePayload(profile)
+    const redirectTarget = typeof route.query.redirect === 'string' ? route.query.redirect : null
+    if (redirectTarget && redirectTarget.startsWith('/')) {
+      router.push(redirectTarget)
+      return
+    }
     reset()
     await loadOnboarding()
     if (needsOnboarding.value) {
@@ -131,8 +139,6 @@ function navigateTo(path) {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .formCard {
   width: 100%;
   max-width: min(420px, 90vw);

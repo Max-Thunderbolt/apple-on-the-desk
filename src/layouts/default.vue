@@ -3,7 +3,7 @@
     <router-view />
   </v-main>
   <HelpButton :className="effectiveClassName" :classId="effectiveClassId"
-    v-if="!['/Teacher', '/Onboarding', '/Login', '/Register'].includes(route.path)" />
+    v-if="!['/Teacher', '/Onboarding', '/Login', '/Register', '/AdminDashboard', '/SchoolAdminDashboard'].includes(route.path)" />
   <AppFooter />
 </template>
 
