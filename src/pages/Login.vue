@@ -139,8 +139,6 @@ function navigateTo(path) {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .formCard {
   width: 100%;
   max-width: min(420px, 90vw);

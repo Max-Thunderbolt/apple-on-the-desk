@@ -3,7 +3,7 @@
         <h1 class="pageTitle">{{ isEdit ? 'Edit class' : 'Add a Class' }}</h1>
 
         <div class="addClassForm">
-            <div v-if="!isEdit && schoolAdminSchools.length" class="formGroup">
+            <!-- <div v-if="!isEdit && schoolAdminSchools.length" class="formGroup">
                 <label class="formLabel">Create as</label>
                 <v-radio-group v-model="schoolAdminCreateMode" inline density="compact" hide-details class="radioRow">
                     <v-radio label="School class (assign teacher)" value="assign" color="primary" />
@@ -18,16 +18,19 @@
             </div>
             <div v-if="isSchoolAdminCreate" class="formGroup">
                 <label class="formLabel">Teacher</label>
-                <v-select v-model="assignTeacherUserId" :items="teacherSelectItems" item-title="label" item-value="userId"
-                    density="comfortable" variant="outlined" hide-details class="rbacSelect" :disabled="!schoolAdminSchoolId"
-                    placeholder="Select teacher" />
+                <v-select v-model="assignTeacherUserId" :items="teacherSelectItems" item-title="label"
+                    item-value="userId" density="comfortable" variant="outlined" hide-details class="rbacSelect"
+                    :disabled="!schoolAdminSchoolId" placeholder="Select teacher" />
             </div>
             <div v-else-if="!isEdit && teacherSchools.length" class="formGroup">
-                <label class="formLabel">School (optional)</label>
+                <label class="formLabel">School</label>
                 <v-select v-model="teacherOptionalSchoolId" :items="teacherSchoolItems" item-title="schoolName"
-                    item-value="schoolId" clearable density="comfortable" variant="outlined" hide-details
-                    class="rbacSelect" placeholder="Personal class (no school)" />
+                    item-value="schoolId" density="comfortable" variant="outlined" hide-details class="rbacSelect"
+                    placeholder="Select school" />
             </div>
+            <p v-else-if="!isEdit" class="formError">
+                You must belong to a school before creating classes.
+            </p> -->
             <div class="formGroup">
                 <label class="formLabel">Class name</label>
                 <input v-model="className" type="text" class="formInput" placeholder="e.g. 4T" maxlength="120" />
@@ -122,6 +125,13 @@ watch(() => props.classData, (newClassData) => {
     }
 }, { immediate: true, deep: true });
 
+watch(teacherSchoolItems, (schools) => {
+    if (isEdit.value) return;
+    if (!teacherOptionalSchoolId.value && schools.length) {
+        teacherOptionalSchoolId.value = schools[0].schoolId;
+    }
+}, { immediate: true });
+
 const canSubmit = computed(() => {
     const name = className.value?.trim();
     const noDuplicates = duplicateStudentNames.value.length === 0;
@@ -130,7 +140,7 @@ const canSubmit = computed(() => {
     if (isSchoolAdminCreate.value) {
         return !!(schoolAdminSchoolId.value && assignTeacherUserId.value);
     }
-    return true;
+    return !!teacherOptionalSchoolId.value;
 });
 
 function parseStudents() {
@@ -186,7 +196,7 @@ async function submit() {
     if (!isEdit.value && isSchoolAdminCreate.value) {
         payload.schoolId = schoolAdminSchoolId.value;
         payload.userId = assignTeacherUserId.value;
-    } else if (!isEdit.value && teacherOptionalSchoolId.value) {
+    } else if (!isEdit.value) {
         payload.schoolId = teacherOptionalSchoolId.value;
     }
     try {
@@ -293,6 +303,7 @@ async function submit() {
 }
 
 @media (hover: hover) {
+
     .formInput:hover,
     .formTextarea:hover {
         border-color: rgba(255, 255, 255, 0.3);

@@ -120,8 +120,6 @@ function onSearchInput() {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .controlsBar {
     display: inline-flex;
     align-items: center;

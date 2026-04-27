@@ -338,12 +338,23 @@ class Server {
         }
     }
 
+    async searchAdminUsers(q) {
+        try {
+            const response = await this.http.get('/admin/users/search', { params: { q } })
+            return response.data
+        } catch (error) {
+            console.error('Error searching users:', error)
+            throw error
+        }
+    }
+
     async createAdminSchoolJoinCode(schoolId, role) {
         try {
             const response = await this.http.post(
                 `/admin/schools/${encodeURIComponent(schoolId)}/join-codes`,
                 { role }
             )
+            console.log('response', response.data);
             return response.data
         } catch (error) {
             console.error('Error creating school join code:', error)
@@ -367,9 +378,33 @@ class Server {
                 `/schools/${encodeURIComponent(schoolId)}/join-codes`,
                 { role }
             )
+            console.log('response', response.data);
             return response.data
         } catch (error) {
             console.error('Error creating school join code:', error)
+            throw error
+        }
+    }
+
+    async addSchoolMember(schoolId, body) {
+        try {
+            const response = await this.http.post(`/schools/${encodeURIComponent(schoolId)}/members`, body)
+            return response.data
+        } catch (error) {
+            console.error('Error adding school member:', error)
+            throw error
+        }
+    }
+
+    async searchSchoolUsers(schoolId, q) {
+        try {
+            const response = await this.http.get(
+                `/schools/${encodeURIComponent(schoolId)}/users/search`,
+                { params: { q } }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error searching school users:', error)
             throw error
         }
     }
@@ -393,6 +428,18 @@ class Server {
             return response.data
         } catch (error) {
             console.error('Error loading teachers:', error)
+            throw error
+        }
+    }
+
+    async removeSchoolTeacher(schoolId, teacherUserId) {
+        try {
+            const response = await this.http.delete(
+                `/schools/${encodeURIComponent(schoolId)}/teachers/${encodeURIComponent(teacherUserId)}`
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error removing school teacher:', error)
             throw error
         }
     }

@@ -4,9 +4,11 @@
             <v-icon>mdi-chevron-right</v-icon>
         </template>
     </v-breadcrumbs>
-    <div v-if="dataLoading" class="dataLoading">
-        <v-progress-circular indeterminate color="primary" size="64" width="6" />
-        <span class="dataLoadingText">Loading class...</span>
+    <div v-if="dataLoading" class="container dataLoadingPage">
+        <div class="dataLoading">
+            <v-progress-circular indeterminate color="primary" size="64" width="6" />
+            <span class="dataLoadingText">Loading class...</span>
+        </div>
     </div>
     <div v-else class="container" style="justify-content: flex-start !important;">
         <!-- ROYAL RANK HEADER -->
@@ -66,20 +68,8 @@
     <grouper-modal v-model="grouperModalOpen" :class-id="id" :students="classData?.students || []"
         @groupsUpdated="onGroupsUpdated" />
 
-    <v-menu v-model="shopItemContextMenuOpen"
-        :style="{ position: 'fixed', left: shopItemContextMenuX + 'px', top: shopItemContextMenuY + 'px' }"
-        :location="undefined" :attach="false" class="shopItemContextMenu">
-        <v-list class="shopContextMenuList">
-            <v-list-item @click="openEditShopItemModal">
-                <template v-slot:prepend><v-icon size="small">mdi-pencil</v-icon></template>
-                <v-list-item-title>Edit</v-list-item-title>
-            </v-list-item>
-            <v-list-item @click="deleteShopItemFromMenu">
-                <template v-slot:prepend><v-icon size="small">mdi-delete</v-icon></template>
-                <v-list-item-title>Delete</v-list-item-title>
-            </v-list-item>
-        </v-list>
-    </v-menu>
+    <AppContextMenu :open="isShopItemContextMenuOpen" :x="shopItemContextMenuX" :y="shopItemContextMenuY"
+        :items="shopItemContextMenuItems" @close="closeShopItemContextMenu" @select="onShopItemContextSelect" />
     <CreateItemModal v-model="createShopItemModalOpen" type="shopItem" :editing-item="shopItemToEdit"
         @saved="onShopItemSaved" />
 </template>
@@ -88,10 +78,12 @@
 import { ref, onMounted, onUnmounted, computed, defineEmits, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useActiveClass } from '../../composables/useActiveClass';
+import { useContextMenu } from '../../composables/useContextMenu';
 import Timer from '../../components/Timer.vue';
 import ClassList from '../../components/classList.vue';
 import Shop from '../../components/Shop.vue';
 import Controls from '../../components/controls.vue';
+import AppContextMenu from '../../components/common/AppContextMenu.vue';
 import Server from '../../services/server';
 import { toast } from 'vue-sonner';
 import { experienceToRank, getExperience } from '../../composables/useExperience';
@@ -115,10 +107,7 @@ const searchQuery = ref('');
 const viewMode = ref('list');
 const createShopItemModalOpen = ref(false);
 const shopItemToEdit = ref(null);
-const shopItemContextMenuOpen = ref(false);
-const shopItemContextMenuX = ref(0);
-const shopItemContextMenuY = ref(0);
-const shopItemContextTarget = ref(null);
+const shopItemContextMenu = useContextMenu();
 const dataLoading = ref(true);
 let breadcrumbs = computed(() => [
     { title: 'Teacher', to: '/Teacher' },
@@ -170,6 +159,14 @@ const progressToNextRank = computed(() => {
 const hasGroups = computed(() => classData.value?.students?.some((s) => s.group) ?? false);
 const hasExistingGroups = computed(() => hasGroups.value);
 const hasStudents = computed(() => (classData.value?.students?.length ?? 0) > 0);
+const isShopItemContextMenuOpen = computed(() => shopItemContextMenu.isOpen.value);
+const shopItemContextMenuX = computed(() => shopItemContextMenu.x.value);
+const shopItemContextMenuY = computed(() => shopItemContextMenu.y.value);
+const shopItemContextTarget = computed(() => shopItemContextMenu.target.value);
+const shopItemContextMenuItems = computed(() => ([
+    { key: 'edit-shop-item', label: 'Edit', icon: 'mdi-pencil' },
+    { key: 'delete-shop-item', label: 'Delete', icon: 'mdi-delete', danger: true },
+]));
 
 watch(hasGroups, (newVal) => {
     if (newVal && viewMode.value === 'list') viewMode.value = 'groups';
@@ -326,25 +323,34 @@ function openCreateShopItemModal() {
 }
 
 function openShopItemContextMenu(e, item) {
-    shopItemContextTarget.value = item;
-    shopItemContextMenuX.value = e.clientX;
-    shopItemContextMenuY.value = e.clientY;
-    shopItemContextMenuOpen.value = true;
+    shopItemContextMenu.open(e, item);
+}
+
+function closeShopItemContextMenu() {
+    shopItemContextMenu.close();
+}
+
+function onShopItemContextSelect(actionKey) {
+    if (actionKey === 'edit-shop-item') {
+        openEditShopItemModal();
+        return;
+    }
+    if (actionKey === 'delete-shop-item') {
+        deleteShopItemFromMenu();
+    }
 }
 
 function openEditShopItemModal() {
     if (shopItemContextTarget.value) {
         shopItemToEdit.value = shopItemContextTarget.value;
-        shopItemContextMenuOpen.value = false;
+        closeShopItemContextMenu();
         createShopItemModalOpen.value = true;
     }
-    shopItemContextTarget.value = null;
 }
 
 async function deleteShopItemFromMenu() {
     const item = shopItemContextTarget.value;
-    shopItemContextMenuOpen.value = false;
-    shopItemContextTarget.value = null;
+    closeShopItemContextMenu();
     if (!item) return;
     const itemId = item._id != null ? String(item._id) : item.id;
     if (!itemId) return;
@@ -374,7 +380,10 @@ function handleCreateGroups() {
 </script>
 
 <style>
-@import '../../styles/style.css';
+
+.dataLoadingPage {
+    justify-content: flex-start !important;
+}
 
 .dataLoading {
     display: flex;
@@ -963,23 +972,4 @@ function handleCreateGroups() {
     filter: brightness(1.1);
 }
 
-.shopContextMenuList {
-    background-color: var(--inkBlack) !important;
-    border: 1px solid var(--white);
-    border-radius: 12px;
-    padding: 0.25rem 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.shopContextMenuList .v-list-item {
-    font-family: var(--font);
-    color: var(--white);
-    min-height: 40px;
-}
-
-@media (hover: hover) {
-    .shopContextMenuList .v-list-item:hover {
-        background-color: var(--seaGreen) !important;
-    }
-}
 </style>

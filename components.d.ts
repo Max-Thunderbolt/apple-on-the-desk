@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppContextMenu: typeof import('./src/components/common/AppContextMenu.vue')['default']
     AppFooter: typeof import('./src/components/AppFooter.vue')['default']
     AwardPointsModal: typeof import('./src/components/modals/awardPointsModal.vue')['default']
     CategoryRenderer: typeof import('./src/components/tutorials/CategoryRenderer.vue')['default']

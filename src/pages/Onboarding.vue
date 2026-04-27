@@ -315,8 +315,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .onboardingPage {
   justify-content: flex-start !important;
   padding-top: 1rem;

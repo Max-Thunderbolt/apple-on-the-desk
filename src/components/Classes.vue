@@ -7,7 +7,8 @@
         </template>
     </v-breadcrumbs>
     <div class="container" style="justify-content: flex-start !important;">
-        <div class="title">My Classes <v-btn class="addClassButton_Classes" @click="openAddClassModal">
+        <div class="title">My Classes <v-btn class="addClassButton_Classes" :disabled="!canCreateClass"
+                @click="openAddClassModal">
                 <v-icon>mdi-plus</v-icon>
             </v-btn>
         </div>
@@ -16,6 +17,9 @@
             <span class="classesLoadingText">Loading classes...</span>
         </div>
         <div v-else class="classContainer">
+            <div v-if="!canCreateClass" class="classCreateHint">
+                Join a school as a teacher to create classes.
+            </div>
             <div v-if="classes.length === 0">
                 <div class="emptyState" style="text-align: center; font-family: var(--font); font-size: 1.5rem;">
                     No classes yet! Let's create one by clicking the + button above.
@@ -80,9 +84,10 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useClasses } from '../composables/useClasses';
 import { experienceToRank } from '../composables/useExperience';
+import { useUserProfile } from '@/composables/useUserProfile';
 import ClassForm from './modals/ClassForm.vue';
 
 const { classes, loadClasses, getClassById, deleteClass } = useClasses();
@@ -94,6 +99,8 @@ const editClassModal = ref(false);
 const addClassModal = ref(false);
 const classToEdit = ref(null);
 const classesLoading = ref(true);
+const { teacherSchools } = useUserProfile();
+const canCreateClass = computed(() => teacherSchools.value.length > 0);
 
 const CARD_COLOURS = [
     '#493657ff',
@@ -171,6 +178,7 @@ function onEditSaved() {
 }
 
 function openAddClassModal() {
+    if (!canCreateClass.value) return;
     addClassModal.value = true;
 }
 
@@ -201,8 +209,6 @@ const navigateTo = (path) => {
 </script>
 
 <style>
-@import '../styles/style.css';
-
 .classesLoading {
     display: flex;
     flex-direction: column;
@@ -373,6 +379,19 @@ const navigateTo = (path) => {
     cursor: pointer !important;
     height: 50px !important;
     width: 30px !important;
+}
+
+.addClassButton_Classes:disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+}
+
+.classCreateHint {
+    width: 100%;
+    text-align: center;
+    font-family: var(--font);
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 0.5rem;
 }
 
 .editClassModalCard,

@@ -23,18 +23,21 @@
           <span class="titleAccent">Teacher</span>
         </div>
         <div v-if="isPlatformAdmin || hasSchoolAdmin" class="dashLinks">
-          <v-btn v-if="isPlatformAdmin" size="small" variant="tonal" class="dashLink" @click="navigateTo('/AdminDashboard')">
+          <v-btn v-if="isPlatformAdmin" size="small" variant="tonal" class="dashLink"
+            @click="navigateTo('/AdminDashboard')">
             Admin dashboard
           </v-btn>
-          <v-btn v-if="hasSchoolAdmin" size="small" variant="tonal" class="dashLink" @click="navigateTo('/SchoolAdminDashboard')">
+          <v-btn v-if="hasSchoolAdmin" size="small" variant="tonal" class="dashLink"
+            @click="navigateTo('/SchoolAdminDashboard')">
             School dashboard
           </v-btn>
         </div>
         <v-tabs v-model="activeTab" class="teacherTabs" bg-color="transparent" grow>
           <v-tab value="profile" class="teacherTab">Profile</v-tab>
-          <v-tab value="performance" class="teacherTab">Class Performance</v-tab>
-          <v-tab value="settings" class="teacherTab">School</v-tab>
-          <v-tab value="Onboarding" class="teacherTab">Tutorials</v-tab>
+          <v-tab v-if="!hasSchoolAdmin || !isPlatformAdmin" value="performance" class="teacherTab">Class
+            Performance</v-tab>
+          <v-tab v-if="!hasSchoolAdmin || !isPlatformAdmin" value="settings" class="teacherTab">School</v-tab>
+          <v-tab v-if="!hasSchoolAdmin || !isPlatformAdmin" value="Onboarding" class="teacherTab">Tutorials</v-tab>
         </v-tabs>
         <v-window v-model="activeTab" class="teacherWindow">
           <v-window-item value="profile" class="teacherWindowItem">
@@ -76,8 +79,6 @@ function navigateTo(path) {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .teacherWindowItem {
   padding: 1rem;
   display: flex;

@@ -1,19 +1,6 @@
 <template>
   <div class="container adminPage">
     <div class="adminShell">
-      <v-breadcrumbs
-        density="compact"
-        :items="[
-          { title: 'Home', to: '/' },
-          { title: 'Admin', to: '/AdminDashboard' },
-        ]"
-        class="breadcrumbs adminBreadcrumbs"
-      >
-        <template #divider>
-          <v-icon size="18" class="crumbIcon">mdi-chevron-right</v-icon>
-        </template>
-      </v-breadcrumbs>
-
       <header class="adminHeader">
         <div class="adminHeaderLeft">
           <p class="adminEyebrow">Platform administration</p>
@@ -30,39 +17,24 @@
             <span>R60 × student × school × term</span>
           </div>
           <div class="termSelector">
-            <v-select
-              v-model="term"
-              :items="termItems"
-              density="compact"
-              hide-details
-              variant="outlined"
-              class="glassField termField"
-            />
-            <v-text-field
-              v-model.number="year"
-              type="number"
-              density="compact"
-              hide-details
-              variant="outlined"
-              class="glassField yearField"
-            />
-            <v-btn
-              class="refreshBtn"
-              size="small"
-              :loading="overviewLoading"
-              icon="mdi-refresh"
-              variant="flat"
-              @click="loadOverview"
-            />
+            <v-select v-model="term" :items="termItems" density="compact" hide-details variant="outlined"
+              class="glassField termField" label="Term" rounded="lg"
+              :menu-props="{ contentClass: 'dashboardSelectMenu' }" />
+            <v-text-field v-model.number="year" label="Year" type="number" variant="outlined" density="compact"
+              rounded="lg" hide-details class="glassField yearField" :clearable="false" />
+            <v-btn class="refreshBtn" size="small" :loading="overviewLoading" icon="mdi-refresh" variant="flat"
+              @click="loadOverview" />
           </div>
         </div>
       </header>
 
-      <v-alert v-if="loadError" type="error" variant="tonal" class="adminAlert" rounded="lg" closable @click:close="loadError = ''">
+      <v-alert v-if="loadError" type="error" variant="tonal" class="adminAlert" rounded="lg" closable
+        @click:close="loadError = ''">
         {{ loadError }}
       </v-alert>
 
-      <v-alert v-if="successMsg" type="success" variant="tonal" class="adminAlert" rounded="lg" closable @click:close="successMsg = ''">
+      <v-alert v-if="successMsg" type="success" variant="tonal" class="adminAlert" rounded="lg" closable
+        @click:close="successMsg = ''">
         {{ successMsg }}
       </v-alert>
 
@@ -129,17 +101,11 @@
               <v-icon size="22" color="rgba(0,168,232,0.9)">mdi-plus-circle-outline</v-icon>
               <h3 class="actionTitle">Create school</h3>
             </div>
-            <p class="actionDesc">Add a new school to the platform. Assign members and generate invite links after creation.</p>
+            <p class="actionDesc">Add a new school to the platform. Assign members and generate invite links after
+              creation.</p>
             <div class="actionRow">
-              <v-text-field
-                v-model="newSchoolName"
-                placeholder="e.g. Riverside Primary"
-                density="compact"
-                hide-details
-                variant="outlined"
-                class="glassField actionInput"
-                @keyup.enter="createSchool"
-              />
+              <v-text-field v-model="newSchoolName" placeholder="e.g. Riverside Primary" density="compact" hide-details
+                variant="outlined" class="glassField actionInput" @keyup.enter="createSchool" />
               <v-btn class="actionBtn actionBtn--create" :loading="creatingSchool" @click="createSchool">
                 Create
               </v-btn>
@@ -152,36 +118,28 @@
               <v-icon size="22" color="rgba(26,147,111,0.9)">mdi-account-plus-outline</v-icon>
               <h3 class="actionTitle">Add member</h3>
             </div>
-            <p class="actionDesc">Assign a user to a school by email or Firebase UID.</p>
+            <p class="actionDesc">Search and assign an existing account to a school.</p>
             <div class="actionFields">
-              <v-select
-                v-model="memberSchoolId"
-                :items="schoolSelectItems"
-                item-title="title"
-                item-value="value"
-                placeholder="Select school"
-                density="compact"
-                hide-details
-                variant="outlined"
-                class="glassField"
-              />
-              <v-text-field
-                v-model="memberEmail"
-                placeholder="teacher@school.org"
-                density="compact"
-                hide-details
-                variant="outlined"
-                class="glassField"
-              />
+              <v-select v-model="memberSchoolId" :items="schoolSelectItems" item-title="title" item-value="value"
+                placeholder="Select school" density="compact" hide-details variant="outlined" class="glassField"
+                :menu-props="{ contentClass: 'dashboardSelectMenu' }" />
+              <v-autocomplete v-model="memberUserId" v-model:search="memberSearchQuery" :items="memberSearchResults"
+                item-title="label" item-value="userId" placeholder="Search user by name, email, or UID"
+                density="compact" hide-details variant="outlined" class="glassField userLookupField" no-filter
+                :loading="memberSearchLoading" :disabled="!memberSchoolId" clearable
+                :menu-props="{ contentClass: 'dashboardSelectMenu' }">
+                <template #prepend-inner>
+                  <v-progress-circular v-if="memberSearchLoading" indeterminate size="16" width="2" color="primary" />
+                  <v-icon v-else size="16">mdi-account-search-outline</v-icon>
+                </template>
+                <template #item="{ props, item }">
+                  <v-list-item v-bind="props" :title="item.raw.name || 'Unnamed user'"
+                    :subtitle="item.raw.email || item.raw.userId" />
+                </template>
+              </v-autocomplete>
               <div class="actionRowInline">
-                <v-select
-                  v-model="memberRole"
-                  :items="roleItems"
-                  density="compact"
-                  hide-details
-                  variant="outlined"
-                  class="glassField roleSelect"
-                />
+                <v-select v-model="memberRole" :items="roleItems" density="compact" hide-details variant="outlined"
+                  class="glassField roleSelect" :menu-props="{ contentClass: 'dashboardSelectMenu' }" />
                 <v-btn class="actionBtn actionBtn--member" :loading="addingMember" @click="addMember">
                   Add
                 </v-btn>
@@ -197,27 +155,13 @@
             </div>
             <p class="actionDesc">Generate role-specific join links. Anyone signed in can join using the link.</p>
             <div class="inviteBody">
-              <v-select
-                v-model="inviteSchoolId"
-                :items="schoolSelectItems"
-                item-title="title"
-                item-value="value"
-                placeholder="Select school"
-                density="compact"
-                hide-details
-                variant="outlined"
-                class="glassField inviteSchoolSelect"
-              />
+              <v-select v-model="inviteSchoolId" :items="schoolSelectItems" item-title="title" item-value="value"
+                placeholder="Select school" density="compact" hide-details variant="outlined"
+                class="glassField inviteSchoolSelect" :menu-props="{ contentClass: 'dashboardSelectMenu' }" />
               <div class="inviteLinkGroup">
                 <div class="inviteLinkRow">
-                  <v-btn
-                    class="actionBtn actionBtn--invite"
-                    size="small"
-                    :loading="creatingTeacherJoinCode"
-                    :disabled="!inviteSchoolId"
-                    prepend-icon="mdi-account-school"
-                    @click="generateJoinCode('teacher')"
-                  >
+                  <v-btn class="actionBtn actionBtn--invite" size="small" :loading="creatingTeacherJoinCode"
+                    :disabled="!inviteSchoolId" prepend-icon="mdi-account-school" @click="generateJoinCode('teacher')">
                     Teacher link
                   </v-btn>
                   <div v-if="teacherJoinUrl" class="linkCopy">
@@ -226,19 +170,15 @@
                   </div>
                 </div>
                 <div class="inviteLinkRow">
-                  <v-btn
-                    class="actionBtn actionBtn--invite"
-                    size="small"
-                    :loading="creatingSchoolAdminJoinCode"
-                    :disabled="!inviteSchoolId"
-                    prepend-icon="mdi-shield-account"
-                    @click="generateJoinCode('schoolAdmin')"
-                  >
+                  <v-btn class="actionBtn actionBtn--invite" size="small" :loading="creatingSchoolAdminJoinCode"
+                    :disabled="!inviteSchoolId" prepend-icon="mdi-shield-account"
+                    @click="generateJoinCode('schoolAdmin')">
                     Admin link
                   </v-btn>
                   <div v-if="schoolAdminJoinUrl" class="linkCopy">
                     <code class="linkText">{{ schoolAdminJoinUrl }}</code>
-                    <v-btn icon="mdi-content-copy" size="x-small" variant="text" @click="copyLink(schoolAdminJoinUrl)" />
+                    <v-btn icon="mdi-content-copy" size="x-small" variant="text"
+                      @click="copyLink(schoolAdminJoinUrl)" />
                   </div>
                 </div>
               </div>
@@ -273,7 +213,8 @@
                   <tr class="schoolRow" @click="toggleSchoolExpand(row.schoolId)">
                     <td>
                       <div class="schoolNameCell">
-                        <v-icon size="18" class="expandIcon" :class="{ 'expandIcon--open': expandedSchool === row.schoolId }">
+                        <v-icon size="18" class="expandIcon"
+                          :class="{ 'expandIcon--open': expandedSchool === row.schoolId }">
                           mdi-chevron-right
                         </v-icon>
                         <div>
@@ -287,7 +228,8 @@
                     <td class="num">{{ formatInt(row.studentCount) }}</td>
                     <td class="num costCell">{{ formatZAR(row.costZAR) }}</td>
                     <td class="num">
-                      <v-btn icon="mdi-open-in-new" size="x-small" variant="text" @click.stop="viewSchoolMembers(row.schoolId)" />
+                      <v-btn icon="mdi-open-in-new" size="x-small" variant="text"
+                        @click.stop="viewSchoolMembers(row.schoolId)" />
                     </td>
                   </tr>
                   <tr v-if="expandedSchool === row.schoolId" class="expandRow">
@@ -300,10 +242,12 @@
                           <h4 class="expandSubtitle">Members ({{ schoolMembers.members?.length ?? 0 }})</h4>
                           <div v-if="schoolMembers.members?.length" class="memberChips">
                             <div v-for="m in schoolMembers.members" :key="m.userId" class="memberChip" :class="m.role">
-                              <v-icon size="14">{{ m.role === 'schoolAdmin' ? 'mdi-shield-account' : 'mdi-account' }}</v-icon>
+                              <v-icon size="14">{{ m.role === 'schoolAdmin' ? 'mdi-shield-account' : 'mdi-account'
+                                }}</v-icon>
                               <span class="memberName">{{ m.name || m.email || m.userId.slice(0, 8) }}</span>
                               <span class="memberRole">{{ m.role === 'schoolAdmin' ? 'Admin' : 'Teacher' }}</span>
-                              <span v-if="m.classCount" class="memberStat">{{ m.classCount }} classes · {{ m.studentCount }} students</span>
+                              <span v-if="m.classCount" class="memberStat">{{ m.classCount }} classes · {{
+                                m.studentCount }} students</span>
                             </div>
                           </div>
                           <p v-else class="expandEmpty">No members yet</p>
@@ -345,7 +289,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -385,9 +329,13 @@ const newSchoolName = ref('')
 const creatingSchool = ref(false)
 
 const memberSchoolId = ref('')
-const memberEmail = ref('')
+const memberUserId = ref('')
 const memberRole = ref('teacher')
 const addingMember = ref(false)
+const memberSearchQuery = ref('')
+const memberSearchLoading = ref(false)
+const memberSearchResults = ref([])
+let memberSearchRequestId = 0
 
 const inviteSchoolId = ref('')
 const teacherJoinUrl = ref('')
@@ -604,21 +552,48 @@ async function createSchool() {
 
 async function addMember() {
   if (!memberSchoolId.value) { loadError.value = 'Select a school'; return }
-  const body = { role: memberRole.value }
-  if (memberEmail.value?.trim()) body.email = memberEmail.value.trim()
-  else { loadError.value = 'Enter an email address'; return }
+  if (!memberUserId.value) { loadError.value = 'Select a user account'; return }
+  const body = { role: memberRole.value, userId: memberUserId.value }
   addingMember.value = true
   loadError.value = ''
   try {
     await Server.addAdminSchoolMember(memberSchoolId.value, body)
     successMsg.value = `Member added as ${memberRole.value}`
-    memberEmail.value = ''
+    memberUserId.value = ''
+    memberSearchQuery.value = ''
+    memberSearchResults.value = []
   } catch (e) {
     loadError.value = e.response?.data?.message || e.message || 'Failed to add member'
   } finally {
     addingMember.value = false
   }
 }
+
+watch(memberSearchQuery, async (raw) => {
+  const q = raw?.trim() || ''
+  if (q.length < 2) {
+    memberSearchResults.value = []
+    memberSearchLoading.value = false
+    return
+  }
+  const requestId = ++memberSearchRequestId
+  memberSearchLoading.value = true
+  try {
+    const data = await Server.searchAdminUsers(q)
+    if (requestId !== memberSearchRequestId) return
+    memberSearchResults.value = (data.users || []).map((u) => ({
+      ...u,
+      label: `${u.name || 'Unnamed user'} - ${u.email || u.userId}`,
+    }))
+  } catch (e) {
+    if (requestId !== memberSearchRequestId) return
+    loadError.value = e.response?.data?.message || e.message || 'Failed to search users'
+  } finally {
+    if (requestId === memberSearchRequestId) {
+      memberSearchLoading.value = false
+    }
+  }
+})
 
 async function generateJoinCode(role) {
   if (!inviteSchoolId.value) { loadError.value = 'Select a school first'; return }
@@ -680,25 +655,35 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
-
 .adminPage {
   align-items: flex-start;
   justify-content: flex-start;
   padding-top: 1rem;
   padding-bottom: 3rem;
 }
+
 .adminShell {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem 2rem;
 }
+
 @media (min-width: 768px) {
-  .adminShell { padding: 0 1.5rem 3rem; }
+  .adminShell {
+    padding: 0 1.5rem 3rem;
+  }
 }
-.adminBreadcrumbs :deep(.v-breadcrumbs-item) { font-size: 0.8125rem; font-weight: 500; opacity: 0.85; }
-.crumbIcon { opacity: 0.5; }
+
+.adminBreadcrumbs :deep(.v-breadcrumbs-item) {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.crumbIcon {
+  opacity: 0.5;
+}
 
 /* Header */
 .adminHeader {
@@ -709,17 +694,19 @@ onMounted(() => {
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
+
 .adminEyebrow {
   font-family: var(--font);
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   margin: 0 0 0.4rem;
 }
+
 .adminTitle {
   font-family: var(--font);
   font-weight: 600;
@@ -728,19 +715,22 @@ onMounted(() => {
   color: var(--white);
   margin: 0 0 0.5rem;
 }
+
 .adminSubtitle {
   font-family: var(--font);
   font-size: 0.95rem;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
   margin: 0;
   max-width: 36rem;
 }
+
 .headerActions {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   align-items: flex-end;
 }
+
 .billingChip {
   display: inline-flex;
   align-items: center;
@@ -749,21 +739,39 @@ onMounted(() => {
   border-radius: 999px;
   font-family: var(--font);
   font-size: 0.75rem;
-  color: rgba(255,255,255,0.7);
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.chipIcon { opacity: 0.6; }
+
+.chipIcon {
+  opacity: 0.6;
+}
+
 .termSelector {
   display: flex;
   gap: 0.5rem;
   align-items: center;
 }
-.termField { max-width: 160px; }
-.yearField { max-width: 90px; }
 
-.adminAlert { margin-bottom: 1rem; font-family: var(--font); }
-.loadingWrap { display: flex; justify-content: center; padding: 3rem; }
+.termField {
+  max-width: 160px;
+}
+
+.yearField {
+  max-width: 90px;
+}
+
+.adminAlert {
+  margin-bottom: 1rem;
+  font-family: var(--font);
+}
+
+.loadingWrap {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
 
 /* KPI */
 .kpiGrid {
@@ -772,8 +780,18 @@ onMounted(() => {
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
-@media (min-width: 640px) { .kpiGrid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1100px) { .kpiGrid { grid-template-columns: repeat(6, 1fr); } }
+
+@media (min-width: 640px) {
+  .kpiGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .kpiGrid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
 
 .kpiCard {
   display: flex;
@@ -781,21 +799,19 @@ onMounted(() => {
   gap: 0.75rem;
   padding: 1rem;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.05);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: border-color 0.2s, transform 0.2s;
 }
+
 @media (hover: hover) {
-  .kpiCard:hover { border-color: rgba(255,255,255,0.18); transform: translateY(-2px); }
+  .kpiCard:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+    transform: translateY(-2px);
+  }
 }
-.kpiCard--schools { border-left: 3px solid rgba(0,168,232,0.7); }
-.kpiCard--teachers { border-left: 3px solid rgba(197,40,61,0.7); }
-.kpiCard--classes { border-left: 3px solid rgba(26,147,111,0.7); }
-.kpiCard--students { border-left: 3px solid rgba(168,51,185,0.7); }
-.kpiCard--cost { border-left: 3px solid rgba(247,183,7,0.8); }
-.kpiCard--yearly { border-left: 3px solid rgba(26,147,111,0.8); }
 
 .kpiIconWrap {
   display: flex;
@@ -806,15 +822,23 @@ onMounted(() => {
   border-radius: 12px;
   flex-shrink: 0;
 }
-.kpiBody { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+
+.kpiBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
 .kpiLabel {
   font-family: var(--font);
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
 }
+
 .kpiValue {
   font-family: var(--font);
   font-size: 1.5rem;
@@ -823,11 +847,15 @@ onMounted(() => {
   color: var(--white);
   font-variant-numeric: tabular-nums;
 }
-.kpiValue--money { font-size: 1.2rem; }
+
+.kpiValue--money {
+  font-size: 1.2rem;
+}
+
 .kpiMeta {
   font-family: var(--font);
   font-size: 0.7rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.35);
   margin-top: 0.1rem;
 }
 
@@ -838,40 +866,61 @@ onMounted(() => {
   gap: 1rem;
   margin-bottom: 1rem;
 }
+
 @media (min-width: 768px) {
-  .chartsRow { grid-template-columns: 3fr 2fr; }
+  .chartsRow {
+    grid-template-columns: 3fr 2fr;
+  }
 }
 
 .chartPanel {
   padding: 1.25rem;
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: linear-gradient(160deg, rgba(0,23,31,0.65) 0%, rgba(0,23,31,0.4) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
-.chartPanel--full { margin-bottom: 1rem; }
+
+.chartPanel--full {
+  margin-bottom: 1rem;
+}
+
 .chartTitle {
   font-family: var(--font);
   font-size: 0.9rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
   margin: 0 0 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-.chartTitleIcon { opacity: 0.5; }
-.chartWrap { position: relative; height: 220px; }
-.chartWrap--doughnut { height: 260px; }
-.chartWrap--line { height: 200px; }
+
+.chartTitleIcon {
+  opacity: 0.5;
+}
+
+.chartWrap {
+  position: relative;
+  height: 220px;
+}
+
+.chartWrap--doughnut {
+  height: 260px;
+}
+
+.chartWrap--line {
+  height: 200px;
+}
+
 .chartEmpty {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
   font-family: var(--font);
-  color: rgba(255,255,255,0.3);
+  color: rgba(255, 255, 255, 0.3);
   font-size: 0.9rem;
 }
 
@@ -882,26 +931,33 @@ onMounted(() => {
   gap: 1rem;
   margin-bottom: 1rem;
 }
+
 @media (min-width: 768px) {
-  .actionsGrid { grid-template-columns: 1fr 1fr; }
+  .actionsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
+
 .actionCard {
   padding: 1.25rem;
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: linear-gradient(160deg, rgba(0,23,31,0.65) 0%, rgba(0,23,31,0.4) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
+
 .actionCard--wide {
   grid-column: 1 / -1;
 }
+
 .actionHeader {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
+
 .actionTitle {
   font-family: var(--font);
   font-size: 1rem;
@@ -909,30 +965,44 @@ onMounted(() => {
   color: var(--white);
   margin: 0;
 }
+
 .actionDesc {
   font-family: var(--font);
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
   margin: 0 0 0.85rem;
   line-height: 1.4;
 }
+
 .actionRow {
   display: flex;
   gap: 0.5rem;
   align-items: center;
 }
-.actionInput { flex: 1; }
+
+.actionInput {
+  flex: 1;
+}
+
 .actionFields {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+
 .actionRowInline {
   display: flex;
   gap: 0.5rem;
   align-items: center;
 }
-.roleSelect { max-width: 160px; }
+
+.roleSelect {
+  max-width: 160px;
+}
+
+.userLookupField {
+  width: 100%;
+}
 
 .actionBtn {
   text-transform: none !important;
@@ -942,19 +1012,22 @@ onMounted(() => {
   letter-spacing: 0.01em !important;
   padding: 0 1rem !important;
 }
+
 .actionBtn--create {
-  background: linear-gradient(135deg, rgba(0,168,232,0.45) 0%, rgba(0,168,232,0.2) 100%) !important;
-  border: 1px solid rgba(0,168,232,0.4) !important;
+  background: linear-gradient(135deg, rgba(0, 168, 232, 0.45) 0%, rgba(0, 168, 232, 0.2) 100%) !important;
+  border: 1px solid rgba(0, 168, 232, 0.4) !important;
   color: var(--white) !important;
 }
+
 .actionBtn--member {
-  background: linear-gradient(135deg, rgba(26,147,111,0.45) 0%, rgba(26,147,111,0.2) 100%) !important;
-  border: 1px solid rgba(26,147,111,0.4) !important;
+  background: linear-gradient(135deg, rgba(26, 147, 111, 0.45) 0%, rgba(26, 147, 111, 0.2) 100%) !important;
+  border: 1px solid rgba(26, 147, 111, 0.4) !important;
   color: var(--white) !important;
 }
+
 .actionBtn--invite {
-  background: linear-gradient(135deg, rgba(168,51,185,0.35) 0%, rgba(168,51,185,0.15) 100%) !important;
-  border: 1px solid rgba(168,51,185,0.3) !important;
+  background: linear-gradient(135deg, rgba(168, 51, 185, 0.35) 0%, rgba(168, 51, 185, 0.15) 100%) !important;
+  border: 1px solid rgba(168, 51, 185, 0.3) !important;
   color: var(--white) !important;
 }
 
@@ -964,18 +1037,24 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.75rem;
 }
-.inviteSchoolSelect { max-width: 300px; }
+
+.inviteSchoolSelect {
+  max-width: 300px;
+}
+
 .inviteLinkGroup {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
+
 .inviteLinkRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
 }
+
 .linkCopy {
   display: flex;
   align-items: center;
@@ -983,14 +1062,15 @@ onMounted(() => {
   min-width: 0;
   flex: 1;
 }
+
 .linkText {
   font-family: ui-monospace, monospace;
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.55);
-  background: rgba(255,255,255,0.04);
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.04);
   padding: 0.3rem 0.5rem;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -998,21 +1078,22 @@ onMounted(() => {
 }
 
 .refreshBtn {
-  background: rgba(0,168,232,0.2) !important;
-  border: 1px solid rgba(0,168,232,0.3) !important;
+  background: rgba(0, 168, 232, 0.2) !important;
+  border: 1px solid rgba(0, 168, 232, 0.3) !important;
   color: var(--white) !important;
 }
 
 /* Table panel */
 .tablePanel {
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: linear-gradient(160deg, rgba(0,23,31,0.65) 0%, rgba(0,23,31,0.4) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   overflow: hidden;
   margin-bottom: 1rem;
 }
+
 .tableHead {
   display: flex;
   flex-wrap: wrap;
@@ -1020,8 +1101,9 @@ onMounted(() => {
   justify-content: space-between;
   gap: 0.75rem;
   padding: 1.25rem 1.35rem 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
+
 .sectionTitle {
   font-family: var(--font);
   font-size: 1rem;
@@ -1032,13 +1114,18 @@ onMounted(() => {
   align-items: center;
   gap: 0.4rem;
 }
-.sectionTitleIcon { opacity: 0.5; }
+
+.sectionTitleIcon {
+  opacity: 0.5;
+}
+
 .sectionDesc {
   font-family: var(--font);
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   margin: 0;
 }
+
 .tableBadge {
   font-family: var(--font);
   font-size: 0.7rem;
@@ -1047,83 +1134,129 @@ onMounted(() => {
   text-transform: uppercase;
   padding: 0.35rem 0.65rem;
   border-radius: 999px;
-  color: rgba(255,255,255,0.8);
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.tableWrap { overflow-x: auto; }
+
+.tableWrap {
+  overflow-x: auto;
+}
 
 .dataTable {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font);
 }
+
 .dataTable thead th {
   text-align: left;
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   padding: 0.6rem 1.35rem;
-  background: rgba(0,0,0,0.15);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
+
 .dataTable tbody td {
   padding: 0.85rem 1.35rem;
   font-size: 0.9rem;
-  color: rgba(255,255,255,0.88);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   vertical-align: middle;
 }
-.dataTable tbody tr:last-child td { border-bottom: none; }
-.schoolRow { cursor: pointer; transition: background 0.15s; }
-@media (hover: hover) {
-  .schoolRow:hover td { background: rgba(255,255,255,0.03); }
+
+.dataTable tbody tr:last-child td {
+  border-bottom: none;
 }
+
+.schoolRow {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+@media (hover: hover) {
+  .schoolRow:hover td {
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
 .schoolNameCell {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
+
 .expandIcon {
   transition: transform 0.2s;
   opacity: 0.4;
 }
-.expandIcon--open { transform: rotate(90deg); opacity: 0.8; }
-.schoolName { display: block; font-weight: 600; color: var(--white); }
+
+.expandIcon--open {
+  transform: rotate(90deg);
+  opacity: 0.8;
+}
+
+.schoolName {
+  display: block;
+  font-weight: 600;
+  color: var(--white);
+}
+
 .schoolIdMono {
   display: block;
   font-size: 0.65rem;
   font-family: ui-monospace, monospace;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255, 255, 255, 0.3);
   margin-top: 0.15rem;
 }
-.num { text-align: right; font-variant-numeric: tabular-nums; }
-.costCell { font-weight: 600; color: rgba(247,183,7,0.9); }
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.costCell {
+  font-weight: 600;
+  color: rgba(247, 183, 7, 0.9);
+}
 
 /* Expanded row */
 .expandRow td {
-  background: rgba(0,0,0,0.12) !important;
+  background: rgba(0, 0, 0, 0.12) !important;
   padding: 0 !important;
-  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
-.expandContent { padding: 1rem 1.35rem; }
-.expandLoading { display: flex; justify-content: center; padding: 0.75rem; }
+
+.expandContent {
+  padding: 1rem 1.35rem;
+}
+
+.expandLoading {
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem;
+}
+
 .expandSubtitle {
   font-family: var(--font);
   font-size: 0.8rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin: 0 0 0.75rem;
 }
+
 .memberChips {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
 .memberChip {
   display: flex;
   align-items: center;
@@ -1132,57 +1265,101 @@ onMounted(() => {
   border-radius: 12px;
   font-family: var(--font);
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.85);
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.memberChip.schoolAdmin { border-color: rgba(168,51,185,0.3); background: rgba(168,51,185,0.08); }
-.memberChip.teacher { border-color: rgba(0,168,232,0.3); background: rgba(0,168,232,0.06); }
-.memberName { font-weight: 600; }
+
+.memberChip.schoolAdmin {
+  border-color: rgba(168, 51, 185, 0.3);
+  background: rgba(168, 51, 185, 0.08);
+}
+
+.memberChip.teacher {
+  border-color: rgba(0, 168, 232, 0.3);
+  background: rgba(0, 168, 232, 0.06);
+}
+
+.memberName {
+  font-weight: 600;
+}
+
 .memberRole {
   font-size: 0.68rem;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.memberStat { font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+
+.memberStat {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .expandEmpty {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   margin: 0;
 }
 
 /* Empty */
-.emptyState { padding: 2.5rem 1.5rem; text-align: center; }
-.emptyIcon { opacity: 0.3; margin-bottom: 0.75rem; }
-.emptyTitle { font-family: var(--font); font-weight: 600; font-size: 1rem; color: rgba(255,255,255,0.8); margin: 0 0 0.25rem; }
-.emptyText { font-family: var(--font); font-size: 0.85rem; color: rgba(255,255,255,0.4); margin: 0 auto; max-width: 280px; }
+.emptyState {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.emptyIcon {
+  opacity: 0.3;
+  margin-bottom: 0.75rem;
+}
+
+.emptyTitle {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 0.25rem;
+}
+
+.emptyText {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0 auto;
+  max-width: 280px;
+}
 
 /* Activity */
 .activityPanel {
   padding: 1.25rem;
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: linear-gradient(160deg, rgba(0,23,31,0.65) 0%, rgba(0,23,31,0.4) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   margin-bottom: 1rem;
 }
+
 .activityList {
   display: flex;
   flex-direction: column;
   gap: 0;
   margin-top: 1rem;
 }
+
 .activityItem {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
-.activityItem:last-child { border-bottom: none; }
+
+.activityItem:last-child {
+  border-bottom: none;
+}
+
 .activityDot {
   width: 8px;
   height: 8px;
@@ -1190,28 +1367,62 @@ onMounted(() => {
   margin-top: 0.35rem;
   flex-shrink: 0;
 }
-.activityDot--school_created { background: rgba(0,168,232,0.8); box-shadow: 0 0 6px rgba(0,168,232,0.4); }
-.activityDot--member_joined { background: rgba(26,147,111,0.8); box-shadow: 0 0 6px rgba(26,147,111,0.4); }
-.activityDot--class_created { background: rgba(168,51,185,0.8); box-shadow: 0 0 6px rgba(168,51,185,0.4); }
-.activityBody { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+
+.activityDot--school_created {
+  background: rgba(0, 168, 232, 0.8);
+  box-shadow: 0 0 6px rgba(0, 168, 232, 0.4);
+}
+
+.activityDot--member_joined {
+  background: rgba(26, 147, 111, 0.8);
+  box-shadow: 0 0 6px rgba(26, 147, 111, 0.4);
+}
+
+.activityDot--class_created {
+  background: rgba(168, 51, 185, 0.8);
+  box-shadow: 0 0 6px rgba(168, 51, 185, 0.4);
+}
+
+.activityDot--class_deleted {
+  background: rgba(197, 40, 61, 0.85);
+  box-shadow: 0 0 6px rgba(197, 40, 61, 0.45);
+}
+
+.activityDot--member_removed {
+  background: rgba(247, 183, 7, 0.85);
+  box-shadow: 0 0 6px rgba(247, 183, 7, 0.45);
+}
+
+.activityBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
 .activityLabel {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.35;
 }
+
 .activityDate {
   font-family: var(--font);
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 /* Glass inputs */
 .glassField :deep(.v-field) {
   border-radius: 10px !important;
-  background: rgba(255,255,255,0.04) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
 }
-.glassField :deep(.v-field__outline) { --v-field-border-opacity: 0.15; }
+
+.glassField :deep(.v-field__outline) {
+  --v-field-border-opacity: 0.15;
+}
+
 .glassField :deep(.v-label),
 .glassField :deep(input),
 .glassField :deep(.v-select__selection-text) {

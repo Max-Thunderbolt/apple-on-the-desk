@@ -29,5 +29,4 @@ function onCancel() {
 </script>
 
 <style scoped>
-@import '../styles/style.css';
 </style>
