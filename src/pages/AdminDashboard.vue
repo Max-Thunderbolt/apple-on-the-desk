@@ -98,7 +98,7 @@
           <!-- Create School -->
           <div class="actionCard">
             <div class="actionHeader">
-              <v-icon size="22" color="rgba(0,168,232,0.9)">mdi-plus-circle-outline</v-icon>
+              <v-icon size="22" color="var(--freshSky)">mdi-plus-circle-outline</v-icon>
               <h3 class="actionTitle">Create school</h3>
             </div>
             <p class="actionDesc">Add a new school to the platform. Assign members and generate invite links after
@@ -115,7 +115,7 @@
           <!-- Add Member -->
           <div class="actionCard">
             <div class="actionHeader">
-              <v-icon size="22" color="rgba(26,147,111,0.9)">mdi-account-plus-outline</v-icon>
+              <v-icon size="22" color="var(--seaGreen)">mdi-account-plus-outline</v-icon>
               <h3 class="actionTitle">Add member</h3>
             </div>
             <p class="actionDesc">Search and assign an existing account to a school.</p>
@@ -150,7 +150,7 @@
           <!-- Invite Links -->
           <div class="actionCard actionCard--wide">
             <div class="actionHeader">
-              <v-icon size="22" color="rgba(168,51,185,0.9)">mdi-link-variant</v-icon>
+              <v-icon size="22" color="var(--amethyst)">mdi-link-variant</v-icon>
               <h3 class="actionTitle">Invite links</h3>
             </div>
             <p class="actionDesc">Generate role-specific join links. Anyone signed in can join using the link.</p>
@@ -304,6 +304,7 @@ import {
   Filler,
 } from 'chart.js'
 import Server from '@/services/server'
+import { useTheme } from '@/composables/useTheme'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, PointElement, LineElement, Tooltip, Legend, Filler)
 
@@ -324,6 +325,8 @@ const loadError = ref('')
 const successMsg = ref('')
 const year = ref(new Date().getFullYear())
 const term = ref(1)
+const { effectiveTheme } = useTheme()
+const isDarkTheme = computed(() => effectiveTheme.value === 'dark')
 
 const newSchoolName = ref('')
 const creatingSchool = ref(false)
@@ -364,13 +367,38 @@ const schoolSelectItems = computed(() =>
 const kpiCards = computed(() => {
   if (!overview.value) return []
   const t = overview.value.totals
+  const tone = isDarkTheme.value
+    ? {
+      skyBg: 'rgba(0,168,232,0.15)',
+      sky: 'rgba(0,168,232,0.9)',
+      redBg: 'rgba(197,40,61,0.15)',
+      red: 'rgba(197,40,61,0.9)',
+      greenBg: 'rgba(26,147,111,0.15)',
+      green: 'rgba(26,147,111,0.9)',
+      purpleBg: 'rgba(168,51,185,0.15)',
+      purple: 'rgba(168,51,185,0.9)',
+      goldBg: 'rgba(247,183,7,0.15)',
+      gold: 'rgba(247,183,7,0.9)',
+    }
+    : {
+      skyBg: 'rgba(0,120,166,0.14)',
+      sky: 'rgba(0,120,166,0.92)',
+      redBg: 'rgba(181,34,54,0.14)',
+      red: 'rgba(181,34,54,0.92)',
+      greenBg: 'rgba(26,147,111,0.14)',
+      green: 'rgba(26,147,111,0.92)',
+      purpleBg: 'rgba(138,30,160,0.14)',
+      purple: 'rgba(138,30,160,0.92)',
+      goldBg: 'rgba(197,142,5,0.14)',
+      gold: 'rgba(197,142,5,0.92)',
+    }
   return [
-    { label: 'Schools', value: t.schools, icon: 'mdi-domain', iconBg: 'rgba(0,168,232,0.15)', iconColor: 'rgba(0,168,232,0.9)', cls: 'kpiCard--schools', meta: 'Registered' },
-    { label: 'Teachers', value: t.teachers ?? 0, icon: 'mdi-account-school-outline', iconBg: 'rgba(197,40,61,0.15)', iconColor: 'rgba(197,40,61,0.9)', cls: 'kpiCard--teachers', meta: 'Unique across schools' },
-    { label: 'Classes', value: t.classes, icon: 'mdi-google-classroom', iconBg: 'rgba(26,147,111,0.15)', iconColor: 'rgba(26,147,111,0.9)', cls: 'kpiCard--classes', meta: 'Active this term' },
-    { label: 'Students', value: formatInt(t.students), icon: 'mdi-account-group-outline', iconBg: 'rgba(168,51,185,0.15)', iconColor: 'rgba(168,51,185,0.9)', cls: 'kpiCard--students' },
-    { label: 'Term revenue', value: formatZAR(t.costZAR), icon: 'mdi-cash-multiple', iconBg: 'rgba(247,183,7,0.15)', iconColor: 'rgba(247,183,7,0.9)', cls: 'kpiCard--cost', isMoney: true, meta: overview.value.termKey },
-    { label: 'Year projection', value: formatZAR(t.projectedYearlyCostZAR ?? 0), icon: 'mdi-chart-timeline-variant', iconBg: 'rgba(26,147,111,0.15)', iconColor: 'rgba(26,147,111,0.9)', cls: 'kpiCard--yearly', isMoney: true, meta: `${overview.value.termsPerYear ?? 3} terms` },
+    { label: 'Schools', value: t.schools, icon: 'mdi-domain', iconBg: tone.skyBg, iconColor: tone.sky, cls: 'kpiCard--schools', meta: 'Registered' },
+    { label: 'Teachers', value: t.teachers ?? 0, icon: 'mdi-account-school-outline', iconBg: tone.redBg, iconColor: tone.red, cls: 'kpiCard--teachers', meta: 'Unique across schools' },
+    { label: 'Classes', value: t.classes, icon: 'mdi-google-classroom', iconBg: tone.greenBg, iconColor: tone.green, cls: 'kpiCard--classes', meta: 'Active this term' },
+    { label: 'Students', value: formatInt(t.students), icon: 'mdi-account-group-outline', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--students' },
+    { label: 'Term revenue', value: formatZAR(t.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: overview.value.termKey },
+    { label: 'Year projection', value: formatZAR(t.projectedYearlyCostZAR ?? 0), icon: 'mdi-chart-timeline-variant', iconBg: tone.greenBg, iconColor: tone.green, cls: 'kpiCard--yearly', isMoney: true, meta: `${overview.value.termsPerYear ?? 3} terms` },
   ]
 })
 
@@ -456,45 +484,58 @@ const growthLineData = computed(() => {
 })
 
 const chartFont = { family: 'Advent Pro, sans-serif' }
-const gridColor = 'rgba(255,255,255,0.06)'
-const tickColor = 'rgba(255,255,255,0.45)'
+const chartTheme = computed(() => (
+  isDarkTheme.value
+    ? {
+      gridColor: 'rgba(255,255,255,0.08)',
+      tickColor: 'rgba(255,255,255,0.6)',
+      tooltipBg: 'rgba(8,33,42,0.96)',
+      tooltipBorder: 'rgba(255,255,255,0.16)',
+    }
+    : {
+      gridColor: 'rgba(13,37,48,0.12)',
+      tickColor: 'rgba(13,37,48,0.72)',
+      tooltipBg: 'rgba(255,255,255,0.98)',
+      tooltipBorder: 'rgba(13,37,48,0.2)',
+    }
+))
 
-const barOptions = {
+const barOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: { titleFont: chartFont, bodyFont: chartFont, backgroundColor: 'rgba(0,23,31,0.92)', borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 },
+    tooltip: { titleFont: chartFont, bodyFont: chartFont, backgroundColor: chartTheme.value.tooltipBg, borderColor: chartTheme.value.tooltipBorder, borderWidth: 1 },
   },
   scales: {
-    x: { ticks: { color: tickColor, font: chartFont }, grid: { display: false } },
-    y: { ticks: { color: tickColor, font: chartFont }, grid: { color: gridColor }, beginAtZero: true },
+    x: { ticks: { color: chartTheme.value.tickColor, font: chartFont }, grid: { display: false } },
+    y: { ticks: { color: chartTheme.value.tickColor, font: chartFont }, grid: { color: chartTheme.value.gridColor }, beginAtZero: true },
   },
-}
+}))
 
-const doughnutOptions = {
+const doughnutOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   cutout: '62%',
   plugins: {
-    legend: { position: 'bottom', labels: { color: tickColor, font: chartFont, padding: 14, usePointStyle: true, pointStyle: 'circle' } },
-    tooltip: { titleFont: chartFont, bodyFont: chartFont, backgroundColor: 'rgba(0,23,31,0.92)', borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 },
+    legend: { position: 'bottom', labels: { color: chartTheme.value.tickColor, font: chartFont, padding: 14, usePointStyle: true, pointStyle: 'circle' } },
+    tooltip: { titleFont: chartFont, bodyFont: chartFont, backgroundColor: chartTheme.value.tooltipBg, borderColor: chartTheme.value.tooltipBorder, borderWidth: 1 },
   },
-}
+}))
 
-const lineOptions = {
+const lineOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: { position: 'top', align: 'end', labels: { color: tickColor, font: chartFont, padding: 16, usePointStyle: true, pointStyle: 'circle' } },
-    tooltip: { mode: 'index', intersect: false, titleFont: chartFont, bodyFont: chartFont, backgroundColor: 'rgba(0,23,31,0.92)', borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 },
+    legend: { position: 'top', align: 'end', labels: { color: chartTheme.value.tickColor, font: chartFont, padding: 16, usePointStyle: true, pointStyle: 'circle' } },
+    tooltip: { mode: 'index', intersect: false, titleFont: chartFont, bodyFont: chartFont, backgroundColor: chartTheme.value.tooltipBg, borderColor: chartTheme.value.tooltipBorder, borderWidth: 1 },
   },
   scales: {
-    x: { ticks: { color: tickColor, font: chartFont }, grid: { display: false } },
-    y: { ticks: { color: tickColor, font: chartFont }, grid: { color: gridColor }, beginAtZero: true },
+    x: { ticks: { color: chartTheme.value.tickColor, font: chartFont }, grid: { display: false } },
+    y: { ticks: { color: chartTheme.value.tickColor, font: chartFont }, grid: { color: chartTheme.value.gridColor }, beginAtZero: true },
   },
   interaction: { mode: 'nearest', axis: 'x', intersect: false },
-}
+}))
 
 function formatInt(n) {
   return typeof n === 'number' ? n.toLocaleString('en-ZA') : '0'
@@ -694,7 +735,7 @@ onMounted(() => {
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.08);
 }
 
 .adminEyebrow {
@@ -703,7 +744,7 @@ onMounted(() => {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   margin: 0 0 0.4rem;
 }
 
@@ -719,7 +760,7 @@ onMounted(() => {
 .adminSubtitle {
   font-family: var(--font);
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(var(--ink-rgb), 0.55);
   margin: 0;
   max-width: 36rem;
 }
@@ -739,9 +780,9 @@ onMounted(() => {
   border-radius: 999px;
   font-family: var(--font);
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(var(--ink-rgb), 0.7);
+  background: rgba(var(--ink-rgb), 0.05);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
 }
 
 .chipIcon {
@@ -799,16 +840,16 @@ onMounted(() => {
   gap: 0.75rem;
   padding: 1rem;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: linear-gradient(145deg, rgba(var(--ink-rgb), 0.06) 0%, rgba(var(--ink-rgb), 0.02) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 24px rgba(var(--shadow-rgb), 0.18), inset 0 1px 0 rgba(var(--ink-rgb), 0.05);
   transition: border-color 0.2s, transform 0.2s;
 }
 
 @media (hover: hover) {
   .kpiCard:hover {
-    border-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(var(--ink-rgb), 0.18);
     transform: translateY(-2px);
   }
 }
@@ -836,7 +877,7 @@ onMounted(() => {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
 }
 
 .kpiValue {
@@ -855,7 +896,7 @@ onMounted(() => {
 .kpiMeta {
   font-family: var(--font);
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--ink-rgb), 0.35);
   margin-top: 0.1rem;
 }
 
@@ -876,10 +917,10 @@ onMounted(() => {
 .chartPanel {
   padding: 1.25rem;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: linear-gradient(160deg, rgba(var(--color-bg-rgb), 0.65) 0%, rgba(var(--color-bg-rgb), 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 6px 28px rgba(var(--shadow-rgb), 0.2), inset 0 1px 0 rgba(var(--ink-rgb), 0.04);
 }
 
 .chartPanel--full {
@@ -890,7 +931,7 @@ onMounted(() => {
   font-family: var(--font);
   font-size: 0.9rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
   margin: 0 0 1rem;
   display: flex;
   align-items: center;
@@ -920,7 +961,7 @@ onMounted(() => {
   justify-content: center;
   height: 100%;
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(var(--ink-rgb), 0.3);
   font-size: 0.9rem;
 }
 
@@ -941,10 +982,10 @@ onMounted(() => {
 .actionCard {
   padding: 1.25rem;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: linear-gradient(160deg, rgba(var(--color-bg-rgb), 0.65) 0%, rgba(var(--color-bg-rgb), 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 6px 28px rgba(var(--shadow-rgb), 0.2), inset 0 1px 0 rgba(var(--ink-rgb), 0.04);
 }
 
 .actionCard--wide {
@@ -969,7 +1010,7 @@ onMounted(() => {
 .actionDesc {
   font-family: var(--font);
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(var(--ink-rgb), 0.45);
   margin: 0 0 0.85rem;
   line-height: 1.4;
 }
@@ -1066,11 +1107,11 @@ onMounted(() => {
 .linkText {
   font-family: ui-monospace, monospace;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.04);
+  color: rgba(var(--ink-rgb), 0.55);
+  background: rgba(var(--ink-rgb), 0.04);
   padding: 0.3rem 0.5rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1086,10 +1127,10 @@ onMounted(() => {
 /* Table panel */
 .tablePanel {
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: linear-gradient(160deg, rgba(var(--color-bg-rgb), 0.65) 0%, rgba(var(--color-bg-rgb), 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 6px 28px rgba(var(--shadow-rgb), 0.2), inset 0 1px 0 rgba(var(--ink-rgb), 0.04);
   overflow: hidden;
   margin-bottom: 1rem;
 }
@@ -1101,7 +1142,7 @@ onMounted(() => {
   justify-content: space-between;
   gap: 0.75rem;
   padding: 1.25rem 1.35rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.06);
 }
 
 .sectionTitle {
@@ -1122,7 +1163,7 @@ onMounted(() => {
 .sectionDesc {
   font-family: var(--font);
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   margin: 0;
 }
 
@@ -1134,9 +1175,9 @@ onMounted(() => {
   text-transform: uppercase;
   padding: 0.35rem 0.65rem;
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(var(--ink-rgb), 0.8);
+  background: rgba(var(--ink-rgb), 0.06);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
 }
 
 .tableWrap {
@@ -1155,17 +1196,17 @@ onMounted(() => {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   padding: 0.6rem 1.35rem;
-  background: rgba(0, 0, 0, 0.15);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(var(--shadow-rgb), 0.15);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.06);
 }
 
 .dataTable tbody td {
   padding: 0.85rem 1.35rem;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.88);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(var(--ink-rgb), 0.88);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.05);
   vertical-align: middle;
 }
 
@@ -1180,7 +1221,7 @@ onMounted(() => {
 
 @media (hover: hover) {
   .schoolRow:hover td {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--ink-rgb), 0.03);
   }
 }
 
@@ -1210,7 +1251,7 @@ onMounted(() => {
   display: block;
   font-size: 0.65rem;
   font-family: ui-monospace, monospace;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(var(--ink-rgb), 0.3);
   margin-top: 0.15rem;
 }
 
@@ -1226,9 +1267,9 @@ onMounted(() => {
 
 /* Expanded row */
 .expandRow td {
-  background: rgba(0, 0, 0, 0.12) !important;
+  background: rgba(var(--shadow-rgb), 0.12) !important;
   padding: 0 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.06) !important;
 }
 
 .expandContent {
@@ -1245,7 +1286,7 @@ onMounted(() => {
   font-family: var(--font);
   font-size: 0.8rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(var(--ink-rgb), 0.6);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin: 0 0 0.75rem;
@@ -1265,9 +1306,9 @@ onMounted(() => {
   border-radius: 12px;
   font-family: var(--font);
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(var(--ink-rgb), 0.85);
+  background: rgba(var(--ink-rgb), 0.05);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
 }
 
 .memberChip.schoolAdmin {
@@ -1286,20 +1327,20 @@ onMounted(() => {
 
 .memberRole {
   font-size: 0.68rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(var(--ink-rgb), 0.45);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .memberStat {
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
 }
 
 .expandEmpty {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   margin: 0;
 }
 
@@ -1318,14 +1359,14 @@ onMounted(() => {
   font-family: var(--font);
   font-weight: 600;
   font-size: 1rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   margin: 0 0 0.25rem;
 }
 
 .emptyText {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   margin: 0 auto;
   max-width: 280px;
 }
@@ -1334,10 +1375,10 @@ onMounted(() => {
 .activityPanel {
   padding: 1.25rem;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: linear-gradient(160deg, rgba(var(--color-bg-rgb), 0.65) 0%, rgba(var(--color-bg-rgb), 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 6px 28px rgba(var(--shadow-rgb), 0.2), inset 0 1px 0 rgba(var(--ink-rgb), 0.04);
   margin-bottom: 1rem;
 }
 
@@ -1353,7 +1394,7 @@ onMounted(() => {
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.04);
 }
 
 .activityItem:last-child {
@@ -1403,20 +1444,20 @@ onMounted(() => {
 .activityLabel {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   line-height: 1.35;
 }
 
 .activityDate {
   font-family: var(--font);
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--ink-rgb), 0.35);
 }
 
 /* Glass inputs */
 .glassField :deep(.v-field) {
   border-radius: 10px !important;
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: rgba(var(--ink-rgb), 0.04) !important;
 }
 
 .glassField :deep(.v-field__outline) {
@@ -1427,5 +1468,58 @@ onMounted(() => {
 .glassField :deep(input),
 .glassField :deep(.v-select__selection-text) {
   font-family: var(--font);
+}
+
+:global(:root[data-theme='light']) .adminHeader,
+:global(:root[data-theme='light']) .tableHead {
+  border-bottom-color: rgba(13, 37, 48, 0.14);
+}
+
+:global(:root[data-theme='light']) .adminEyebrow,
+:global(:root[data-theme='light']) .kpiLabel,
+:global(:root[data-theme='light']) .sectionDesc,
+:global(:root[data-theme='light']) .activityDate {
+  color: rgba(13, 37, 48, 0.6);
+}
+
+:global(:root[data-theme='light']) .adminSubtitle,
+:global(:root[data-theme='light']) .actionDesc,
+:global(:root[data-theme='light']) .activityLabel,
+:global(:root[data-theme='light']) .tableBadge {
+  color: rgba(13, 37, 48, 0.72);
+}
+
+:global(:root[data-theme='light']) .kpiCard,
+:global(:root[data-theme='light']) .chartPanel,
+:global(:root[data-theme='light']) .actionCard,
+:global(:root[data-theme='light']) .tablePanel,
+:global(:root[data-theme='light']) .activityPanel {
+  border-color: rgba(13, 37, 48, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 22px rgba(13, 37, 48, 0.08);
+}
+
+:global(:root[data-theme='light']) .dataTable thead th {
+  color: rgba(13, 37, 48, 0.7);
+  background: rgba(13, 37, 48, 0.06);
+  border-bottom-color: rgba(13, 37, 48, 0.12);
+}
+
+:global(:root[data-theme='light']) .dataTable tbody td {
+  color: rgba(13, 37, 48, 0.88);
+  border-bottom-color: rgba(13, 37, 48, 0.1);
+}
+
+:global(:root[data-theme='light']) .schoolRow:hover td {
+  background: rgba(13, 37, 48, 0.05);
+}
+
+:global(:root[data-theme='light']) .expandRow td {
+  background: rgba(13, 37, 48, 0.04) !important;
+  border-bottom-color: rgba(13, 37, 48, 0.12) !important;
+}
+
+:global(:root[data-theme='light']) .glassField :deep(.v-field) {
+  background: rgba(13, 37, 48, 0.05) !important;
 }
 </style>

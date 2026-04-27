@@ -145,7 +145,7 @@ function onSearchInput() {
     font-size: 1rem;
     color: var(--white);
     background-color: var(--inkBlack);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(var(--ink-rgb), 0.2);
     border-radius: 180px;
     padding: 0.5rem 1rem;
     outline: none;
@@ -153,12 +153,12 @@ function onSearchInput() {
 }
 
 .searchInput::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(var(--ink-rgb), 0.5);
 }
 
 .searchInput:focus {
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    border-color: rgba(var(--ink-rgb), 0.4);
+    box-shadow: 0 0 0 2px rgba(var(--ink-rgb), 0.1);
 }
 
 .actionsPill {
@@ -168,10 +168,10 @@ function onSearchInput() {
     gap: 0;
     flex-shrink: 0;
     background-color: var(--inkBlack);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(var(--ink-rgb), 0.2);
     border-radius: 180px;
     padding: 0.25rem 0.15rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(var(--shadow-rgb), 0.3);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -186,12 +186,12 @@ function onSearchInput() {
     width: 1px;
     height: 24px;
     margin: 0 0.15rem;
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(var(--ink-rgb), 0.25);
     border-radius: 1px;
 }
 
 .actionsPill:hover {
-    border-color: rgba(255, 255, 255, 0.35);
+    border-color: rgba(var(--ink-rgb), 0.35);
 }
 
 .actions-pill-glow {
@@ -246,6 +246,6 @@ function onSearchInput() {
 }
 
 .viewToggleBtn:hover {
-    background-color: rgba(255, 255, 255, 0.12) !important;
+    background-color: rgba(var(--ink-rgb), 0.12) !important;
 }
 </style>

@@ -95,7 +95,7 @@ onMounted(() => {
     background: var(--inkBlack);
     border: 1px solid var(--freshSky);
     border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 16px rgba(var(--shadow-rgb), 0.4);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -205,7 +205,7 @@ onMounted(() => {
     left: -150%;
     width: 50%;
     height: 100%;
-    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    background: linear-gradient(120deg, transparent, rgba(var(--ink-rgb), 0.5), transparent);
     transform: skewX(-20deg);
 }
 

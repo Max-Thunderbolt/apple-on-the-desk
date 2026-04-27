@@ -185,8 +185,8 @@ function navigateTo(path) {
   width: 100%;
   padding: 1rem;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(var(--ink-rgb), 0.06);
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
 }
 
 .avatar {
@@ -215,13 +215,13 @@ function navigateTo(path) {
 .email {
   font-family: var(--font);
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(var(--ink-rgb), 0.7);
   margin: 0;
 }
 
 .signedOutMessage {
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   margin: 0;
 }
 
@@ -247,7 +247,7 @@ function navigateTo(path) {
 .signOutButton {
   background: rgba(197, 40, 61, 0.5) !important;
   color: var(--white) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.2) !important;
 }
 
 .billingButton {
@@ -256,12 +256,12 @@ function navigateTo(path) {
       rgba(0, 168, 232, 0.35) 50%,
       rgba(0, 168, 232, 0.45) 100%) !important;
   color: var(--white) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.12) !important;
 }
 
 .deleteAccountButton {
-  color: rgba(255, 255, 255, 0.7) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: rgba(var(--ink-rgb), 0.7) !important;
+  border-color: rgba(var(--ink-rgb), 0.3) !important;
   font-family: var(--font) !important;
   text-transform: none !important;
 }
@@ -273,7 +273,7 @@ function navigateTo(path) {
 
 .confirmCard {
   background: var(--inkBlack) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(var(--ink-rgb), 0.15);
 }
 
 .confirmTitle {
@@ -282,7 +282,7 @@ function navigateTo(path) {
 }
 
 .confirmText {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
   font-family: var(--font);
 }
 
@@ -296,12 +296,12 @@ function navigateTo(path) {
       rgba(0, 168, 232, 0.35) 50%,
       rgba(0, 168, 232, 0.45) 100%) !important;
   color: var(--white) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
 }
 
 .backLink {
   margin-top: 1rem;
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: rgba(var(--ink-rgb), 0.7) !important;
   font-family: var(--font) !important;
   text-transform: none !important;
 }

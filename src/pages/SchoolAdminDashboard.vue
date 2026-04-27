@@ -81,7 +81,7 @@
           <div v-if="dash.teachers?.length" class="teacherGrid">
             <div v-for="t in dash.teachers" :key="t.userId" class="teacherCard">
               <div class="teacherAvatar">
-                <v-icon size="24" color="rgba(0,168,232,0.8)">mdi-account-circle</v-icon>
+                <v-icon size="24" color="var(--freshSky)">mdi-account-circle</v-icon>
               </div>
               <div class="teacherInfo">
                 <span class="teacherName">{{ t.name || 'Unnamed' }}</span>
@@ -264,6 +264,7 @@ import {
 } from 'chart.js'
 import { useUserProfile } from '@/composables/useUserProfile'
 import { useContextMenu } from '@/composables/useContextMenu'
+import { useTheme } from '@/composables/useTheme'
 import Server from '@/services/server'
 import ClassForm from '@/components/modals/ClassForm.vue'
 import AppContextMenu from '@/components/common/AppContextMenu.vue'
@@ -291,6 +292,8 @@ const dash = ref(null)
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
+const { effectiveTheme } = useTheme()
+const isDarkTheme = computed(() => effectiveTheme.value === 'dark')
 
 const teacherInviteUrl = ref('')
 const generatingLink = ref(false)
@@ -323,11 +326,32 @@ const termItems = [
 const kpiCards = computed(() => {
   if (!dash.value) return []
   const d = dash.value
+  const tone = isDarkTheme.value
+    ? {
+      skyBg: 'rgba(0,168,232,0.15)',
+      sky: 'rgba(0,168,232,0.9)',
+      greenBg: 'rgba(26,147,111,0.15)',
+      green: 'rgba(26,147,111,0.9)',
+      purpleBg: 'rgba(168,51,185,0.15)',
+      purple: 'rgba(168,51,185,0.9)',
+      goldBg: 'rgba(247,183,7,0.15)',
+      gold: 'rgba(247,183,7,0.9)',
+    }
+    : {
+      skyBg: 'rgba(0,120,166,0.14)',
+      sky: 'rgba(0,120,166,0.92)',
+      greenBg: 'rgba(26,147,111,0.14)',
+      green: 'rgba(26,147,111,0.92)',
+      purpleBg: 'rgba(138,30,160,0.14)',
+      purple: 'rgba(138,30,160,0.92)',
+      goldBg: 'rgba(197,142,5,0.14)',
+      gold: 'rgba(197,142,5,0.92)',
+    }
   return [
-    { label: 'Teachers', value: d.teachers?.length ?? d.teacherCount ?? 0, icon: 'mdi-account-school-outline', iconBg: 'rgba(0,168,232,0.15)', iconColor: 'rgba(0,168,232,0.9)', cls: 'kpiCard--teachers' },
-    { label: 'Classes', value: d.classCount ?? d.classes?.length ?? 0, icon: 'mdi-google-classroom', iconBg: 'rgba(26,147,111,0.15)', iconColor: 'rgba(26,147,111,0.9)', cls: 'kpiCard--classes' },
-    { label: 'Students', value: d.studentCount ?? 0, icon: 'mdi-account-group-outline', iconBg: 'rgba(168,51,185,0.15)', iconColor: 'rgba(168,51,185,0.9)', cls: 'kpiCard--students' },
-    { label: 'Term cost', value: formatZAR(d.costZAR), icon: 'mdi-cash-multiple', iconBg: 'rgba(247,183,7,0.15)', iconColor: 'rgba(247,183,7,0.9)', cls: 'kpiCard--cost', isMoney: true, meta: d.termKey },
+    { label: 'Teachers', value: d.teachers?.length ?? d.teacherCount ?? 0, icon: 'mdi-account-school-outline', iconBg: tone.skyBg, iconColor: tone.sky, cls: 'kpiCard--teachers' },
+    { label: 'Classes', value: d.classCount ?? d.classes?.length ?? 0, icon: 'mdi-google-classroom', iconBg: tone.greenBg, iconColor: tone.green, cls: 'kpiCard--classes' },
+    { label: 'Students', value: d.studentCount ?? 0, icon: 'mdi-account-group-outline', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--students' },
+    { label: 'Term cost', value: formatZAR(d.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: d.termKey },
   ]
 })
 
@@ -358,8 +382,21 @@ const classesByTeacher = computed(() => {
 })
 
 const chartFont = { family: 'Advent Pro, sans-serif' }
-const gridColor = 'rgba(255,255,255,0.06)'
-const tickColor = 'rgba(255,255,255,0.45)'
+const chartTheme = computed(() => (
+  isDarkTheme.value
+    ? {
+      gridColor: 'rgba(255,255,255,0.08)',
+      tickColor: 'rgba(255,255,255,0.6)',
+      tooltipBg: 'rgba(8,33,42,0.96)',
+      tooltipBorder: 'rgba(255,255,255,0.16)',
+    }
+    : {
+      gridColor: 'rgba(13,37,48,0.12)',
+      tickColor: 'rgba(13,37,48,0.72)',
+      tooltipBg: 'rgba(255,255,255,0.98)',
+      tooltipBorder: 'rgba(13,37,48,0.2)',
+    }
+))
 
 const studentsPerClassData = computed(() => {
   const classes = dash.value?.classes
@@ -393,26 +430,26 @@ const classXPData = computed(() => {
   }
 })
 
-const barOptions = {
+const barOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: { titleFont: chartFont, bodyFont: chartFont, backgroundColor: 'rgba(0,23,31,0.92)', borderColor: 'rgba(255,255,255,0.12)', borderWidth: 1 },
+    tooltip: { titleFont: chartFont, bodyFont: chartFont, backgroundColor: chartTheme.value.tooltipBg, borderColor: chartTheme.value.tooltipBorder, borderWidth: 1 },
   },
   scales: {
-    x: { ticks: { color: tickColor, font: chartFont }, grid: { display: false } },
-    y: { ticks: { color: tickColor, font: chartFont }, grid: { color: gridColor }, beginAtZero: true },
+    x: { ticks: { color: chartTheme.value.tickColor, font: chartFont }, grid: { display: false } },
+    y: { ticks: { color: chartTheme.value.tickColor, font: chartFont }, grid: { color: chartTheme.value.gridColor }, beginAtZero: true },
   },
-}
+}))
 
-const xpBarOptions = {
-  ...barOptions,
+const xpBarOptions = computed(() => ({
+  ...barOptions.value,
   plugins: {
-    ...barOptions.plugins,
-    tooltip: { ...barOptions.plugins.tooltip, callbacks: { label: (ctx) => `${ctx.parsed.y.toLocaleString()} XP` } },
+    ...barOptions.value.plugins,
+    tooltip: { ...barOptions.value.plugins.tooltip, callbacks: { label: (ctx) => `${ctx.parsed.y.toLocaleString()} XP` } },
   },
-}
+}))
 
 function formatZAR(n) {
   if (typeof n !== 'number') return 'R 0'
@@ -653,7 +690,7 @@ watch(selectedSchoolId, () => {
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.08);
 }
 
 .saEyebrow {
@@ -662,7 +699,7 @@ watch(selectedSchoolId, () => {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   margin: 0 0 0.4rem;
 }
 
@@ -738,16 +775,16 @@ watch(selectedSchoolId, () => {
   gap: 0.75rem;
   padding: 1rem;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: linear-gradient(145deg, rgba(var(--ink-rgb), 0.06) 0%, rgba(var(--ink-rgb), 0.02) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 24px rgba(var(--shadow-rgb), 0.18), inset 0 1px 0 rgba(var(--ink-rgb), 0.05);
   transition: border-color 0.2s, transform 0.2s;
 }
 
 @media (hover: hover) {
   .kpiCard:hover {
-    border-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(var(--ink-rgb), 0.18);
     transform: translateY(-2px);
   }
 }
@@ -775,7 +812,7 @@ watch(selectedSchoolId, () => {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
 }
 
 .kpiValue {
@@ -794,7 +831,7 @@ watch(selectedSchoolId, () => {
 .kpiMeta {
   font-family: var(--font);
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--ink-rgb), 0.35);
   margin-top: 0.1rem;
 }
 
@@ -815,17 +852,17 @@ watch(selectedSchoolId, () => {
 .chartPanel {
   padding: 1.25rem;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: linear-gradient(160deg, rgba(var(--color-bg-rgb), 0.65) 0%, rgba(var(--color-bg-rgb), 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 6px 28px rgba(var(--shadow-rgb), 0.2), inset 0 1px 0 rgba(var(--ink-rgb), 0.04);
 }
 
 .chartTitle {
   font-family: var(--font);
   font-size: 0.9rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
   margin: 0 0 1rem;
   display: flex;
   align-items: center;
@@ -847,7 +884,7 @@ watch(selectedSchoolId, () => {
   justify-content: center;
   height: 100%;
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(var(--ink-rgb), 0.3);
   font-size: 0.9rem;
 }
 
@@ -855,10 +892,10 @@ watch(selectedSchoolId, () => {
 .sectionPanel {
   padding: 1.25rem;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(160deg, rgba(0, 23, 31, 0.65) 0%, rgba(0, 23, 31, 0.4) 100%);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: linear-gradient(160deg, rgba(var(--color-bg-rgb), 0.65) 0%, rgba(var(--color-bg-rgb), 0.4) 100%);
   backdrop-filter: blur(14px);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 6px 28px rgba(var(--shadow-rgb), 0.2), inset 0 1px 0 rgba(var(--ink-rgb), 0.04);
   margin-bottom: 1.25rem;
 }
 
@@ -889,7 +926,7 @@ watch(selectedSchoolId, () => {
 .sectionDesc {
   font-family: var(--font);
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   margin: 0;
 }
 
@@ -901,9 +938,9 @@ watch(selectedSchoolId, () => {
   text-transform: uppercase;
   padding: 0.35rem 0.65rem;
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(var(--ink-rgb), 0.8);
+  background: rgba(var(--ink-rgb), 0.06);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
 }
 
 /* Invite bar */
@@ -941,11 +978,11 @@ watch(selectedSchoolId, () => {
 .linkCode {
   font-family: ui-monospace, monospace;
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.04);
+  color: rgba(var(--ink-rgb), 0.55);
+  background: rgba(var(--ink-rgb), 0.04);
   padding: 0.3rem 0.5rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -977,8 +1014,8 @@ watch(selectedSchoolId, () => {
   gap: 0.75rem;
   padding: 0.85rem 1rem;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
+  background: rgba(var(--ink-rgb), 0.03);
   transition: border-color 0.2s, background 0.2s;
 }
 
@@ -1014,7 +1051,7 @@ watch(selectedSchoolId, () => {
 .teacherEmail {
   font-family: var(--font);
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1027,7 +1064,7 @@ watch(selectedSchoolId, () => {
 }
 
 .removeTeacherBtn {
-  color: rgba(255, 255, 255, 0.65) !important;
+  color: rgba(var(--ink-rgb), 0.65) !important;
 }
 
 @media (hover: hover) {
@@ -1054,7 +1091,7 @@ watch(selectedSchoolId, () => {
 .statLabel {
   font-family: var(--font);
   font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--ink-rgb), 0.35);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1067,10 +1104,10 @@ watch(selectedSchoolId, () => {
 }
 
 .classTeacherGroup {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-radius: 14px;
   padding: 0.8rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(var(--ink-rgb), 0.02);
 }
 
 .classTeacherGroupHeader {
@@ -1097,7 +1134,7 @@ watch(selectedSchoolId, () => {
 
 .classTeacherEmail {
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(var(--ink-rgb), 0.45);
   font-size: 0.72rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1109,8 +1146,8 @@ watch(selectedSchoolId, () => {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(var(--ink-rgb), 0.6);
+  border: 1px solid rgba(var(--ink-rgb), 0.15);
   border-radius: 999px;
   padding: 0.2rem 0.45rem;
 }
@@ -1136,8 +1173,8 @@ watch(selectedSchoolId, () => {
 .classCard {
   padding: 1rem;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
+  background: rgba(var(--ink-rgb), 0.03);
   transition: border-color 0.2s, background 0.2s;
   cursor: context-menu;
 }
@@ -1201,7 +1238,7 @@ watch(selectedSchoolId, () => {
 .metricLabel {
   font-family: var(--font);
   font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--ink-rgb), 0.35);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1217,7 +1254,7 @@ watch(selectedSchoolId, () => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(var(--ink-rgb), 0.35);
   display: block;
   margin-bottom: 0.35rem;
 }
@@ -1246,7 +1283,7 @@ watch(selectedSchoolId, () => {
 }
 
 .leaderName {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -1255,15 +1292,15 @@ watch(selectedSchoolId, () => {
 }
 
 .leaderPts {
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(var(--ink-rgb), 0.45);
   font-size: 0.75rem;
   flex-shrink: 0;
 }
 
 .classActionModalCard {
   border-radius: 18px !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  background: linear-gradient(160deg, rgba(0, 23, 31, 0.78) 0%, rgba(0, 23, 31, 0.55) 100%) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.12) !important;
+  background: linear-gradient(160deg, rgba(var(--color-bg-rgb), 0.78) 0%, rgba(var(--color-bg-rgb), 0.55) 100%) !important;
   backdrop-filter: blur(14px);
 }
 
@@ -1294,19 +1331,19 @@ watch(selectedSchoolId, () => {
   gap: 0.5rem;
   padding: 0.45rem 0.6rem;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
+  background: rgba(var(--ink-rgb), 0.03);
 }
 
 .studentName {
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.86);
+  color: rgba(var(--ink-rgb), 0.86);
   font-size: 0.86rem;
 }
 
 .studentPts {
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(var(--ink-rgb), 0.45);
   font-size: 0.75rem;
 }
 
@@ -1319,7 +1356,7 @@ watch(selectedSchoolId, () => {
 
 .removeTeacherText {
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
 }
 
 .editClassBtn {
@@ -1356,7 +1393,7 @@ watch(selectedSchoolId, () => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
 }
 
 .costValue {
@@ -1370,20 +1407,20 @@ watch(selectedSchoolId, () => {
 .costValue--small {
   font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(var(--ink-rgb), 0.65);
 }
 
 .emptyNote {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--ink-rgb), 0.4);
   margin: 0;
 }
 
 /* Glass inputs */
 .glassField :deep(.v-field) {
   border-radius: 10px !important;
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: rgba(var(--ink-rgb), 0.04) !important;
 }
 
 .glassField :deep(.v-field__outline) {
@@ -1394,5 +1431,38 @@ watch(selectedSchoolId, () => {
 .glassField :deep(input),
 .glassField :deep(.v-select__selection-text) {
   font-family: var(--font);
+}
+
+:global(:root[data-theme='light']) .saHeader {
+  border-bottom-color: rgba(13, 37, 48, 0.14);
+}
+
+:global(:root[data-theme='light']) .saEyebrow,
+:global(:root[data-theme='light']) .kpiLabel,
+:global(:root[data-theme='light']) .sectionDesc,
+:global(:root[data-theme='light']) .statLabel,
+:global(:root[data-theme='light']) .emptyNote {
+  color: rgba(13, 37, 48, 0.6);
+}
+
+:global(:root[data-theme='light']) .kpiCard,
+:global(:root[data-theme='light']) .chartPanel,
+:global(:root[data-theme='light']) .sectionPanel,
+:global(:root[data-theme='light']) .classActionModalCard {
+  border-color: rgba(13, 37, 48, 0.14) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: 0 6px 22px rgba(13, 37, 48, 0.08);
+}
+
+:global(:root[data-theme='light']) .teacherCard,
+:global(:root[data-theme='light']) .classTeacherGroup,
+:global(:root[data-theme='light']) .classCard,
+:global(:root[data-theme='light']) .studentRow {
+  border-color: rgba(13, 37, 48, 0.14);
+  background: rgba(13, 37, 48, 0.04);
+}
+
+:global(:root[data-theme='light']) .glassField :deep(.v-field) {
+  background: rgba(13, 37, 48, 0.05) !important;
 }
 </style>

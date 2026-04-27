@@ -36,6 +36,7 @@ declare module 'vue' {
     Shop: typeof import('./src/components/Shop.vue')['default']
     StepsAndVideo: typeof import('./src/components/tutorials/StepsAndVideo.vue')['default']
     StudentConstraintsModal: typeof import('./src/components/modals/StudentConstraintsModal.vue')['default']
+    ThemeToggle: typeof import('./src/components/navigation/ThemeToggle.vue')['default']
     Timer: typeof import('./src/components/Timer.vue')['default']
     TopNav: typeof import('./src/components/navigation/topNav.vue')['default']
   }

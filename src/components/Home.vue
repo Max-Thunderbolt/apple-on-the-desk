@@ -79,7 +79,7 @@ const navigateTo = (path) => {
     width: 100% !important;
     max-width: min(420px, 90vw);
     border-radius: 20px !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
     color: var(--white) !important;
     text-transform: none !important;
     letter-spacing: 0.02em;
@@ -112,7 +112,7 @@ const navigateTo = (path) => {
             rgba(0, 168, 232, 0.35) 50%,
             rgba(0, 168, 232, 0.45) 100%) !important;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(var(--highlight-rgb), 0.25),
         0 4px 24px rgba(0, 168, 232, 0.15);
 }
 
@@ -123,7 +123,7 @@ const navigateTo = (path) => {
             rgba(26, 147, 111, 0.35) 50%,
             rgba(26, 147, 111, 0.45) 100%) !important;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(var(--highlight-rgb), 0.25),
         0 4px 24px rgba(26, 147, 111, 0.15);
 }
 
@@ -133,7 +133,7 @@ const navigateTo = (path) => {
             rgba(var(--amethyst-rgb), 0.25) 50%,
             rgba(var(--amethyst-rgb), 0.35) 100%) !important;
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(var(--highlight-rgb), 0.25),
         0 4px 24px rgba(var(--amethyst-rgb), 0.2);
 }
 
@@ -146,14 +146,14 @@ const navigateTo = (path) => {
     .adminDashButton:hover,
     .schoolAdminDashButton:hover {
         transform: scale(1.02) translateY(-6px);
-        border-color: rgba(255, 255, 255, 0.35) !important;
+        border-color: rgba(var(--ink-rgb), 0.35) !important;
         color: var(--white) !important;
         filter: brightness(1.08);
     }
 
     .viewClassesButton:hover {
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+            inset 0 1px 0 rgba(var(--highlight-rgb), 0.35),
             0 12px 40px rgba(0, 168, 232, 0.35),
             0 0 0 1px rgba(0, 168, 232, 0.2);
     }
@@ -161,14 +161,14 @@ const navigateTo = (path) => {
     .addClassButton:hover,
     .createAccountButton:hover {
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+            inset 0 1px 0 rgba(var(--highlight-rgb), 0.35),
             0 12px 40px rgba(26, 147, 111, 0.35),
             0 0 0 1px rgba(26, 147, 111, 0.2);
     }
 
     .profileButton:hover {
         box-shadow:
-            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+            inset 0 1px 0 rgba(var(--highlight-rgb), 0.35),
             0 12px 40px rgba(var(--amethyst-rgb), 0.4),
             0 0 0 1px rgba(var(--amethyst-rgb), 0.3);
     }
@@ -199,9 +199,9 @@ const navigateTo = (path) => {
     height: 200%;
     background: linear-gradient(105deg,
             transparent 0%,
-            rgba(255, 255, 255, 0.08) 40%,
-            rgba(255, 255, 255, 0.25) 50%,
-            rgba(255, 255, 255, 0.08) 60%,
+            rgba(var(--highlight-rgb), 0.08) 40%,
+            rgba(var(--highlight-rgb), 0.3) 50%,
+            rgba(var(--highlight-rgb), 0.08) 60%,
             transparent 100%);
     transform: skewX(-28deg) translateX(-150%);
     transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
@@ -240,7 +240,7 @@ const navigateTo = (path) => {
 @keyframes pulse {
     0% {
         transform: scale(1);
-        filter: drop-shadow(0 0 5px var(--freshSky-rgb));
+        filter: drop-shadow(0 0 5px var(--freshSky));
     }
 
     50% {
@@ -250,7 +250,7 @@ const navigateTo = (path) => {
 
     100% {
         transform: scale(1);
-        filter: drop-shadow(0 0 5px var(--freshSky-rgb));
+        filter: drop-shadow(0 0 5px var(--freshSky));
     }
 }
 </style>

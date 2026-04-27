@@ -89,7 +89,7 @@ const hasStepsOrVideo = computed(() => props.field.steps?.length > 0 || videoUrl
 .fieldDescription {
   font-family: var(--font);
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   margin: 0;
   line-height: 1.5;
   white-space: pre-line;
@@ -114,7 +114,7 @@ const hasStepsOrVideo = computed(() => props.field.steps?.length > 0 || videoUrl
 .extraInfoText {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(var(--ink-rgb), 0.75);
   margin: 0;
   line-height: 1.5;
 }
@@ -131,16 +131,16 @@ const hasStepsOrVideo = computed(() => props.field.steps?.length > 0 || videoUrl
   font-weight: 600;
   padding: 0.4rem 1rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(var(--ink-rgb), 0.15);
+  background: rgba(var(--ink-rgb), 0.04);
+  color: rgba(var(--ink-rgb), 0.6);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .sectionTab:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
+  background: rgba(var(--ink-rgb), 0.08);
+  color: rgba(var(--ink-rgb), 0.85);
 }
 
 .sectionTab.active {
@@ -168,7 +168,7 @@ const hasStepsOrVideo = computed(() => props.field.steps?.length > 0 || videoUrl
 .sectionWarningText {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   margin: 0;
   line-height: 1.5;
 }

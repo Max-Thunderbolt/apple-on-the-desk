@@ -209,8 +209,6 @@ function onCategorySaved() {
 </script>
 
 <style>
-@import '../../styles/style.css';
-
 .pointsDialogCard {
     background-color: var(--inkBlack);
     border-radius: 25px;
@@ -353,7 +351,7 @@ function onCategorySaved() {
     border: 1px solid var(--white);
     border-radius: 12px;
     padding: 0.25rem 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 12px rgba(var(--shadow-rgb), 0.5);
 }
 
 .contextMenuList .v-list-item {

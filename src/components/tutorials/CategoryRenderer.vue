@@ -75,8 +75,8 @@ const allFieldsDone = computed(() =>
 <style scoped>
 .categoryCard {
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: rgba(var(--ink-rgb), 0.04);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   overflow: hidden;
@@ -102,7 +102,7 @@ const allFieldsDone = computed(() =>
 }
 
 .categoryHeader:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(var(--ink-rgb), 0.03);
 }
 
 .categoryHeaderLeft {
@@ -134,12 +134,12 @@ const allFieldsDone = computed(() =>
 .categoryProgress {
   font-family: var(--font);
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
   font-weight: 600;
 }
 
 .expandIcon {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
   transition: transform 0.25s ease;
 }
 
@@ -160,8 +160,8 @@ const allFieldsDone = computed(() =>
   gap: 0.5rem;
   padding: 1rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(var(--ink-rgb), 0.03);
+  border: 1px solid rgba(var(--ink-rgb), 0.06);
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 

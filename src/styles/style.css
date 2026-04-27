@@ -1,162 +1,375 @@
-  :root {
-    --white: #ffffffff;
-    --inkBlack: #00171fff;
-    --seaGreen: #1a936fff;
-    --intenseCherry: #c5283dff;
-    --freshSky: #00a8e8ff;
-    --amethyst: #A833B9;
-    --font: "Advent Pro", sans-serif;
-    /* Glassy dark theme – palette at low opacity for overlays */
-    --inkBlack-rgb: 0, 23, 31;
-    --freshSky-rgb: 0, 168, 232;
-    --seaGreen-rgb: 26, 147, 111;
-    --gold-rgb: 247, 183, 7;
-    --amethyst-rgb: 168, 51, 185;
-    /* Responsive spacing variables */
-    --spacing-mobile: 0.5rem;
-    --spacing-tablet: 1rem;
-    --spacing-desktop: 1.5rem;
-  }
+/* ==========================================================================
+   Design tokens
+   --------------------------------------------------------------------------
+   Foundation lives on :root with dark-theme values. Light theme overrides
+   live under :root[data-theme='light']. The runtime theme is set by the
+   useTheme composable via the data-theme attribute on <html>.
+   ========================================================================== */
 
-  [data-sonner-toast][data-type="success"] {
-    background-color: var(--seaGreen) !important;
-    color: var(--white) !important;
-    border: 1px solid var(--white) !important;
-    border-radius: 15px !important;
-    padding: 0.75rem !important;
-    max-width: 90vw !important;
-  }
+:root {
+  --font: "Advent Pro", sans-serif;
 
+  /* Brand palette (consistent across themes) */
+  --seaGreen: #1a936f;
+  --intenseCherry: #c5283d;
+  --freshSky: #00a8e8;
+  --amethyst: #a833b9;
+  --gold: #f7b707;
+  --freshSky-rgb: 0, 168, 232;
+  --seaGreen-rgb: 26, 147, 111;
+  --gold-rgb: 247, 183, 7;
+  --amethyst-rgb: 168, 51, 185;
+  --intenseCherry-rgb: 197, 40, 61;
+
+  /* ------- Dark theme (default) ------- */
+
+  /* Backgrounds */
+  --color-bg: #00171f;
+  --color-bg-rgb: 0, 23, 31;
+  --color-bg-grad-mid: #0a2530;
+  --color-bg-grad-deep: #061a22;
+
+  /* Text */
+  --color-text: #ffffff;
+  --color-text-rgb: 255, 255, 255;
+  --color-text-strong: #ffffff;
+  --color-text-muted: rgba(255, 255, 255, 0.72);
+  --color-text-subtle: rgba(255, 255, 255, 0.55);
+  --color-text-on-accent: #ffffff;
+
+  /* RGB tuples used in alpha overlays so the same value flips per theme. */
+  --ink-rgb: 255, 255, 255;
+  --shadow-rgb: 0, 0, 0;
+  --highlight-rgb: 255, 255, 255;
+
+  /* Borders */
+  --color-border: rgba(255, 255, 255, 0.16);
+  --color-border-soft: rgba(255, 255, 255, 0.10);
+  --color-border-strong: rgba(255, 255, 255, 0.28);
+
+  /* Surfaces (overlay tints on top of the page bg) */
+  --color-surface: rgba(255, 255, 255, 0.05);
+  --color-surface-2: rgba(255, 255, 255, 0.08);
+  --color-surface-3: rgba(255, 255, 255, 0.12);
+  --color-surface-hover: rgba(255, 255, 255, 0.10);
+  --color-surface-elevated: rgba(8, 33, 42, 0.96);
+  --color-surface-overlay: rgba(0, 23, 31, 0.85);
+
+  /* Shadows */
+  --color-shadow: rgba(0, 0, 0, 0.40);
+  --color-shadow-soft: rgba(0, 0, 0, 0.18);
+  --color-shadow-strong: rgba(0, 0, 0, 0.55);
+
+  /* Focus / selection */
+  --color-focus-ring: rgba(0, 168, 232, 0.55);
+  --color-selection-bg: rgba(0, 168, 232, 0.35);
+  --color-selection-text: #ffffff;
+
+  /* Status colors (theme-tuned) */
+  --color-success: var(--seaGreen);
+  --color-error: var(--intenseCherry);
+  --color-info: var(--freshSky);
+  --color-warning: var(--gold);
+
+  /* Scrollbar */
+  --color-scrollbar-track: rgba(255, 255, 255, 0.04);
+  --color-scrollbar-thumb: rgba(255, 255, 255, 0.18);
+  --color-scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+
+  /* Compatibility aliases */
+  --white: var(--color-text);
+  --inkBlack: var(--color-bg);
+  --inkBlack-rgb: var(--color-bg-rgb);
+
+  /* Responsive spacing */
+  --spacing-mobile: 0.5rem;
+  --spacing-tablet: 1rem;
+  --spacing-desktop: 1.5rem;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-bg: #f7fafc;
+  --color-bg-rgb: 247, 250, 252;
+  --color-bg-grad-mid: #ecf3fa;
+  --color-bg-grad-deep: #dfecf7;
+
+  --color-text: #0d2530;
+  --color-text-rgb: 13, 37, 48;
+  --color-text-strong: #061a22;
+  --color-text-muted: rgba(13, 37, 48, 0.74);
+  --color-text-subtle: rgba(13, 37, 48, 0.55);
+  --color-text-on-accent: #ffffff;
+
+  --ink-rgb: 13, 37, 48;
+  --shadow-rgb: 13, 37, 48;
+  --highlight-rgb: 255, 255, 255;
+
+  --color-border: rgba(13, 37, 48, 0.18);
+  --color-border-soft: rgba(13, 37, 48, 0.10);
+  --color-border-strong: rgba(13, 37, 48, 0.30);
+
+  --color-surface: rgba(255, 255, 255, 0.85);
+  --color-surface-2: rgba(255, 255, 255, 0.94);
+  --color-surface-3: #ffffff;
+  --color-surface-hover: rgba(13, 37, 48, 0.06);
+  --color-surface-elevated: #ffffff;
+  --color-surface-overlay: rgba(255, 255, 255, 0.94);
+
+  --color-shadow: rgba(13, 37, 48, 0.18);
+  --color-shadow-soft: rgba(13, 37, 48, 0.08);
+  --color-shadow-strong: rgba(13, 37, 48, 0.30);
+
+  --color-focus-ring: rgba(0, 120, 166, 0.55);
+  --color-selection-bg: rgba(0, 120, 166, 0.30);
+  --color-selection-text: #061a22;
+
+  /* Slightly darker variants for AA contrast against light backgrounds */
+  --color-success: #137a55;
+  --color-error: #b52236;
+  --color-info: #0078a6;
+  --color-warning: #b07b04;
+
+  --color-scrollbar-track: rgba(13, 37, 48, 0.04);
+  --color-scrollbar-thumb: rgba(13, 37, 48, 0.22);
+  --color-scrollbar-thumb-hover: rgba(13, 37, 48, 0.34);
+}
+
+/* ==========================================================================
+   Base layout
+   ========================================================================== */
+
+html,
+body,
+#app {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+body {
+  font-family: var(--font);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: var(--color-selection-bg);
+  color: var(--color-selection-text);
+}
+
+/* Focus visible ring for keyboard nav (skip pointer interactions) */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Auto-fill colors that look right in both themes */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--color-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface-elevated) inset;
+  caret-color: var(--color-text);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Scrollbars (WebKit + Firefox) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--color-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-scrollbar-thumb-hover);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* ==========================================================================
+   Toast styles
+   ========================================================================== */
+
+[data-sonner-toast][data-type="success"] {
+  background-color: var(--seaGreen) !important;
+  color: var(--color-text-on-accent) !important;
+  border: 1px solid rgba(var(--highlight-rgb), 0.18) !important;
+  border-radius: 15px !important;
+  padding: 0.75rem !important;
+  max-width: 90vw !important;
+  box-shadow: 0 8px 24px var(--color-shadow) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background-color: var(--intenseCherry) !important;
+  color: var(--color-text-on-accent) !important;
+  border: 1px solid rgba(var(--highlight-rgb), 0.18) !important;
+  border-radius: 15px !important;
+  padding: 0.75rem !important;
+  max-width: 90vw !important;
+  box-shadow: 0 8px 24px var(--color-shadow) !important;
+}
+
+@media (min-width: 768px) {
+
+  [data-sonner-toast][data-type="success"],
   [data-sonner-toast][data-type="error"] {
-    background-color: var(--intenseCherry) !important;
-    color: var(--white) !important;
-    border: 1px solid var(--white) !important;
-    border-radius: 15px !important;
-    padding: 0.75rem !important;
-    max-width: 90vw !important;
+    padding: 1rem !important;
+    max-width: 420px !important;
   }
+}
 
-  @media (min-width: 768px) {
+/* ==========================================================================
+   Page container & typography
+   ========================================================================== */
 
-    [data-sonner-toast][data-type="success"],
-    [data-sonner-toast][data-type="error"] {
-      padding: 1rem !important;
-      max-width: 420px !important;
-    }
-  }
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 70% 10%, rgba(var(--freshSky-rgb), 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 100% 60% at 20% 90%, rgba(var(--seaGreen-rgb), 0.08) 0%, transparent 45%),
+    linear-gradient(165deg, var(--color-bg) 0%, var(--color-bg-grad-mid) 40%, var(--color-bg-grad-deep) 70%, var(--color-bg) 100%);
+  color: var(--color-text);
+}
 
+@media (min-width: 768px) {
   .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    min-height: 100vh;
-    background-color: var(--inkBlack);
-    background-image:
-      radial-gradient(ellipse 120% 80% at 70% 10%,
-        rgba(var(--freshSky-rgb), 0.12) 0%,
-        transparent 50%),
-      radial-gradient(ellipse 100% 60% at 20% 90%,
-        rgba(var(--seaGreen-rgb), 0.08) 0%,
-        transparent 45%),
-      linear-gradient(165deg,
-        var(--inkBlack) 0%,
-        #0a2530 40%,
-        #061a22 70%,
-        var(--inkBlack) 100%);
-    color: var(--white);
+    padding: 0 2rem;
   }
+}
 
-  @media (min-width: 768px) {
-    .container {
-      padding: 0 2rem;
-    }
-  }
+.title {
+  font-family: var(--font);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+  font-variation-settings: "wdth" 147.8;
+  font-size: clamp(2.5rem, 5vw + 1rem, 6.25rem);
+  text-align: center;
+  color: var(--color-text);
+}
 
+.subtitle {
+  font-family: var(--font);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+  font-variation-settings: "wdth" 147.8;
+  font-size: clamp(1.75rem, 3vw + 0.5rem, 4rem);
+  color: var(--color-text-muted);
+  text-align: center;
+}
 
-  .title {
-    font-family: var(--font);
-    font-optical-sizing: auto;
-    font-weight: 600;
-    font-style: normal;
-    font-variation-settings:
-      "wdth" 147.8;
-    font-size: clamp(2.5rem, 5vw + 1rem, 6.25rem);
-    text-align: center;
-  }
+.titleAccent {
+  color: var(--intenseCherry);
+}
 
-  .subtitle {
-    font-family: var(--font);
-    font-optical-sizing: auto;
-    font-weight: 600;
-    font-style: normal;
-    font-variation-settings:
-      "wdth" 147.8;
-    font-size: clamp(1.75rem, 3vw + 0.5rem, 4rem);
-    color: grey;
-    text-align: center;
-  }
+.menuContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
 
-  .titleAccent {
-    color: var(--intenseCherry);
-  }
+.breadcrumbs {
+  font-size: clamp(0.9rem, 2vw, 1.2rem);
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--color-text) !important;
+  background-color: var(--color-surface-elevated) !important;
+  border: 1px solid var(--color-border-soft);
+  box-shadow: 0 4px 14px var(--color-shadow-soft);
+}
 
-  .menuContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    padding: 20px 20px 20px 20px;
-  }
+.breadcrumbs-item {
+  color: var(--color-text) !important;
+}
 
-  .breadcrumbs {
-    font-size: clamp(0.9rem, 2vw, 1.2rem);
-    font-weight: 600;
-    font-family: var(--font);
-    color: var(--white) !important;
-    background-color: var(--inkBlack) !important;
-  }
+/* ==========================================================================
+   Vuetify global overrides (teleported overlays / cross-component polish)
+   ========================================================================== */
 
-  .breadcrumbs-item {
-    color: var(--white) !important;
-  }
+/* Teleported select / autocomplete menus */
+.dashboardSelectMenu,
+.dashboardSelectMenu.v-overlay__content {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border-soft) !important;
+  background: var(--color-surface-elevated) !important;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 28px var(--color-shadow) !important;
+  overflow: hidden;
+}
 
-  /* Vuetify teleported select/autocomplete menus */
-  .dashboardSelectMenu,
-  .dashboardSelectMenu.v-overlay__content {
-    border-radius: 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    background: linear-gradient(160deg, rgba(var(--inkBlack-rgb), 0.96) 0%, rgba(var(--inkBlack-rgb), 0.9) 100%) !important;
-    backdrop-filter: blur(14px);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35) !important;
-    overflow: hidden;
-  }
+.dashboardSelectMenu .v-list {
+  background: transparent !important;
+  padding: 0.25rem 0;
+}
 
-  .dashboardSelectMenu .v-list {
-    background: transparent !important;
-    padding: 0.25rem 0;
-  }
+.dashboardSelectMenu .v-list-item {
+  min-height: 44px;
+  background: transparent !important;
+}
 
-  .dashboardSelectMenu .v-list-item {
-    min-height: 44px;
-    background: transparent !important;
-  }
+.dashboardSelectMenu .v-list-item--active,
+.dashboardSelectMenu .v-list-item:hover {
+  background: var(--color-surface-hover) !important;
+}
 
-  .dashboardSelectMenu .v-list-item--active,
-  .dashboardSelectMenu .v-list-item:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-  }
+.dashboardSelectMenu .v-list-item-title {
+  font-family: var(--font);
+  font-size: 0.88rem;
+  color: var(--color-text) !important;
+}
 
-  .dashboardSelectMenu .v-list-item-title {
-    font-family: var(--font);
-    font-size: 0.88rem;
-    color: rgba(255, 255, 255, 0.9) !important;
-  }
+.dashboardSelectMenu .v-list-item-subtitle {
+  font-family: var(--font);
+  font-size: 0.74rem;
+  color: var(--color-text-subtle) !important;
+}
 
-  .dashboardSelectMenu .v-list-item-subtitle {
-    font-family: var(--font);
-    font-size: 0.74rem;
-    color: rgba(255, 255, 255, 0.58) !important;
-  }
+/* Vuetify input labels & placeholders default to a low-opacity "on-surface".
+   Set them to our semantic muted token so they read well on any theme. */
+.v-field .v-label,
+.v-field .v-field-label {
+  color: var(--color-text-muted) !important;
+  opacity: 1 !important;
+}
+
+/* Make the standalone field outline border respect the theme. Component-level
+   styles still win because of selector specificity / scoping. */
+.v-field--variant-outlined .v-field__outline {
+  --v-field-border-opacity: 1;
+}

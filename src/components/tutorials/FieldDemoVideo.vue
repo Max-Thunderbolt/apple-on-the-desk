@@ -50,7 +50,7 @@ defineEmits(['toggle'])
 .fieldDescription {
   font-family: var(--font);
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(var(--ink-rgb), 0.8);
   margin: 0;
   line-height: 1.5;
   white-space: pre-line;
@@ -110,7 +110,7 @@ defineEmits(['toggle'])
 .extraInfoText {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(var(--ink-rgb), 0.75);
   margin: 0;
   line-height: 1.5;
 }

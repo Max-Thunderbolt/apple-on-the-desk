@@ -224,7 +224,7 @@ function onGroupClick(groupStudents) {
     color: var(--white);
     opacity: 0.9;
     background-color: var(--inkBlack);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(var(--ink-rgb), 0.25);
     border-radius: 12px;
     padding: 0.5rem 0.75rem;
 }
@@ -276,8 +276,8 @@ function onGroupClick(groupStudents) {
 }
 
 .groupCard {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(var(--ink-rgb), 0.05);
+    border: 2px solid rgba(var(--ink-rgb), 0.1);
     border-radius: 12px;
     padding: 0.6rem 0.75rem;
     transition: all 0.3s ease;
@@ -293,9 +293,9 @@ function onGroupClick(groupStudents) {
 
 @media (hover: hover) {
     .groupCard:hover {
-        background-color: rgba(255, 255, 255, 0.08);
+        background-color: rgba(var(--ink-rgb), 0.08);
         border-color: var(--seaGreen);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 12px rgba(var(--shadow-rgb), 0.3);
     }
 }
 
@@ -473,7 +473,7 @@ function onGroupClick(groupStudents) {
     gap: 0.5rem;
     padding: 0.5rem 0.6rem;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(var(--shadow-rgb), 0.3);
     min-height: 44px;
     transition: all 0.2s ease;
     cursor: pointer;

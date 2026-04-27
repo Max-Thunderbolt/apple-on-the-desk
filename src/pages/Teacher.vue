@@ -137,7 +137,7 @@ function navigateTo(path) {
 .loadingText,
 .signedOutMessage {
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
   margin: 0;
 }
 
@@ -151,7 +151,7 @@ function navigateTo(path) {
       rgba(0, 168, 232, 0.35) 50%,
       rgba(0, 168, 232, 0.45) 100%) !important;
   color: var(--white) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
 }
 
 .teacherContent {
@@ -176,7 +176,7 @@ function navigateTo(path) {
 }
 
 .teacherTab {
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: rgba(var(--ink-rgb), 0.7) !important;
 }
 
 .teacherTabs :deep(.v-tab--selected) {

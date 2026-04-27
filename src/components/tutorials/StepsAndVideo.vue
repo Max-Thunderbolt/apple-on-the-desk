@@ -200,7 +200,7 @@ function toggleFsPlay() {
 .stepText {
   font-family: var(--font);
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(var(--ink-rgb), 0.7);
   line-height: 1.45;
 }
 
@@ -213,8 +213,8 @@ function toggleFsPlay() {
   width: 100%;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: rgba(var(--shadow-rgb), 0.3);
   cursor: pointer;
 }
 
@@ -239,14 +239,14 @@ function toggleFsPlay() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(var(--shadow-rgb), 0.4);
   border: none;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .playOverlay:hover {
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(var(--shadow-rgb), 0.55);
 }
 
 .fullscreenBtn {
@@ -260,7 +260,7 @@ function toggleFsPlay() {
   height: 32px;
   border-radius: 8px;
   border: none;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(var(--shadow-rgb), 0.55);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.2s ease, background 0.15s ease;
@@ -271,7 +271,7 @@ function toggleFsPlay() {
 }
 
 .fullscreenBtn:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(var(--shadow-rgb), 0.8);
 }
 
 /* --- fullscreen overlay --- */
@@ -282,7 +282,7 @@ function toggleFsPlay() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(var(--shadow-rgb), 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -295,7 +295,7 @@ function toggleFsPlay() {
   border-radius: 16px;
   overflow: hidden;
   background: #000;
-  box-shadow: 0 8px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 8px 60px rgba(var(--shadow-rgb), 0.6);
 }
 
 .fsVideo {
@@ -320,14 +320,14 @@ function toggleFsPlay() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(var(--shadow-rgb), 0.35);
   border: none;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .fsPlayOverlay:hover {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(var(--shadow-rgb), 0.5);
 }
 
 .fsCloseBtn {
@@ -341,13 +341,13 @@ function toggleFsPlay() {
   height: 40px;
   border-radius: 50%;
   border: none;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(var(--shadow-rgb), 0.6);
   cursor: pointer;
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .fsCloseBtn:hover {
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(var(--shadow-rgb), 0.85);
   transform: scale(1.1);
 }
 

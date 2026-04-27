@@ -333,7 +333,7 @@ onMounted(async () => {
 
 .loadingText {
   font-family: var(--font);
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--ink-rgb), 0.85);
 }
 
 .onboardingHeader {
@@ -349,7 +349,7 @@ onMounted(async () => {
 .onboardingSubtitle {
   font-family: var(--font);
   font-size: clamp(0.95rem, 2vw, 1.1rem);
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(var(--ink-rgb), 0.65);
   text-align: center;
   margin: 0;
 }
@@ -365,7 +365,7 @@ onMounted(async () => {
 .progressTrack {
   width: 100%;
   height: 8px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(var(--ink-rgb), 0.08);
   border-radius: 100px;
   overflow: hidden;
 }
@@ -380,7 +380,7 @@ onMounted(async () => {
 .progressLabel {
   font-family: var(--font);
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--ink-rgb), 0.5);
   text-align: right;
   font-weight: 600;
 }
@@ -430,7 +430,7 @@ onMounted(async () => {
   font-family: var(--font) !important;
   text-transform: none !important;
   font-weight: 600 !important;
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: rgba(var(--ink-rgb), 0.5) !important;
   border-radius: 14px !important;
 }
 
@@ -447,7 +447,7 @@ onMounted(async () => {
       rgba(0, 168, 232, 0.35) 50%,
       rgba(0, 168, 232, 0.45) 100%) !important;
   color: var(--white) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
   border-radius: 14px !important;
 }
 
@@ -460,7 +460,7 @@ onMounted(async () => {
   max-width: 700px;
   background: rgba(var(--freshSky-rgb), 0.6);
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(var(--ink-rgb), 0.45);
   transition: border-color 0.2s ease;
 }
 
@@ -469,7 +469,7 @@ onMounted(async () => {
 }
 
 .searchIcon {
-  color: rgba(255, 255, 255, 1);
+  color: rgba(var(--ink-rgb), 1);
   flex-shrink: 0;
 }
 
@@ -484,32 +484,32 @@ onMounted(async () => {
 }
 
 .searchInput::placeholder {
-  color: rgba(255, 255, 255, 1);
+  color: rgba(var(--ink-rgb), 1);
 }
 
 .clearSearch {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(var(--ink-rgb), 0.1);
   border: none;
   border-radius: 50%;
   width: 24px;
   height: 24px;
   flex-shrink: 0;
   cursor: pointer;
-  color: rgba(255, 255, 255, 1);
+  color: rgba(var(--ink-rgb), 1);
   transition: background 0.15s ease;
 }
 
 .clearSearch:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(var(--ink-rgb), 0.2);
 }
 
 .noResults {
   font-family: var(--font);
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(var(--ink-rgb), 0.45);
   text-align: center;
   padding: 2rem 1rem;
   margin: 0;
