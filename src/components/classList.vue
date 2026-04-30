@@ -89,7 +89,7 @@
 
         <award-points-modal v-model:pointsDialogOpen="pointsDialogOpen" v-model:selectedStudents="selectedStudents"
             :all-students="props.students" :class-id="props.classId" :is-for-group="awardPointsIsForGroup"
-            @studentsUpdated="onStudentsUpdated" />
+            scope="student" @studentsUpdated="onStudentsUpdated" />
 
         <student-constraints-modal v-model="constraintsModalOpen" :class-id="props.classId"
             :student="selectedStudentForConstraints" :all-students="props.students"

@@ -58,6 +58,12 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    /** Only relevant when type === 'pointsCategory'. Determines the category's scope. */
+    scope: {
+        type: String,
+        default: 'student',
+        validator: (v) => ['student', 'class'].includes(v),
+    },
 });
 
 const emit = defineEmits(['update:modelValue', 'saved']);
@@ -70,12 +76,20 @@ const submitting = ref(false);
 
 const isEdit = computed(() => !!props.editingItem);
 const title = computed(() => {
-    if (props.type === 'pointsCategory') return isEdit.value ? 'Edit point category' : 'Create point category';
+    if (props.type === 'pointsCategory') {
+        const label = props.scope === 'class' ? 'class point category' : 'point category';
+        return isEdit.value ? `Edit ${label}` : `Create ${label}`;
+    }
     return isEdit.value ? 'Edit shop item' : 'Create shop item';
 });
 const subtitle = computed(() => {
     if (isEdit.value) return '';
-    return props.type === 'pointsCategory' ? 'Add a new category for awarding points.' : 'Add a new item to the shop.';
+    if (props.type === 'pointsCategory') {
+        return props.scope === 'class'
+            ? 'Add a new category for awarding class points.'
+            : 'Add a new category for awarding points.';
+    }
+    return 'Add a new item to the shop.';
 });
 const submitButtonText = computed(() => {
     if (submitting.value) return isEdit.value ? 'Saving…' : 'Creating…';
@@ -142,7 +156,7 @@ async function submit() {
                 const response = await Server.updatePointsCategory(editId, { name: trimmedName, value: num });
                 emit('saved', response.pointsCategory);
             } else {
-                const response = await Server.createPointsCategory({ name: trimmedName, value: num });
+                const response = await Server.createPointsCategory({ name: trimmedName, value: num, scope: props.scope });
                 emit('saved', response.pointsCategory);
             }
         } else {

@@ -63,7 +63,8 @@
         </div>
     </div>
     <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
-        :all-students="classData?.students || []" :class-id="id" @studentsUpdated="onStudentsUpdated" />
+        :all-students="classData?.students || []" :class-id="id" scope="class"
+        @studentsUpdated="onStudentsUpdated" />
 
     <grouper-modal v-model="grouperModalOpen" :class-id="id" :students="classData?.students || []"
         @groupsUpdated="onGroupsUpdated" />
