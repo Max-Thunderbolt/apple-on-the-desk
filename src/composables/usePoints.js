@@ -6,8 +6,8 @@ import Server from '../services/server';
  * @param {import('vue').Ref<string> | string} classIdRef - Class ID (ref or string)
  */
 export function usePoints(classIdRef) {
-    async function getPointsCategories() {
-        const response = await Server.getAllPointsCategories();
+    async function getPointsCategories(scope) {
+        const response = await Server.getAllPointsCategories(scope);
         return response.pointsCategories ?? [];
     }
 
@@ -18,13 +18,17 @@ export function usePoints(classIdRef) {
         return response.students;
     }
 
-    async function createPointsCategory(name, value) {
-        const response = await Server.createPointsCategory({ name, value });
+    async function createPointsCategory(name, value, scope) {
+        const payload = { name, value };
+        if (scope) payload.scope = scope;
+        const response = await Server.createPointsCategory(payload);
         return response.pointsCategory;
     }
 
-    async function updatePointsCategory(id, name, value) {
-        const response = await Server.updatePointsCategory(id, { name, value });
+    async function updatePointsCategory(id, name, value, scope) {
+        const payload = { name, value };
+        if (scope) payload.scope = scope;
+        const response = await Server.updatePointsCategory(id, payload);
         return response.pointsCategory;
     }
 

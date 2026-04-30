@@ -97,9 +97,10 @@ class Server {
         }
     }
 
-    async getAllPointsCategories() {
+    async getAllPointsCategories(scope) {
         try {
-            const response = await this.http.get('/points-categories')
+            const params = scope ? { scope } : {}
+            const response = await this.http.get('/points-categories', { params })
             return response.data
         } catch (error) {
             console.error('Error getting all points categories:', error)

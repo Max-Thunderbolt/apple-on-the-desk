@@ -3,10 +3,10 @@
         @click:outside="closePointsDialog">
         <v-card class="pointsDialogCard">
             <v-card-title class="pointsDialogTitle">
-                Award points
+                {{ scope === 'class' ? 'Award class points' : 'Award points' }}
             </v-card-title>
             <v-card-subtitle class="pointsDialogSubtitle">
-                Choose a category
+                {{ scope === 'class' ? 'Choose a class category' : 'Choose a category' }}
             </v-card-subtitle>
             <v-card-text class="pointsDialogList">
                 <div v-for="category in pointsCategories" :key="category._id || category.id || category.name"
@@ -46,7 +46,7 @@
         </v-list>
     </v-menu>
     <CreateItemModal v-model="createCategoryModalOpen" type="pointsCategory" :editing-item="categoryToEdit"
-        @saved="onCategorySaved" />
+        :scope="scope" @saved="onCategorySaved" />
 </template>
 
 <script setup>
@@ -87,6 +87,11 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    scope: {
+        type: String,
+        default: 'student',
+        validator: (value) => ['student', 'class'].includes(value),
+    },
 });
 
 const { getPointsCategories, awardPoints: awardPointsApi, deletePointsCategory } = usePoints(toRef(props, 'classId'));
@@ -104,6 +109,12 @@ watch(() => props.classId, () => {
     }
 }, { immediate: true });
 
+watch(() => props.scope, () => {
+    if (props.classId) {
+        loadPointsCategories();
+    }
+});
+
 watch(pointsCategories, (categories) => {
     if (categories.length > 0) {
         pointsCategoriesLoading.value = false;
@@ -117,7 +128,7 @@ async function loadPointsCategories() {
     pointsCategoriesLoading.value = true;
     pointsCategories.value = [];
     try {
-        const data = await getPointsCategories();
+        const data = await getPointsCategories(props.scope);
         pointsCategories.value = data ?? [];
     } catch (err) {
         console.error('Failed to load points categories:', err);
