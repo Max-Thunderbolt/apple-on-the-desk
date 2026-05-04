@@ -12,7 +12,10 @@
                 <div v-for="category in pointsCategories" :key="category._id || category.id || category.name"
                     class="pointsCategoryItem" @click="awardPoints(category)"
                     @contextmenu.prevent="openCategoryContextMenu($event, category)">
-                    <span class="pointsCategoryName">{{ category.name }}</span>
+                    <span class="pointsCategoryName">
+                        {{ category.name }}
+                        <!-- <span v-if="category.global || category.default" class="categoryBadge">Global</span> -->
+                    </span>
                     <span class="pointsCategoryValue">+{{ formatCost(category.value) }}</span>
                 </div>
                 <div v-if="pointsCategories.length === 0 && !pointsCategoriesLoading" class="noCategories">
@@ -32,7 +35,8 @@
             </v-card-actions>
         </v-card>
     </v-dialog>
-    <v-menu v-model="categoryContextMenuOpen" :style="{ position: 'fixed', left: categoryContextMenuX + 'px', top: categoryContextMenuY + 'px' }"
+    <v-menu v-model="categoryContextMenuOpen"
+        :style="{ position: 'fixed', left: categoryContextMenuX + 'px', top: categoryContextMenuY + 'px' }"
         :location="undefined" :attach="false" class="pointsCategoryContextMenu">
         <v-list class="contextMenuList">
             <v-list-item @click="openEditCategoryModal">
@@ -129,6 +133,18 @@ async function loadPointsCategories() {
     pointsCategories.value = [];
     try {
         const data = await getPointsCategories(props.scope);
+        console.log('[awardPointsModal] categories loaded', {
+            scope: props.scope,
+            count: Array.isArray(data) ? data.length : 0,
+            categories: (data ?? []).map((c) => ({
+                id: c.id ?? (c._id != null ? String(c._id) : null),
+                name: c.name ?? null,
+                userId: c.userId ?? null,
+                default: c.default === true,
+                global: c.global === true,
+                scope: c.scope ?? null,
+            })),
+        });
         pointsCategories.value = data ?? [];
     } catch (err) {
         console.error('Failed to load points categories:', err);
@@ -280,6 +296,21 @@ function onCategorySaved() {
 .pointsCategoryName {
     font-family: var(--font);
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.categoryBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid var(--white);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    opacity: 0.9;
 }
 
 .pointsCategoryValue {
