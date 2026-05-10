@@ -25,8 +25,8 @@
                 <div class="experienceProgress">
                     <div class="progressInfo">
                         <span class="currentExp">{{ classData?.experience ?? 0 }} XP</span>
-                        <span class="nextRankLabel">Next: {{ getNextRank().name }}</span>
-                        <span class="nextRankExp">{{ getNextRank().experience }} XP</span>
+                        <span class="nextRankLabel">Next: {{ nextRank.name }}</span>
+                        <span class="nextRankExp">{{ nextRank.experience }} XP</span>
                     </div>
                     <div class="progressBarContainer">
                         <div class="progressBar" :style="{ width: progressToNextRank + '%' }">
@@ -63,8 +63,7 @@
         </div>
     </div>
     <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
-        :all-students="classData?.students || []" :class-id="id" scope="class"
-        @studentsUpdated="onStudentsUpdated" />
+        :all-students="classData?.students || []" :class-id="id" scope="class" @studentsUpdated="onStudentsUpdated" />
 
     <grouper-modal v-model="grouperModalOpen" :class-id="id" :students="classData?.students || []"
         @groupsUpdated="onGroupsUpdated" />
@@ -87,7 +86,7 @@ import Controls from '../../components/controls.vue';
 import AppContextMenu from '../../components/common/AppContextMenu.vue';
 import Server from '../../services/server';
 import { toast } from 'vue-sonner';
-import { experienceToRank, getExperience } from '../../composables/useExperience';
+import { experienceToRank } from '../../composables/useExperience';
 import AwardPointsModal from '../../components/modals/awardPointsModal.vue';
 import grouperModal from '../../components/modals/GrouperModal.vue';
 import CreateItemModal from '../../components/modals/CreateItemModal.vue';
@@ -116,43 +115,36 @@ let breadcrumbs = computed(() => [
     { title: dataLoading.value ? 'Loading...' : (classData.value?.name ?? 'Class'), to: `/Class/${id}` },
 ]);
 
-// Rank thresholds
-const RANK_THRESHOLDS = [
-    { experience: 0, name: 'Beginner', icon: '🥉' },
-    { experience: 100, name: 'Novice', icon: '🥈' },
-    { experience: 200, name: 'Apprentice', icon: '🥇' },
-    { experience: 300, name: 'Expert', icon: '💜' },
-    { experience: 400, name: 'Master', icon: '💎' },
-    { experience: 500, name: 'Grandmaster', icon: '👑' },
-];
+const XP_PER_RANK = 100;
+const MAX_RANK_INDEX = 39;
 
-const getNextRank = () => {
-    const currentExp = classData.value?.experience ?? 0;
-    const nextRank = RANK_THRESHOLDS.find(rank => rank.experience > currentExp);
-    return nextRank || RANK_THRESHOLDS[RANK_THRESHOLDS.length - 1];
-};
+const currentExperience = computed(() => Number(classData.value?.experience ?? 0));
 
-const getCurrentRank = () => {
-    const currentExp = classData.value?.experience ?? 0;
-    for (let i = RANK_THRESHOLDS.length - 1; i >= 0; i--) {
-        if (currentExp >= RANK_THRESHOLDS[i].experience) {
-            return RANK_THRESHOLDS[i];
-        }
-    }
-    return RANK_THRESHOLDS[0];
-};
+const currentRankIndex = computed(() =>
+    Math.min(Math.floor(currentExperience.value / XP_PER_RANK), MAX_RANK_INDEX)
+);
+
+const nextRankIndex = computed(() =>
+    Math.min(currentRankIndex.value + 1, MAX_RANK_INDEX)
+);
+
+const nextRank = computed(() => {
+    const xp = nextRankIndex.value * XP_PER_RANK;
+    return {
+        ...experienceToRank(xp),
+        experience: xp,
+    };
+});
 
 const progressToNextRank = computed(() => {
-    const currentExp = classData.value?.experience ?? 0;
-    const currentRank = getCurrentRank();
-    const nextRank = getNextRank();
-
-    if (currentRank.experience === nextRank.experience) {
+    if (currentRankIndex.value >= MAX_RANK_INDEX) {
         return 100; // Max rank
     }
 
-    const expInCurrentRank = currentExp - currentRank.experience;
-    const expNeededForNextRank = nextRank.experience - currentRank.experience;
+    const rankStartXp = currentRankIndex.value * XP_PER_RANK;
+    const nextRankXp = (currentRankIndex.value + 1) * XP_PER_RANK;
+    const expInCurrentRank = currentExperience.value - rankStartXp;
+    const expNeededForNextRank = nextRankXp - rankStartXp;
 
     return Math.min(100, Math.floor((expInCurrentRank / expNeededForNextRank) * 100));
 });

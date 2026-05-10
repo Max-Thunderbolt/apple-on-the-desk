@@ -140,7 +140,10 @@ const canSubmit = computed(() => {
     if (isSchoolAdminCreate.value) {
         return !!(schoolAdminSchoolId.value && assignTeacherUserId.value);
     }
-    return !!teacherOptionalSchoolId.value;
+    // console.log('teacherOptionalSchoolId', teacherOptionalSchoolId.value);
+    // console.log('canSubmit', !!teacherOptionalSchoolId.value);
+    // return !!teacherOptionalSchoolId.value;
+    return true;
 });
 
 function parseStudents() {

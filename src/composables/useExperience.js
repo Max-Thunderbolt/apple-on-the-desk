@@ -1,48 +1,30 @@
 import Server from '../services/server';
 
-const EXPERIENCE_ICONS = {
-    rank1: '🥉',
-    rank2: '🥈',
-    rank3: '🥇',
-    rank4: '💜',
-    rank5: '💎',
-    rank6: '👑',
-};
-
-const EXPERIENCE_NAMES = {
-    rank1: 'Beginner',
-    rank2: 'Novice',
-    rank3: 'Apprentice',
-    rank4: 'Expert',
-    rank5: 'Master',
-    rank6: 'Grandmaster',
-};
+const TIERS = [
+    { name: 'Copper', icon: '🟤', divisions: 5 },
+    { name: 'Bronze', icon: '🟠', divisions: 5 },
+    { name: 'Silver', icon: '⚪', divisions: 5 },
+    { name: 'Gold', icon: '🌕', divisions: 5 },
+    { name: 'Platinum', icon: '🔷', divisions: 5 },
+    { name: 'Diamond', icon: '💎', divisions: 5 },
+    { name: 'Master', icon: '🔮', divisions: 5 },
+    { name: 'LEGEND', icon: '👑', divisions: 5 },
+];
 
 /**
  * Map experience number to rank display (icon + name).
+ * Each rank is 100 XP wide, 5 divisions per tier.
  * @param {number} experience
  * @returns {{ icon: string, name: string }}
  */
 export function experienceToRank(experience) {
-    if (experience >= 0 && experience < 100) {
-        return { icon: EXPERIENCE_ICONS.rank1, name: EXPERIENCE_NAMES.rank1 };
-    }
-    if (experience >= 100 && experience < 200) {
-        return { icon: EXPERIENCE_ICONS.rank2, name: EXPERIENCE_NAMES.rank2 };
-    }
-    if (experience >= 200 && experience < 300) {
-        return { icon: EXPERIENCE_ICONS.rank3, name: EXPERIENCE_NAMES.rank3 };
-    }
-    if (experience >= 300 && experience < 400) {
-        return { icon: EXPERIENCE_ICONS.rank4, name: EXPERIENCE_NAMES.rank4 };
-    }
-    if (experience >= 400 && experience < 500) {
-        return { icon: EXPERIENCE_ICONS.rank5, name: EXPERIENCE_NAMES.rank5 };
-    }
-    if (experience >= 500) {
-        return { icon: EXPERIENCE_ICONS.rank6, name: EXPERIENCE_NAMES.rank6 };
-    }
-    return { icon: EXPERIENCE_ICONS.rank1, name: EXPERIENCE_NAMES.rank1 };
+    const rankIndex = Math.min(Math.floor(experience / 100), 39); // clamp to rank 40 max
+    const tierIndex = Math.floor(rankIndex / 3);
+    const division = TIERS[tierIndex].divisions - (rankIndex % TIERS[tierIndex].divisions); // counts down: 3, 2, 1
+    return {
+        icon: TIERS[tierIndex].icon,
+        name: `${TIERS[tierIndex].name} ${division}`,
+    };
 }
 
 /**
