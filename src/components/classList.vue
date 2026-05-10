@@ -77,9 +77,7 @@
                     ({{ formatCost(-pointsRemaining) }} excess)
                 </span>
             </span>
-            <v-btn class="checkoutButton"
-                :disabled="!canCheckout"
-                @click="checkout">
+            <v-btn class="checkoutButton" :disabled="!canCheckout" @click="checkout">
                 Checkout
             </v-btn>
         </div>
@@ -163,6 +161,7 @@ const contextMenuTarget = computed(() => contextMenu.target.value);
 const contextMenuItems = computed(() => ([
     { key: 'edit-name', label: 'Edit Name', icon: 'mdi-pencil' },
     { key: 'manage-constraints', label: 'Manage Pairing Constraints', icon: 'mdi-account-multiple-remove' },
+    { key: 'delete-student', label: 'Delete Student', icon: 'mdi-delete', danger: true },
 ]));
 const shopCostRef = toRef(props, 'shopCost');
 const studentsRef = toRef(props, 'students');
@@ -293,6 +292,29 @@ function handleContextMenuAction(actionKey) {
     }
     if (actionKey === 'manage-constraints') {
         openConstraintsModal(student);
+    }
+    if (actionKey === 'delete-student') {
+        deleteStudent(student);
+    }
+}
+
+async function deleteStudent(student) {
+    // contextMenu.close();
+    if (!student) return;
+    if (!window.confirm('Delete this student? This action cannot be undone.')) return;
+    try {
+        console.log('Deleting student:', student);
+        await Server.deleteStudent(props.classId, student.id);
+        emit('students-updated', { students: props.students.filter((s) => s.id !== student.id) });
+        toast.success('Student deleted', {
+            description: `${student.name} deleted`,
+            duration: 3000,
+        });
+    } catch (err) {
+        console.error('Failed to delete student:', err);
+        toast.error('Failed to delete student');
+    } finally {
+        contextMenu.close();
     }
 }
 
@@ -757,5 +779,4 @@ function onConstraintsUpdated(updatedStudent) {
     opacity: 0.5;
     cursor: not-allowed;
 }
-
 </style>

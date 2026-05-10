@@ -373,6 +373,18 @@ class Server {
         }
     }
 
+    async deleteStudent(classId, studentId) {
+        console.log('deleting student:', classId, studentId);
+        try {
+            const response = await this.http.delete(`/classes/${classId}/students/${encodeURIComponent(studentId)}`)
+            console.log('response', response.data);
+            return response.data
+        } catch (error) {
+            console.error('Error deleting student:', error)
+            throw error
+        }
+    }
+
     async createSchoolJoinCode(schoolId, role) {
         try {
             const response = await this.http.post(
