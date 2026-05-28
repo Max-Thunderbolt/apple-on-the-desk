@@ -11,16 +11,19 @@ const TIERS = [
     { name: 'LEGEND', icon: '👑', divisions: 5 },
 ];
 
+const DIVISIONS_PER_TIER = TIERS[0].divisions;
+export const MAX_RANK_INDEX = TIERS.length * DIVISIONS_PER_TIER - 1;
+
 /**
  * Map experience number to rank display (icon + name).
- * Each rank is 100 XP wide, 5 divisions per tier.
+ * Each rank is 100 XP wide, 5 divisions per tier (40 ranks total).
  * @param {number} experience
  * @returns {{ icon: string, name: string }}
  */
 export function experienceToRank(experience) {
-    const rankIndex = Math.min(Math.floor(experience / 100), 39); // clamp to rank 40 max
-    const tierIndex = Math.floor(rankIndex / 3);
-    const division = TIERS[tierIndex].divisions - (rankIndex % TIERS[tierIndex].divisions); // counts down: 3, 2, 1
+    const rankIndex = Math.min(Math.floor(experience / 100), MAX_RANK_INDEX);
+    const tierIndex = Math.floor(rankIndex / DIVISIONS_PER_TIER);
+    const division = DIVISIONS_PER_TIER - (rankIndex % DIVISIONS_PER_TIER); // counts down: 5, 4, 3, 2, 1
     return {
         icon: TIERS[tierIndex].icon,
         name: `${TIERS[tierIndex].name} ${division}`,

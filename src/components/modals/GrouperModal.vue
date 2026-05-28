@@ -14,6 +14,9 @@
                     <label class="inputLabel">Number of Groups</label>
                     <v-text-field v-model.number="numberOfGroups" type="number" min="1" :max="maxGroups"
                         variant="outlined" density="compact" class="grouperInput" @input="validateInput" />
+                    <label class="inputLabel">Group Name Prefix</label>
+                    <v-text-field v-model="groupNamePrefix" type="text" variant="outlined" density="compact"
+                        class="grouperInput" placeholder="e.g. C" />
                 </div>
 
                 <!-- Preview -->
@@ -121,7 +124,7 @@ const currentGroups = ref({});
 const dragOverGroup = ref(null);
 const draggingStudent = ref(null);
 const assigningStudentId = ref(null);
-
+const groupNamePrefix = ref('');
 const totalStudents = computed(() => props.students.length);
 const maxGroups = computed(() => props.students.length);
 const groupSize = computed(() => {
@@ -211,7 +214,7 @@ async function handleGenerateGroups() {
     errorMessage.value = '';
 
     try {
-        const response = await Server.generateGroups(props.classId, numberOfGroups.value);
+        const response = await Server.generateGroups(props.classId, numberOfGroups.value, groupNamePrefix.value);
 
         if (response.success) {
             toast.success('Groups generated successfully');

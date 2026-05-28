@@ -86,7 +86,7 @@ import Controls from '../../components/controls.vue';
 import AppContextMenu from '../../components/common/AppContextMenu.vue';
 import Server from '../../services/server';
 import { toast } from 'vue-sonner';
-import { experienceToRank } from '../../composables/useExperience';
+import { experienceToRank, MAX_RANK_INDEX } from '../../composables/useExperience';
 import AwardPointsModal from '../../components/modals/awardPointsModal.vue';
 import grouperModal from '../../components/modals/GrouperModal.vue';
 import CreateItemModal from '../../components/modals/CreateItemModal.vue';
@@ -116,7 +116,6 @@ let breadcrumbs = computed(() => [
 ]);
 
 const XP_PER_RANK = 100;
-const MAX_RANK_INDEX = 39;
 
 const currentExperience = computed(() => Number(classData.value?.experience ?? 0));
 
