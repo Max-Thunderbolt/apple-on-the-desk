@@ -1,34 +1,36 @@
 <template>
     <div class="container">
-        <div class="title">
+        <div class="title heroRise">
             Apple On The <span class="titleAccent">Desk</span>
         </div>
-        <div class="subtitle">
+        <div class="subtitle heroRise">
             Make learning fun! <img src="@/assets/apple-icon.svg" class="main-apple" />
         </div>
 
         <div class="menuContainer">
-            <template v-if="authReady">
-                <v-btn v-if="!isSignedIn" class="createAccountButton" @click="navigateTo('/Login')">
-                    Join
-                </v-btn>
-                <template v-else>
-                    <v-btn v-if="!isPlatformAdmin && !hasSchoolAdmin" class="viewClassesButton"
-                        @click="navigateTo('/Classes')">
-                        View Classes
+            <Transition name="menu-rise" appear>
+                <div v-if="authReady" class="menuButtons">
+                    <v-btn v-if="!isSignedIn" class="createAccountButton" @click="navigateTo('/Login')">
+                        Join
                     </v-btn>
-                    <v-btn class="profileButton" @click="navigateTo('/Teacher')">
-                        Teacher
-                    </v-btn>
-                    <v-btn v-if="isPlatformAdmin" class="adminDashButton" @click="navigateTo('/AdminDashboard')">
-                        Admin dashboard
-                    </v-btn>
-                    <v-btn v-if="hasSchoolAdmin" class="schoolAdminDashButton"
-                        @click="navigateTo('/SchoolAdminDashboard')">
-                        School dashboard
-                    </v-btn>
-                </template>
-            </template>
+                    <template v-else>
+                        <v-btn v-if="!isPlatformAdmin && !hasSchoolAdmin" class="viewClassesButton"
+                            @click="navigateTo('/Classes')">
+                            View Classes
+                        </v-btn>
+                        <v-btn class="profileButton" @click="navigateTo('/Teacher')">
+                            Teacher
+                        </v-btn>
+                        <v-btn v-if="isPlatformAdmin" class="adminDashButton" @click="navigateTo('/AdminDashboard')">
+                            Admin dashboard
+                        </v-btn>
+                        <v-btn v-if="hasSchoolAdmin" class="schoolAdminDashButton"
+                            @click="navigateTo('/SchoolAdminDashboard')">
+                            School dashboard
+                        </v-btn>
+                    </template>
+                </div>
+            </Transition>
         </div>
     </div>
 </template>
@@ -51,6 +53,61 @@ const navigateTo = (path) => {
 </script>
 
 <style>
+/* ——— Hero entrance ——— */
+
+.heroRise {
+    opacity: 0;
+    animation: rise-in 0.8s var(--ease-out-soft) forwards;
+}
+
+.title.heroRise {
+    animation-delay: 0.05s;
+}
+
+.subtitle.heroRise {
+    animation-delay: 0.2s;
+}
+
+.menuButtons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+}
+
+/* Menu buttons rise in once auth state resolves */
+.menu-rise-enter-active {
+    transition:
+        opacity 0.6s var(--ease-out-soft) 0.35s,
+        transform 0.6s var(--ease-out-soft) 0.35s;
+}
+
+.menu-rise-enter-from {
+    opacity: 0;
+    transform: translateY(18px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .heroRise {
+        opacity: 1;
+        animation: none;
+    }
+
+    .menu-rise-enter-active {
+        transition: none;
+    }
+
+    .menu-rise-enter-from {
+        opacity: 1;
+        transform: none;
+    }
+
+    .main-apple {
+        animation: none;
+    }
+}
+
 .adminDashButton {
     background: linear-gradient(135deg,
             rgba(138, 43, 226, 0.45) 0%,

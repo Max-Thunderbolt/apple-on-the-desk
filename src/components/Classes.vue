@@ -26,7 +26,7 @@
                 </div>
 
             </div>
-            <template v-for="classItem in classes" :key="classItem.name">
+            <template v-for="classItem in classesWithRank" :key="classItem.id">
                 <v-card class="classCard" :style="{ '--card-glass-color': getCardColorRgba(classItem) }"
                     @click="navigateTo(`/Class/${classItem.id}`)"
                     @contextmenu.prevent="openContextMenu($event, classItem)">
@@ -40,9 +40,13 @@
                     <v-card-text style="text-align: center; font-family: var(--font);">
                         {{ classItem.experience }} exp
                     </v-card-text>
-                    <v-card-text style="text-align: center; font-family: var(--font); font-size: 1.5rem;">
-                        {{ experienceToRank(classItem.experience).icon }} {{ experienceToRank(classItem.experience).name
-                        }}
+                    <v-card-text class="classRankRow">
+                        <RankBadge
+                            :rank-index="classItem.rankIndex"
+                            :aria-label="`${classItem.rankName} rank badge`"
+                            badge-class="classRankBadge"
+                        />
+                        <span>{{ classItem.rankName }}</span>
                     </v-card-text>
                     <!-- <v-card-actions style="justify-content: center; font-family: var(--font); gap: 10px;">
                         <v-btn class="classShopButton" @click.stop="navigateTo(`/Class/${classItem.id}/shop`)">
@@ -87,6 +91,7 @@ import { useRouter } from 'vue-router';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useClasses } from '../composables/useClasses';
 import { experienceToRank } from '../composables/useExperience';
+import RankBadge from './common/RankBadge.vue';
 import { useUserProfile } from '@/composables/useUserProfile';
 import ClassForm from './modals/ClassForm.vue';
 
@@ -101,6 +106,17 @@ const classToEdit = ref(null);
 const classesLoading = ref(true);
 const { teacherSchools } = useUserProfile();
 const canCreateClass = computed(() => teacherSchools.value.length > 0);
+
+const classesWithRank = computed(() =>
+    (classes.value ?? []).map((classItem) => {
+        const rank = experienceToRank(classItem.experience ?? 0);
+        return {
+            ...classItem,
+            rankIndex: rank.rankIndex,
+            rankName: rank.name,
+        };
+    }),
+);
 
 const CARD_COLOURS = [
     '#493657ff',
@@ -226,6 +242,23 @@ const navigateTo = (path) => {
     opacity: 0.9;
 }
 
+.classRankRow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    text-align: center;
+    font-family: var(--font);
+    font-size: 1.1rem;
+}
+
+.classRankBadge {
+    width: 3.5rem;
+    height: auto;
+    flex-shrink: 0;
+}
+
 .classContainer {
     display: flex;
     flex-direction: row;
@@ -244,14 +277,14 @@ const navigateTo = (path) => {
     border-radius: 20px !important;
     border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
     background: linear-gradient(135deg,
-            rgba(var(--card-glass-color), 0.55) 0%,
-            rgba(var(--card-glass-color), 0.35) 50%,
-            rgba(var(--card-glass-color), 0.45) 100%) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+            rgba(var(--card-glass-color), 0.72) 0%,
+            rgba(var(--card-glass-color), 0.52) 50%,
+            rgba(var(--card-glass-color), 0.62) 100%) !important;
     box-shadow:
         inset 0 1px 0 rgba(var(--ink-rgb), 0.2),
         0 4px 24px rgba(var(--shadow-rgb), 0.2);
+    content-visibility: auto;
+    contain-intrinsic-size: 320px 280px;
     transition:
         transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
         box-shadow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),

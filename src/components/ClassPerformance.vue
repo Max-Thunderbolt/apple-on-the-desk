@@ -14,7 +14,13 @@
         <li v-for="(row, index) in leaderboardRows" :key="row.id" class="leaderboardItem">
           <div class="leaderboardCard" :style="getLeaderboardCardStyle(row)">
             <span class="leaderboardPosition">{{ index + 1 }}</span>
-            <span class="leaderboardIcon" :title="row.rankName">{{ row.rankIcon }}</span>
+            <span class="leaderboardIcon" :title="row.rankName">
+              <RankBadge
+                :rank-index="row.rankIndex"
+                :aria-label="`${row.rankName} rank badge`"
+                badge-class="leaderboardRankBadge"
+              />
+            </span>
             <span class="leaderboardName">{{ row.name }}</span>
             <span class="leaderboardRank">{{ row.rankName }}</span>
           </div>
@@ -132,6 +138,7 @@
 import { ref, computed } from 'vue';
 import { useClasses } from '@/composables/useClasses';
 import { experienceToRank } from '@/composables/useExperience';
+import RankBadge from '@/components/common/RankBadge.vue';
 import server from '@/services/server';
 
 const { getClassNames, getClassById } = useClasses();
@@ -142,12 +149,12 @@ const leaderboardRows = computed(() => {
   return [...list]
     .map((c) => {
       const exp = c.experience ?? 0;
-      const { icon: rankIcon, name: rankName } = experienceToRank(exp);
+      const { rankIndex, name: rankName } = experienceToRank(exp);
       return {
         id: c.id,
         name: c.name,
         experience: exp,
-        rankIcon,
+        rankIndex,
         rankName,
         topStudents: c.topStudents ?? [],
       };
@@ -409,8 +416,13 @@ loadClassList();
 
 .leaderboardIcon {
   flex-shrink: 0;
-  font-size: 1.5rem;
+  width: 2.25rem;
   line-height: 1;
+}
+
+.leaderboardRankBadge {
+  width: 100%;
+  height: auto;
 }
 
 .leaderboardName {

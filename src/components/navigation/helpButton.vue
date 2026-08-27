@@ -1,79 +1,168 @@
 <template>
     <div class="helpButton">
         <div v-if="showTutorialTip" class="tutorialTip">
-            <p class="tutorialTipText">This button opens the tutorials menu. It will display all outstanding tutorials.
+            <p class="tutorialTipText">
+                Open this menu for tutorials and theme settings.
             </p>
             <button type="button" class="tutorialTipGotIt" @click="dismissTutorialTip">Got it</button>
         </div>
-        <v-speed-dial location="bottom end" transition="fade-transition" class="helpApple">
+
+        <v-menu
+            v-model="menuOpen"
+            location="top end"
+            origin="overlap"
+            :close-on-content-click="false"
+            transition="fade-transition"
+        >
             <template #activator="{ props: activatorProps }">
-                <v-fab v-bind="activatorProps" class="helpAppleFab" variant="text" elevation="0"
-                    @click="allComplete ? getHelp('search') : undefined">
-                    <img src="@/assets/apple-icon.svg" alt="Help" class="helpAppleIcon" />
+                <v-fab
+                    v-bind="activatorProps"
+                    class="helpAppleFab"
+                    variant="text"
+                    elevation="0"
+                    aria-label="Help and settings"
+                >
+                    <img src="@/assets/apple-icon.svg" alt="" class="helpAppleIcon" />
                 </v-fab>
             </template>
-            <template v-if="!allComplete">
-                <div v-for="cat in incompleteCategories" :key="cat.key" class="helpButtonOption">
-                    <div class="helpButtonIconText" @click="getHelp(cat.key)">{{ cat.name }}</div>
-                </div>
-            </template>
-        </v-speed-dial>
+
+            <div class="helpMenu" role="menu">
+                <template v-if="panel === 'main'">
+                    <button type="button" class="helpMenuItem" role="menuitem" @click="onTutorialsClick">
+                        <v-icon size="18">mdi-school-outline</v-icon>
+                        <span>Tutorials</span>
+                    </button>
+                    <button type="button" class="helpMenuItem" role="menuitem" @click="panel = 'theme'">
+                        <v-icon size="18">{{ themeIcon }}</v-icon>
+                        <span>Theme</span>
+                        <v-icon size="16" class="helpMenuChevron">mdi-chevron-right</v-icon>
+                    </button>
+                </template>
+
+                <template v-else-if="panel === 'tutorials'">
+                    <button type="button" class="helpMenuItem helpMenuBack" @click="panel = 'main'">
+                        <v-icon size="18">mdi-chevron-left</v-icon>
+                        <span>Tutorials</span>
+                    </button>
+                    <button
+                        v-for="cat in incompleteCategories"
+                        :key="cat.key"
+                        type="button"
+                        class="helpMenuItem"
+                        role="menuitem"
+                        @click="openTutorial(cat.key)"
+                    >
+                        <span>{{ cat.name }}</span>
+                    </button>
+                </template>
+
+                <template v-else-if="panel === 'theme'">
+                    <button type="button" class="helpMenuItem helpMenuBack" @click="panel = 'main'">
+                        <v-icon size="18">mdi-chevron-left</v-icon>
+                        <span>Theme</span>
+                    </button>
+                    <button
+                        v-for="mode in themeOptions"
+                        :key="mode.value"
+                        type="button"
+                        class="helpMenuItem"
+                        :class="{ 'helpMenuItem--active': themeMode === mode.value }"
+                        role="menuitemradio"
+                        :aria-checked="themeMode === mode.value"
+                        @click="selectTheme(mode.value)"
+                    >
+                        <v-icon size="18">{{ mode.icon }}</v-icon>
+                        <span>{{ mode.label }}</span>
+                    </button>
+                </template>
+            </div>
+        </v-menu>
     </div>
 </template>
 
 <script setup>
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { computed, onMounted, ref } from 'vue';
 import { useOnboarding } from '@/composables/useOnboarding';
+import { useTheme } from '@/composables/useTheme';
 
 const TUTORIAL_TIP_STORAGE_KEY = 'apple-on-the-desk-tutorial-tip-dismissed';
-
-const router = useRouter();
-const { config, progress, loadOnboarding } = useOnboarding();
-
-const showTutorialTip = ref(false);
 
 const props = defineProps({
     className: { type: String, default: 'Classes' },
     classId: { type: String, default: null },
-})
+});
 
-const className = computed(() => props.className)
-const classId = computed(() => props.classId)
+const router = useRouter();
+const { config, progress, loadOnboarding } = useOnboarding();
+const { themeMode, setThemeMode } = useTheme();
+
+const menuOpen = ref(false);
+const panel = ref('main');
+const showTutorialTip = ref(false);
+
+const themeOptions = [
+    { value: 'system', label: 'System', icon: 'mdi-monitor' },
+    { value: 'light', label: 'Light', icon: 'mdi-white-balance-sunny' },
+    { value: 'dark', label: 'Dark', icon: 'mdi-weather-night' },
+];
+
+const themeIcon = computed(() => {
+    const option = themeOptions.find((item) => item.value === themeMode.value);
+    return option?.icon ?? 'mdi-monitor';
+});
 
 const incompleteCategories = computed(() => {
-    if (!config.value || !progress.value) return []
-    const completed = progress.value.completedFieldKeys || []
-    return config.value.categories.filter(cat =>
-        cat.fields.some(f => !completed.includes(f.key))
-    )
-})
+    if (!config.value || !progress.value) return [];
+    const completed = progress.value.completedFieldKeys || [];
+    return config.value.categories.filter((cat) =>
+        cat.fields.some((f) => !completed.includes(f.key)),
+    );
+});
 
 const allComplete = computed(() =>
-    config.value && progress.value && incompleteCategories.value.length === 0
-)
+    Boolean(config.value && progress.value && incompleteCategories.value.length === 0),
+);
 
-const getHelp = (section) => {
-    const query = { section, className: className.value }
-    if (classId.value) query.classId = classId.value
-    router.push({ path: '/Onboarding', query })
+function openTutorial(section) {
+    const query = { section, className: props.className };
+    if (props.classId) query.classId = props.classId;
+    menuOpen.value = false;
+    router.push({ path: '/Onboarding', query });
+}
+
+function onTutorialsClick() {
+    if (allComplete.value) {
+        openTutorial('search');
+        return;
+    }
+    panel.value = 'tutorials';
+}
+
+function selectTheme(mode) {
+    setThemeMode(mode);
+    menuOpen.value = false;
 }
 
 function dismissTutorialTip() {
     try {
-        localStorage.setItem(TUTORIAL_TIP_STORAGE_KEY, 'true')
-    } catch (_) { }
-    showTutorialTip.value = false
+        localStorage.setItem(TUTORIAL_TIP_STORAGE_KEY, 'true');
+    } catch (_) { /* ignore */ }
+    showTutorialTip.value = false;
 }
 
+watch(menuOpen, (open) => {
+    if (!open) panel.value = 'main';
+});
+
 onMounted(() => {
-    loadOnboarding()
+    loadOnboarding();
     try {
-        showTutorialTip.value = localStorage.getItem(TUTORIAL_TIP_STORAGE_KEY) !== 'true'
+        showTutorialTip.value = localStorage.getItem(TUTORIAL_TIP_STORAGE_KEY) !== 'true';
     } catch (_) {
-        showTutorialTip.value = true
+        showTutorialTip.value = true;
     }
-})
+});
 </script>
 
 <style scoped>
@@ -142,29 +231,6 @@ onMounted(() => {
     color: var(--white);
 }
 
-.helpButtonOption {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: center !important;
-    margin-bottom: 10px;
-    margin-right: 10px;
-    gap: 10px;
-}
-
-.helpButtonIcon {
-    color: var(--white) !important;
-    border: 1px solid var(--freshSky) !important;
-    background-color: var(--inkBlack) !important;
-    border-radius: 50% !important;
-    width: 48px !important;
-    height: 48px !important;
-}
-
-.helpApple {
-    border-radius: 9999px;
-}
-
 .helpAppleFab {
     background-color: transparent !important;
     box-shadow: none !important;
@@ -180,43 +246,66 @@ onMounted(() => {
     height: 32px;
 }
 
-.helpButtonIconText {
-    position: relative;
-    font-family: var(--font);
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--white);
-    text-align: center;
-    margin-top: 4px;
-    padding: 6px 20px;
-    background-color: var(--inkBlack);
-    border-radius: 180px;
+.helpMenu {
+    min-width: 11.5rem;
+    padding: 0.45rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    background: var(--inkBlack);
     border: 1px solid var(--freshSky);
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(var(--shadow-rgb), 0.45);
+}
+
+.helpMenuItem {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    margin: 0;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--white);
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
     overflow: hidden;
     transition:
         transform 150ms ease-out,
-        box-shadow 150ms ease-out;
+        box-shadow 150ms ease-out,
+        background 150ms ease-out,
+        border-color 150ms ease-out;
 }
 
-.helpButtonIconText::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -150%;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(120deg, transparent, rgba(var(--ink-rgb), 0.5), transparent);
-    transform: skewX(-20deg);
+.helpMenuItem :deep(.v-icon) {
+    color: var(--freshSky);
+    flex-shrink: 0;
 }
 
-.helpButtonIconText:hover {
-    cursor: pointer;
-    transform: translateY(-1px) scale(1.03);
-    box-shadow: 0 0 12px rgba(0, 168, 232, 0.45);
+.helpMenuChevron {
+    margin-left: auto;
 }
 
-.helpButtonIconText:hover::after {
-    left: 150%;
-    transition: left 300ms ease-out;
+.helpMenuBack {
+    border-color: rgba(var(--freshSky-rgb), 0.35);
+    margin-bottom: 0.15rem;
+}
+
+.helpMenuItem--active {
+    background: rgba(var(--freshSky-rgb), 0.18);
+    border-color: rgba(var(--freshSky-rgb), 0.55);
+}
+
+.helpMenuItem:hover {
+    transform: translateY(-1px) scale(1.02);
+    background: rgba(var(--freshSky-rgb), 0.14);
+    border-color: rgba(var(--freshSky-rgb), 0.45);
+    box-shadow: 0 0 12px rgba(0, 168, 232, 0.35);
 }
 </style>

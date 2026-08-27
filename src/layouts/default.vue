@@ -2,15 +2,12 @@
   <v-main>
     <router-view />
   </v-main>
-  <ThemeToggle />
-  <HelpButton :className="effectiveClassName" :classId="effectiveClassId"
-    v-if="!['/Teacher', '/Onboarding', '/Login', '/Register', '/AdminDashboard', '/SchoolAdminDashboard'].includes(route.path)" />
+  <HelpButton :className="effectiveClassName" :classId="effectiveClassId" />
   <AppFooter />
 </template>
 
 <script setup>
 import HelpButton from '../components/navigation/helpButton.vue';
-import ThemeToggle from '../components/navigation/ThemeToggle.vue';
 import { useRoute } from 'vue-router';
 import { computed } from 'vue';
 import { useActiveClass } from '../composables/useActiveClass';

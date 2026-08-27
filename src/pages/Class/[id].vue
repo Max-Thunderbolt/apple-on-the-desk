@@ -15,12 +15,15 @@
         <div class="classRankContainer">
             <div class="rankOrnament rankOrnamentLeft">✦</div>
             <v-card class="classRankCard">
-                <div class="rankCrown">{{ experienceToRank(classData?.experience).icon }}</div>
-                <div class="rankTopRow">
-                    <h1 class="className">{{ classData?.name }}</h1>
-                    <div class="rankDisplay">
-                        <span class="rankName">{{ experienceToRank(classData?.experience).name }}</span>
-                    </div>
+                <div class="rankCrown">
+                    <RankBadge
+                        :rank-index="currentRank.rankIndex"
+                        :aria-label="`${currentRank.name} rank badge`"
+                        badge-class="rankCrownBadge"
+                    />
+                </div>
+                <div class="rankDisplay">
+                    <span class="rankName">{{ currentRank.name }}</span>
                 </div>
                 <div class="experienceProgress">
                     <div class="progressInfo">
@@ -87,6 +90,7 @@ import AppContextMenu from '../../components/common/AppContextMenu.vue';
 import Server from '../../services/server';
 import { toast } from 'vue-sonner';
 import { experienceToRank, MAX_RANK_INDEX } from '../../composables/useExperience';
+import RankBadge from '../../components/common/RankBadge.vue';
 import AwardPointsModal from '../../components/modals/awardPointsModal.vue';
 import grouperModal from '../../components/modals/GrouperModal.vue';
 import CreateItemModal from '../../components/modals/CreateItemModal.vue';
@@ -118,6 +122,8 @@ let breadcrumbs = computed(() => [
 const XP_PER_RANK = 100;
 
 const currentExperience = computed(() => Number(classData.value?.experience ?? 0));
+
+const currentRank = computed(() => experienceToRank(currentExperience.value));
 
 const currentRankIndex = computed(() =>
     Math.min(Math.floor(currentExperience.value / XP_PER_RANK), MAX_RANK_INDEX)
@@ -391,30 +397,6 @@ function handleCreateGroups() {
     color: var(--white);
     font-size: 1rem;
     opacity: 0.9;
-}
-
-.rankTopRow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2rem;
-    width: 100%;
-    flex-wrap: wrap;
-}
-
-.className {
-    font-family: var(--font);
-    font-optical-sizing: auto;
-    font-weight: 700;
-    font-style: normal;
-    font-variation-settings: "wdth" 147.8;
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
-    color: var(--white);
-    text-align: center;
-    margin: 0;
-    text-shadow: 0 4px 20px rgba(var(--shadow-rgb), 0.6),
-        0 0 40px rgba(var(--gold-rgb), 0.3);
-    letter-spacing: 1px;
 }
 
 .shopContainer {
@@ -734,7 +716,7 @@ function handleCreateGroups() {
             rgba(var(--amethyst-rgb), 0.15) 50%,
             rgba(var(--gold-rgb), 0.15) 100%) !important;
     border-radius: 32px !important;
-    padding: 3rem 1.5rem 1.5rem 1.5rem !important;
+    padding: 1.5rem 1.5rem 1.5rem 1.5rem !important;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -751,7 +733,7 @@ function handleCreateGroups() {
 
 @media (min-width: 768px) {
     .classRankCard {
-        padding: 3.5rem 2.5rem 1.5rem 2.5rem !important;
+        padding: 1.75rem 2.5rem 1.5rem 2.5rem !important;
         min-width: 550px;
     }
 }
@@ -774,18 +756,20 @@ function handleCreateGroups() {
 }
 
 .rankCrown {
-    position: absolute;
-    top: -25px;
-    font-size: 2.5rem;
+    position: relative;
+    width: 4.5rem;
     animation: float 3s ease-in-out infinite;
-    filter: drop-shadow(0 4px 8px rgba(var(--shadow-rgb), 0.3));
     z-index: 10;
+}
+
+.rankCrownBadge {
+    width: 100%;
+    height: auto;
 }
 
 @media (min-width: 768px) {
     .rankCrown {
-        top: -35px;
-        font-size: 3.5rem;
+        width: 6rem;
     }
 }
 
@@ -961,10 +945,6 @@ function handleCreateGroups() {
 
 .createShopItemButton:hover {
     filter: brightness(1.1);
-}
-
-:root[data-theme='light'] .className {
-    text-shadow: 0 2px 8px rgba(13, 37, 48, 0.2), 0 0 14px rgba(var(--gold-rgb), 0.18);
 }
 
 :root[data-theme='light'] .actionsMenu,
