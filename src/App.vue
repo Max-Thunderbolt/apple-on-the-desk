@@ -1,6 +1,7 @@
 <template>
   <v-app>
     <!-- <Toaster position="top-right" /> -->
+    <PwaUpdatePrompt />
     <template v-if="authReady">
       <router-view />
     </template>
@@ -19,6 +20,7 @@ import { watch } from 'vue'
 import { Toaster } from 'vue-sonner'
 import { useAuth } from '@/composables/useAuth'
 import { fetchUserProfile, clearUserProfile } from '@/composables/useUserProfile'
+import PwaUpdatePrompt from '@/components/common/PwaUpdatePrompt.vue'
 
 const { authReady, isSignedIn } = useAuth()
 

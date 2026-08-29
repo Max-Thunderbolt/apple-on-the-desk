@@ -31,6 +31,9 @@ import { createApp } from 'vue'
 import 'unfonts.css'
 import '@/styles/style.css'
 
+import { initPwaUpdate } from '@/composables/usePwaUpdate'
+initPwaUpdate()
+
 const vueApp = createApp(App)
 
 registerPlugins(vueApp)

@@ -9,10 +9,12 @@
     :bottom-offset="helpBottomOffset"
   />
   <AppFooter />
+  <PwaInstallPrompt />
 </template>
 
 <script setup>
 import HelpButton from '../components/navigation/helpButton.vue';
+import PwaInstallPrompt from '@/components/common/PwaInstallPrompt.vue';
 import { useRoute } from 'vue-router';
 import { computed } from 'vue';
 import { useActiveClass } from '../composables/useActiveClass';
