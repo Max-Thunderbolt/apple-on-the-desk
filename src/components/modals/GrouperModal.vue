@@ -16,16 +16,6 @@
                         variant="outlined" density="compact" class="grouperInput" @input="validateInput" />
                 </div>
 
-                <div v-if="numberOfGroups > 0 && numberOfGroups <= maxGroups" class="groupNamesContainer">
-                    <label class="inputLabel">Group Names</label>
-                    <p class="groupNamesHint">Edit names before generating. Defaults are C01, C02, and so on.</p>
-                    <div class="groupNamesList">
-                        <v-text-field v-for="(_, index) in groupNameDrafts" :key="index"
-                            v-model="groupNameDrafts[index]" type="text" variant="outlined" density="compact"
-                            class="grouperInput groupNameInput" :label="`Group ${index + 1}`" />
-                    </div>
-                </div>
-
                 <!-- Preview -->
                 <div v-if="numberOfGroups > 0 && numberOfGroups <= maxGroups" class="previewContainer">
                     <div class="previewText">
@@ -40,7 +30,7 @@
                         <v-icon>mdi-account-group</v-icon>
                         Current Groups
                     </div>
-                    <p class="dragHint">Drag students between groups to reassign.</p>
+                    <p class="dragHint">Drag students between groups to reassign, or edit a group name.</p>
                     <div class="existingGroupsList">
                         <div v-for="group in currentGroups" :key="group.name" class="groupCard"
                             :class="{ 'groupCard--drag-over': dragOverGroup === group.name }"
@@ -87,7 +77,7 @@
                         Clear Groups
                     </v-btn>
                     <v-btn class="generateButton" variant="text" @click="handleGenerateGroups"
-                        :disabled="!isValidInput || !hasValidGroupNames || loading">
+                        :disabled="!isValidInput || loading">
                         {{ hasExistingGroups ? 'Regenerate' : 'Generate' }}
                     </v-btn>
                     <v-btn class="cancelButton" variant="text" @click="closeDialog" :disabled="loading">
@@ -135,23 +125,7 @@ const currentGroups = ref([]);
 const dragOverGroup = ref(null);
 const draggingStudent = ref(null);
 const assigningStudentId = ref(null);
-const groupNameDrafts = ref([]);
 const pendingGroupNames = ref({});
-
-function buildDefaultGroupNames(count) {
-    return Array.from({ length: count }, (_, index) => `C${String(index + 1).padStart(2, '0')}`);
-}
-
-function syncGroupNameDrafts(count) {
-    const nextCount = Math.max(0, Number(count) || 0);
-    const nextDrafts = groupNameDrafts.value.slice(0, nextCount);
-
-    while (nextDrafts.length < nextCount) {
-        nextDrafts.push(buildDefaultGroupNames(nextCount)[nextDrafts.length]);
-    }
-
-    groupNameDrafts.value = nextDrafts;
-}
 
 const totalStudents = computed(() => props.students.length);
 const maxGroups = computed(() => props.students.length);
@@ -186,20 +160,7 @@ const isValidInput = computed(() => {
     return numberOfGroups.value > 0 && numberOfGroups.value <= maxGroups.value;
 });
 
-const hasValidGroupNames = computed(() => {
-    if (groupNameDrafts.value.length !== numberOfGroups.value) return false;
-    const trimmed = groupNameDrafts.value.map((name) => String(name ?? '').trim());
-    if (trimmed.some((name) => !name)) return false;
-    return new Set(trimmed).size === trimmed.length;
-});
-
 const hasExistingGroups = computed(() => currentGroups.value.length > 0);
-
-watch(numberOfGroups, (count) => {
-    if (count > 0 && count <= maxGroups.value) {
-        syncGroupNameDrafts(count);
-    }
-});
 
 watch(() => props.modelValue, async (newValue) => {
     if (newValue) {
@@ -209,10 +170,7 @@ watch(() => props.modelValue, async (newValue) => {
         }
         await loadCurrentGroups();
         if (currentGroups.value.length > 0) {
-            groupNameDrafts.value = currentGroups.value.map((group) => group.name);
             numberOfGroups.value = currentGroups.value.length;
-        } else {
-            syncGroupNameDrafts(numberOfGroups.value);
         }
         pendingGroupNames.value = {};
         errorMessage.value = '';
@@ -245,21 +203,18 @@ function validateInput() {
 }
 
 async function handleGenerateGroups() {
-    if (!isValidInput.value || !hasValidGroupNames.value) return;
+    if (!isValidInput.value) return;
 
     loading.value = true;
     errorMessage.value = '';
 
-    const groupNames = groupNameDrafts.value.map((name) => String(name).trim());
-
     try {
-        const response = await Server.generateGroups(props.classId, numberOfGroups.value, groupNames);
+        const response = await Server.generateGroups(props.classId, numberOfGroups.value);
 
         if (response.success) {
             toast.success('Groups generated successfully');
             emit('groupsUpdated', response);
             await loadCurrentGroups();
-            closeDialog();
         } else {
             errorMessage.value = response.message || 'Failed to generate groups';
         }
@@ -296,7 +251,6 @@ async function onGroupNameBlur(originalName) {
             toast.success(`Group renamed to ${nextName}`);
             emit('groupsUpdated', response);
             await loadCurrentGroups();
-            groupNameDrafts.value = currentGroups.value.map((group) => group.name);
         } else {
             toast.error(response.message || 'Failed to rename group');
             await loadCurrentGroups();
@@ -366,7 +320,6 @@ async function handleClearGroups() {
             toast.success('Groups cleared successfully');
             emit('groupsUpdated', response);
             currentGroups.value = [];
-            syncGroupNameDrafts(numberOfGroups.value);
         } else {
             errorMessage.value = response.message || 'Failed to clear groups';
         }
@@ -416,26 +369,6 @@ function closeDialog() {
 
 .grouperDialogContent {
     padding: 1.5rem 1rem;
-}
-
-.groupNamesContainer {
-    margin-bottom: 1rem;
-}
-
-.groupNamesHint {
-    font-family: var(--font);
-    font-size: 0.8rem;
-    color: var(--white);
-    opacity: 0.7;
-    margin: 0 0 0.75rem 0;
-}
-
-.groupNamesList {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    max-height: 240px;
-    overflow-y: auto;
 }
 
 .groupNameInput {

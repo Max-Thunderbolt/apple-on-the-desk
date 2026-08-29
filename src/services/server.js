@@ -216,9 +216,9 @@ class Server {
         }
     }
 
-    async generateGroups(classId, numberOfGroups, groupNames) {
+    async generateGroups(classId, numberOfGroups) {
         try {
-            const response = await this.http.post(`/classes/${classId}/generate-groups`, { numberOfGroups, groupNames })
+            const response = await this.http.post(`/classes/${classId}/generate-groups`, { numberOfGroups })
             return response.data
         } catch (error) {
             console.error('Error generating groups:', error)
