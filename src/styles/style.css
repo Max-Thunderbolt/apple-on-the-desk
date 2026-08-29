@@ -85,6 +85,9 @@
   --spacing-mobile: 0.5rem;
   --spacing-tablet: 1rem;
   --spacing-desktop: 1.5rem;
+
+  /* Floating dock (search, action menu, help button) */
+  --floating-dock-bottom-offset: 1.5rem;
 }
 
 :root[data-theme='dark'] {

@@ -351,7 +351,7 @@ defineExpose({ searchRef, timerRef });
 <style scoped>
 .classFloatingDock {
     position: fixed;
-    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--floating-dock-bottom-offset, 1.5rem) + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 900;

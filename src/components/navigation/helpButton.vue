@@ -183,7 +183,7 @@ onMounted(() => {
 }
 
 .helpButton--dockAligned {
-    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--floating-dock-bottom-offset, 1.5rem) + env(safe-area-inset-bottom, 0px));
     justify-content: center;
     min-height: 44px;
 }
