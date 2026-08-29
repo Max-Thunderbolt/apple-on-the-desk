@@ -24,6 +24,10 @@
         </div>
         <div v-if="isPlatformAdmin || hasSchoolAdmin" class="dashLinks">
           <v-btn v-if="isPlatformAdmin" size="small" variant="tonal" class="dashLink"
+            @click="navigateTo('/AdminSchools')">
+            Manage schools
+          </v-btn>
+          <v-btn v-if="isPlatformAdmin" size="small" variant="tonal" class="dashLink"
             @click="navigateTo('/AdminDashboard')">
             Admin dashboard
           </v-btn>

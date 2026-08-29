@@ -1,6 +1,8 @@
 <template>
   <div class="container adminPage">
     <div class="adminShell">
+      <AdminNav />
+
       <header class="adminHeader">
         <div class="adminHeaderLeft">
           <p class="adminEyebrow">Platform administration</p>
@@ -58,8 +60,144 @@
           </article>
         </section>
 
+        <!-- Usage breakdown -->
+        <section v-if="usageSummaryCards.length" class="usagePillRow">
+          <button v-for="pill in usageSummaryCards" :key="pill.key" type="button" class="usagePill"
+            :class="[pill.cls, { 'usagePill--selected': usageFilter === pill.key }]" @click="setUsageFilter(pill.key)">
+            <span class="usagePillCount">{{ pill.count }}</span>
+            <span class="usagePillLabel">{{ pill.label }}</span>
+            <span class="usagePillDesc">{{ pill.desc }}</span>
+          </button>
+        </section>
+
+        <!-- Engagement breakdown -->
+        <section v-if="engagementSummaryCards.length" class="usagePillRow engagementPillRow">
+          <button v-for="pill in engagementSummaryCards" :key="pill.key" type="button" class="usagePill"
+            :class="[pill.cls, { 'usagePill--selected': engagementFilter === pill.key }]"
+            @click="setEngagementFilter(pill.key)">
+            <span class="usagePillCount">{{ pill.count }}</span>
+            <span class="usagePillLabel">{{ pill.label }}</span>
+            <span class="usagePillDesc">{{ pill.desc }}</span>
+          </button>
+        </section>
+
+        <!-- School usage tracker -->
+        <section class="tablePanel">
+          <div class="tableHead">
+            <div>
+              <h2 class="sectionTitle">
+                <v-icon size="20" class="sectionTitleIcon">mdi-radar</v-icon>
+                School usage tracker
+              </h2>
+              <p class="sectionDesc">See which schools are actively using the platform, onboarding, or still awaiting setup.</p>
+            </div>
+            <div class="tableHeadActions">
+              <div class="filterChips">
+                <v-btn v-for="f in USAGE_FILTERS" :key="f.value" size="x-small" variant="text" class="filterChip"
+                  :class="{ 'filterChip--active': usageFilter === f.value && engagementFilter === 'all' }"
+                  @click="setUsageFilter(f.value)">
+                  {{ f.label }}
+                </v-btn>
+                <v-btn v-for="f in ENGAGEMENT_FILTERS" :key="f.value" size="x-small" variant="text"
+                  class="filterChip filterChip--engagement"
+                  :class="{ 'filterChip--active': engagementFilter === f.value && usageFilter === 'all' }"
+                  @click="setEngagementFilter(f.value)">
+                  {{ f.label }}
+                </v-btn>
+              </div>
+              <v-btn size="small" variant="tonal" class="manageSchoolsBtn" prepend-icon="mdi-domain" @click="goToSchools">
+                Manage schools
+              </v-btn>
+            </div>
+          </div>
+
+          <div v-if="filteredSchools.length" class="tableWrap">
+            <table class="dataTable">
+              <thead>
+                <tr>
+                  <th>School</th>
+                  <th>Lifecycle</th>
+                  <th>Engagement</th>
+                  <th class="num">Admins</th>
+                  <th class="num">Teachers</th>
+                  <th class="num">Classes</th>
+                  <th class="num">Students</th>
+                  <th>Last class</th>
+                  <th>Last login</th>
+                  <th class="num">30d events</th>
+                  <th class="num">Term cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in filteredSchools" :key="row.schoolId" class="usageRow">
+                  <td>
+                    <div class="schoolNameCell">
+                      <div>
+                        <span class="schoolName">{{ row.schoolName }}</span>
+                        <span class="schoolIdMono">Joined {{ formatDate(row.createdAt) }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="statusBadge" :class="usageStatusMeta(row.usageStatus).cls">
+                      <v-icon size="14">{{ usageStatusMeta(row.usageStatus).icon }}</v-icon>
+                      {{ usageStatusMeta(row.usageStatus).label }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="statusBadge" :class="engagementStatusMeta(row.engagementStatus).cls">
+                      <v-icon size="14">{{ engagementStatusMeta(row.engagementStatus).icon }}</v-icon>
+                      {{ engagementStatusMeta(row.engagementStatus).label }}
+                    </span>
+                  </td>
+                  <td class="num">{{ row.schoolAdminCount ?? 0 }}</td>
+                  <td class="num">{{ row.teacherCount ?? 0 }}</td>
+                  <td class="num">{{ row.classCount ?? 0 }}</td>
+                  <td class="num">{{ formatInt(row.studentCount) }}</td>
+                  <td class="activityCell">{{ formatDate(row.lastClassActivityAt) }}</td>
+                  <td class="activityCell">{{ formatDate(row.lastTeacherLoginAt) }}</td>
+                  <td class="num">{{ row.eventsLast30Days ?? 0 }}</td>
+                  <td class="num costCell">{{ formatZAR(row.costZAR) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-else class="emptyState">
+            <v-icon size="48" class="emptyIcon">mdi-filter-off-outline</v-icon>
+            <p class="emptyTitle">No schools in this filter</p>
+            <p class="emptyText">Try another usage filter or onboard schools from the Schools page.</p>
+          </div>
+        </section>
+
+        <!-- Engagement health + platform activity -->
+        <section class="chartsRow chartsRow--double">
+          <div class="chartPanel chartPanel--doughnut">
+            <h2 class="chartTitle">
+              <v-icon size="20" class="chartTitleIcon">mdi-heart-pulse</v-icon>
+              Engagement health
+            </h2>
+            <p class="chartSubtitle">School activity in the last 7 / 30 days</p>
+            <div class="chartWrap chartWrap--doughnut">
+              <Doughnut v-if="engagementDoughnutData" :data="engagementDoughnutData" :options="doughnutOptions" />
+              <div v-else class="chartEmpty">No engagement data</div>
+            </div>
+          </div>
+          <div class="chartPanel chartPanel--line">
+            <h2 class="chartTitle">
+              <v-icon size="20" class="chartTitleIcon">mdi-pulse</v-icon>
+              Platform activity — last 12 weeks
+            </h2>
+            <p class="chartSubtitle">Points, purchases, roster changes, and new classes</p>
+            <div class="chartWrap chartWrap--line">
+              <Line v-if="platformActivityData" :data="platformActivityData" :options="lineOptions" />
+              <div v-else class="chartEmpty">No activity logged yet</div>
+            </div>
+          </div>
+        </section>
+
         <!-- Charts section -->
-        <section class="chartsRow">
+        <section class="chartsRow chartsRow--triple">
           <div class="chartPanel chartPanel--bar">
             <h2 class="chartTitle">
               <v-icon size="20" class="chartTitleIcon">mdi-chart-bar</v-icon>
@@ -70,14 +208,36 @@
               <div v-else class="chartEmpty">No school data</div>
             </div>
           </div>
+          <div class="chartPanel chartPanel--bar">
+            <h2 class="chartTitle">
+              <v-icon size="20" class="chartTitleIcon">mdi-google-classroom</v-icon>
+              Classes by school
+            </h2>
+            <div class="chartWrap">
+              <Bar v-if="classesBarData" :data="classesBarData" :options="barOptions" />
+              <div v-else class="chartEmpty">No classes yet</div>
+            </div>
+          </div>
           <div class="chartPanel chartPanel--doughnut">
+            <h2 class="chartTitle">
+              <v-icon size="20" class="chartTitleIcon">mdi-chart-donut</v-icon>
+              Usage breakdown
+            </h2>
+            <div class="chartWrap chartWrap--doughnut">
+              <Doughnut v-if="usageDoughnutData" :data="usageDoughnutData" :options="doughnutOptions" />
+              <div v-else class="chartEmpty">No usage data</div>
+            </div>
+          </div>
+        </section>
+
+        <section v-if="revenueDoughnutData" class="chartsRow chartsRow--single">
+          <div class="chartPanel chartPanel--doughnut chartPanel--wide">
             <h2 class="chartTitle">
               <v-icon size="20" class="chartTitleIcon">mdi-chart-donut</v-icon>
               Revenue distribution
             </h2>
-            <div class="chartWrap chartWrap--doughnut">
-              <Doughnut v-if="revenueDoughnutData" :data="revenueDoughnutData" :options="doughnutOptions" />
-              <div v-else class="chartEmpty">No revenue data</div>
+            <div class="chartWrap chartWrap--doughnut chartWrap--wide">
+              <Doughnut :data="revenueDoughnutData" :options="doughnutOptions" />
             </div>
           </div>
         </section>
@@ -88,196 +248,69 @@
             <v-icon size="20" class="chartTitleIcon">mdi-trending-up</v-icon>
             Platform growth — last 6 months
           </h2>
+          <p class="chartSubtitle">New students use roster addedAt timestamps; classes use createdAt</p>
           <div class="chartWrap chartWrap--line">
             <Line :data="growthLineData" :options="lineOptions" />
           </div>
         </section>
 
-        <!-- Quick Actions -->
-        <section class="actionsGrid">
-          <!-- Create School -->
-          <div class="actionCard">
-            <div class="actionHeader">
-              <v-icon size="22" color="var(--freshSky)">mdi-plus-circle-outline</v-icon>
-              <h3 class="actionTitle">Create school</h3>
-            </div>
-            <p class="actionDesc">Add a new school to the platform. Assign members and generate invite links after
-              creation.</p>
-            <div class="actionRow">
-              <v-text-field v-model="newSchoolName" placeholder="e.g. Riverside Primary" density="compact" hide-details
-                variant="outlined" class="glassField actionInput" @keyup.enter="createSchool" />
-              <v-btn class="actionBtn actionBtn--create" :loading="creatingSchool" @click="createSchool">
-                Create
-              </v-btn>
-            </div>
-          </div>
-
-          <!-- Add Member -->
-          <div class="actionCard">
-            <div class="actionHeader">
-              <v-icon size="22" color="var(--seaGreen)">mdi-account-plus-outline</v-icon>
-              <h3 class="actionTitle">Add member</h3>
-            </div>
-            <p class="actionDesc">Search and assign an existing account to a school.</p>
-            <div class="actionFields">
-              <v-select v-model="memberSchoolId" :items="schoolSelectItems" item-title="title" item-value="value"
-                placeholder="Select school" density="compact" hide-details variant="outlined" class="glassField"
-                :menu-props="{ contentClass: 'dashboardSelectMenu' }" />
-              <v-autocomplete v-model="memberUserId" v-model:search="memberSearchQuery" :items="memberSearchResults"
-                item-title="label" item-value="userId" placeholder="Search user by name, email, or UID"
-                density="compact" hide-details variant="outlined" class="glassField userLookupField" no-filter
-                :loading="memberSearchLoading" :disabled="!memberSchoolId" clearable
-                :menu-props="{ contentClass: 'dashboardSelectMenu' }">
-                <template #prepend-inner>
-                  <v-progress-circular v-if="memberSearchLoading" indeterminate size="16" width="2" color="primary" />
-                  <v-icon v-else size="16">mdi-account-search-outline</v-icon>
-                </template>
-                <template #item="{ props, item }">
-                  <v-list-item v-bind="props" :title="item.raw.name || 'Unnamed user'"
-                    :subtitle="item.raw.email || item.raw.userId" />
-                </template>
-              </v-autocomplete>
-              <div class="actionRowInline">
-                <v-select v-model="memberRole" :items="roleItems" density="compact" hide-details variant="outlined"
-                  class="glassField roleSelect" :menu-props="{ contentClass: 'dashboardSelectMenu' }" />
-                <v-btn class="actionBtn actionBtn--member" :loading="addingMember" @click="addMember">
-                  Add
-                </v-btn>
-              </div>
-            </div>
-          </div>
-
-          <!-- Invite Links -->
-          <div class="actionCard actionCard--wide">
-            <div class="actionHeader">
-              <v-icon size="22" color="var(--amethyst)">mdi-link-variant</v-icon>
-              <h3 class="actionTitle">Invite links</h3>
-            </div>
-            <p class="actionDesc">Generate role-specific join links. Anyone signed in can join using the link.</p>
-            <div class="inviteBody">
-              <v-select v-model="inviteSchoolId" :items="schoolSelectItems" item-title="title" item-value="value"
-                placeholder="Select school" density="compact" hide-details variant="outlined"
-                class="glassField inviteSchoolSelect" :menu-props="{ contentClass: 'dashboardSelectMenu' }" />
-              <div class="inviteLinkGroup">
-                <div class="inviteLinkRow">
-                  <v-btn class="actionBtn actionBtn--invite" size="small" :loading="creatingTeacherJoinCode"
-                    :disabled="!inviteSchoolId" prepend-icon="mdi-account-school" @click="generateJoinCode('teacher')">
-                    Teacher link
-                  </v-btn>
-                  <div v-if="teacherJoinUrl" class="linkCopy">
-                    <code class="linkText">{{ teacherJoinUrl }}</code>
-                    <v-btn icon="mdi-content-copy" size="x-small" variant="text" @click="copyLink(teacherJoinUrl)" />
-                  </div>
-                </div>
-                <div class="inviteLinkRow">
-                  <v-btn class="actionBtn actionBtn--invite" size="small" :loading="creatingSchoolAdminJoinCode"
-                    :disabled="!inviteSchoolId" prepend-icon="mdi-shield-account"
-                    @click="generateJoinCode('schoolAdmin')">
-                    Admin link
-                  </v-btn>
-                  <div v-if="schoolAdminJoinUrl" class="linkCopy">
-                    <code class="linkText">{{ schoolAdminJoinUrl }}</code>
-                    <v-btn icon="mdi-content-copy" size="x-small" variant="text"
-                      @click="copyLink(schoolAdminJoinUrl)" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Schools directory -->
-        <section class="tablePanel">
+        <!-- Teacher activity -->
+        <section v-if="overview.teacherActivity?.length" class="tablePanel">
           <div class="tableHead">
             <div>
-              <h2 class="sectionTitle">Schools directory</h2>
-              <p class="sectionDesc">Click a school to view members, classes, and billing details.</p>
+              <h2 class="sectionTitle">
+                <v-icon size="20" class="sectionTitleIcon">mdi-account-school</v-icon>
+                Teacher activity
+              </h2>
+              <p class="sectionDesc">Teachers sorted by last login — follow up with inactive accounts.</p>
             </div>
-            <div class="tableBadge">{{ overview.schools?.length ?? 0 }} schools</div>
           </div>
-
-          <div v-if="overview.schools?.length" class="tableWrap">
+          <div class="tableWrap">
             <table class="dataTable">
               <thead>
                 <tr>
+                  <th>Teacher</th>
                   <th>School</th>
-                  <th class="num">Teachers</th>
+                  <th>Last login</th>
+                  <th>Last class activity</th>
                   <th class="num">Classes</th>
                   <th class="num">Students</th>
-                  <th class="num">Term cost</th>
-                  <th class="num">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <template v-for="row in overview.schools" :key="row.schoolId">
-                  <tr class="schoolRow" @click="toggleSchoolExpand(row.schoolId)">
-                    <td>
-                      <div class="schoolNameCell">
-                        <v-icon size="18" class="expandIcon"
-                          :class="{ 'expandIcon--open': expandedSchool === row.schoolId }">
-                          mdi-chevron-right
-                        </v-icon>
-                        <div>
-                          <span class="schoolName">{{ row.schoolName }}</span>
-                          <span class="schoolIdMono">{{ row.schoolId.slice(0, 8) }}…</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="num">{{ row.teacherCount ?? 0 }}</td>
-                    <td class="num">{{ row.classCount }}</td>
-                    <td class="num">{{ formatInt(row.studentCount) }}</td>
-                    <td class="num costCell">{{ formatZAR(row.costZAR) }}</td>
-                    <td class="num">
-                      <v-btn icon="mdi-open-in-new" size="x-small" variant="text"
-                        @click.stop="viewSchoolMembers(row.schoolId)" />
-                    </td>
-                  </tr>
-                  <tr v-if="expandedSchool === row.schoolId" class="expandRow">
-                    <td colspan="6">
-                      <div class="expandContent">
-                        <div v-if="schoolMembersLoading" class="expandLoading">
-                          <v-progress-circular indeterminate size="20" width="2" />
-                        </div>
-                        <template v-else-if="schoolMembers">
-                          <h4 class="expandSubtitle">Members ({{ schoolMembers.members?.length ?? 0 }})</h4>
-                          <div v-if="schoolMembers.members?.length" class="memberChips">
-                            <div v-for="m in schoolMembers.members" :key="m.userId" class="memberChip" :class="m.role">
-                              <v-icon size="14">{{ m.role === 'schoolAdmin' ? 'mdi-shield-account' : 'mdi-account'
-                                }}</v-icon>
-                              <span class="memberName">{{ m.name || m.email || m.userId.slice(0, 8) }}</span>
-                              <span class="memberRole">{{ m.role === 'schoolAdmin' ? 'Admin' : 'Teacher' }}</span>
-                              <span v-if="m.classCount" class="memberStat">{{ m.classCount }} classes · {{
-                                m.studentCount }} students</span>
-                            </div>
-                          </div>
-                          <p v-else class="expandEmpty">No members yet</p>
-                        </template>
-                      </div>
-                    </td>
-                  </tr>
-                </template>
+                <tr v-for="t in overview.teacherActivity" :key="`${t.userId}-${t.schoolId}`" class="usageRow">
+                  <td>{{ t.name || t.email || t.userId.slice(0, 10) }}</td>
+                  <td>{{ t.schoolName || '—' }}</td>
+                  <td class="activityCell">{{ formatDate(t.lastLoginDate) }}</td>
+                  <td class="activityCell">{{ formatDate(t.lastClassActivityAt) }}</td>
+                  <td class="num">{{ t.classCount ?? 0 }}</td>
+                  <td class="num">{{ t.studentCount ?? 0 }}</td>
+                </tr>
               </tbody>
             </table>
-          </div>
-
-          <div v-else class="emptyState">
-            <v-icon size="48" class="emptyIcon">mdi-school-outline</v-icon>
-            <p class="emptyTitle">No schools yet</p>
-            <p class="emptyText">Create a school above to see it listed here with usage metrics.</p>
           </div>
         </section>
 
         <!-- Recent activity -->
-        <section v-if="overview.recentActivity?.length" class="activityPanel">
-          <h2 class="sectionTitle">
-            <v-icon size="20" class="sectionTitleIcon">mdi-history</v-icon>
-            Recent activity
-          </h2>
+        <section v-if="filteredRecentActivity.length" class="activityPanel">
+          <div class="activityPanelHead">
+            <h2 class="sectionTitle">
+              <v-icon size="20" class="sectionTitleIcon">mdi-history</v-icon>
+              Recent activity
+            </h2>
+            <div class="filterChips">
+              <v-btn v-for="f in ACTIVITY_FILTERS" :key="f.value" size="x-small" variant="text" class="filterChip"
+                :class="{ 'filterChip--active': activityFilter === f.value }" @click="activityFilter = f.value">
+                {{ f.label }}
+              </v-btn>
+            </div>
+          </div>
           <div class="activityList">
-            <div v-for="(item, idx) in overview.recentActivity" :key="idx" class="activityItem">
+            <div v-for="(item, idx) in filteredRecentActivity" :key="idx" class="activityItem">
               <div class="activityDot" :class="'activityDot--' + item.type" />
               <div class="activityBody">
                 <span class="activityLabel">{{ item.label }}</span>
+                <span v-if="item.schoolName" class="activitySchool">{{ item.schoolName }}</span>
                 <span class="activityDate">{{ formatDate(item.date) }}</span>
               </div>
             </div>
@@ -289,7 +322,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Bar, Doughnut, Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -305,6 +339,7 @@ import {
 } from 'chart.js'
 import Server from '@/services/server'
 import { useTheme } from '@/composables/useTheme'
+import AdminNav from '@/components/admin/AdminNav.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, PointElement, LineElement, Tooltip, Legend, Filler)
 
@@ -325,48 +360,66 @@ const loadError = ref('')
 const successMsg = ref('')
 const year = ref(new Date().getFullYear())
 const term = ref(1)
+const usageFilter = ref('all')
+const engagementFilter = ref('all')
+const activityFilter = ref('all')
+const router = useRouter()
 const { effectiveTheme } = useTheme()
 const isDarkTheme = computed(() => effectiveTheme.value === 'dark')
-
-const newSchoolName = ref('')
-const creatingSchool = ref(false)
-
-const memberSchoolId = ref('')
-const memberUserId = ref('')
-const memberRole = ref('teacher')
-const addingMember = ref(false)
-const memberSearchQuery = ref('')
-const memberSearchLoading = ref(false)
-const memberSearchResults = ref([])
-let memberSearchRequestId = 0
-
-const inviteSchoolId = ref('')
-const teacherJoinUrl = ref('')
-const schoolAdminJoinUrl = ref('')
-const creatingTeacherJoinCode = ref(false)
-const creatingSchoolAdminJoinCode = ref(false)
-
-const expandedSchool = ref(null)
-const schoolMembers = ref(null)
-const schoolMembersLoading = ref(false)
 
 const termItems = [
   { title: 'T1 · Jan–Apr', value: 1 },
   { title: 'T2 · May–Aug', value: 2 },
   { title: 'T3 · Sep–Dec', value: 3 },
 ]
-const roleItems = [
-  { title: 'Teacher', value: 'teacher' },
-  { title: 'School admin', value: 'schoolAdmin' },
+
+const USAGE_FILTERS = [
+  { value: 'all', label: 'All schools' },
+  { value: 'active', label: 'Active' },
+  { value: 'engaged', label: 'Engaged' },
+  { value: 'onboarding', label: 'Onboarding' },
+  { value: 'registered', label: 'Registered' },
 ]
 
-const schoolSelectItems = computed(() =>
-  (overview.value?.schools ?? []).map((s) => ({ title: s.schoolName, value: s.schoolId }))
-)
+const USAGE_STATUS_META = {
+  active: { label: 'Active', icon: 'mdi-check-circle', cls: 'status--active' },
+  engaged: { label: 'Engaged', icon: 'mdi-google-classroom', cls: 'status--engaged' },
+  onboarding: { label: 'Onboarding', icon: 'mdi-account-clock-outline', cls: 'status--onboarding' },
+  registered: { label: 'Registered', icon: 'mdi-domain', cls: 'status--registered' },
+}
+
+const ENGAGEMENT_FILTERS = [
+  { value: 'all', label: 'All engagement' },
+  { value: 'active', label: 'Active (7d)' },
+  { value: 'recent', label: 'Recent (30d)' },
+  { value: 'dormant', label: 'Dormant' },
+  { value: 'never', label: 'Never' },
+]
+
+const ENGAGEMENT_STATUS_META = {
+  active: { label: 'Active', icon: 'mdi-lightning-bolt', cls: 'engagement--active' },
+  recent: { label: 'Recent', icon: 'mdi-clock-outline', cls: 'engagement--recent' },
+  dormant: { label: 'Dormant', icon: 'mdi-sleep', cls: 'engagement--dormant' },
+  never: { label: 'Never', icon: 'mdi-minus-circle-outline', cls: 'engagement--never' },
+}
+
+const ACTIVITY_FILTERS = [
+  { value: 'all', label: 'All events' },
+  { value: 'points', label: 'Points' },
+  { value: 'purchases', label: 'Purchases' },
+  { value: 'roster', label: 'Roster' },
+]
+
+const ACTIVITY_TYPE_GROUPS = {
+  points: ['points_awarded'],
+  purchases: ['purchase_completed'],
+  roster: ['student_added', 'student_removed'],
+}
 
 const kpiCards = computed(() => {
   if (!overview.value) return []
   const t = overview.value.totals
+  const u = t.usageSummary || {}
   const tone = isDarkTheme.value
     ? {
       skyBg: 'rgba(0,168,232,0.15)',
@@ -379,6 +432,8 @@ const kpiCards = computed(() => {
       purple: 'rgba(168,51,185,0.9)',
       goldBg: 'rgba(247,183,7,0.15)',
       gold: 'rgba(247,183,7,0.9)',
+      tealBg: 'rgba(0,168,232,0.12)',
+      teal: 'rgba(0,168,232,0.9)',
     }
     : {
       skyBg: 'rgba(0,120,166,0.14)',
@@ -391,15 +446,59 @@ const kpiCards = computed(() => {
       purple: 'rgba(138,30,160,0.92)',
       goldBg: 'rgba(197,142,5,0.14)',
       gold: 'rgba(197,142,5,0.92)',
+      tealBg: 'rgba(0,120,166,0.12)',
+      teal: 'rgba(0,120,166,0.92)',
     }
   return [
-    { label: 'Schools', value: t.schools, icon: 'mdi-domain', iconBg: tone.skyBg, iconColor: tone.sky, cls: 'kpiCard--schools', meta: 'Registered' },
-    { label: 'Teachers', value: t.teachers ?? 0, icon: 'mdi-account-school-outline', iconBg: tone.redBg, iconColor: tone.red, cls: 'kpiCard--teachers', meta: 'Unique across schools' },
-    { label: 'Classes', value: t.classes, icon: 'mdi-google-classroom', iconBg: tone.greenBg, iconColor: tone.green, cls: 'kpiCard--classes', meta: 'Active this term' },
-    { label: 'Students', value: formatInt(t.students), icon: 'mdi-account-group-outline', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--students' },
+    { label: 'Active (7d)', value: t.schoolsActiveLast7Days ?? 0, icon: 'mdi-lightning-bolt', iconBg: tone.greenBg, iconColor: tone.green, cls: 'kpiCard--eng7', meta: 'Schools with recent activity' },
+    { label: 'Active (30d)', value: t.schoolsActiveLast30Days ?? 0, icon: 'mdi-calendar-check', iconBg: tone.tealBg, iconColor: tone.teal, cls: 'kpiCard--eng30', meta: 'Including recent engagement' },
+    { label: 'Dormant', value: t.schoolsDormant ?? 0, icon: 'mdi-sleep', iconBg: tone.redBg, iconColor: tone.red, cls: 'kpiCard--dormant', meta: 'No activity in 30+ days' },
+    { label: 'Teachers (7d login)', value: t.teachersActiveLast7Days ?? 0, icon: 'mdi-account-check', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--teachers7', meta: 'Logged in this week' },
+    { label: 'Schools', value: t.schools, icon: 'mdi-domain', iconBg: tone.skyBg, iconColor: tone.sky, cls: 'kpiCard--schools', meta: `${u.active ?? 0} with students` },
+    { label: 'Students', value: formatInt(t.students), icon: 'mdi-account-group-outline', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--students', meta: `${t.schoolsWithStudents ?? 0} schools with students` },
     { label: 'Term revenue', value: formatZAR(t.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: overview.value.termKey },
-    { label: 'Year projection', value: formatZAR(t.projectedYearlyCostZAR ?? 0), icon: 'mdi-chart-timeline-variant', iconBg: tone.greenBg, iconColor: tone.green, cls: 'kpiCard--yearly', isMoney: true, meta: `${overview.value.termsPerYear ?? 3} terms` },
+    { label: '30d events', value: t.eventsLast30Days ?? 0, icon: 'mdi-pulse', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--events', meta: `${t.pointsEventsLast30Days ?? 0} points · ${t.purchasesLast30Days ?? 0} purchases` },
   ]
+})
+
+const usageSummaryCards = computed(() => {
+  const u = overview.value?.totals?.usageSummary
+  if (!u) return []
+  return [
+    { key: 'active', label: 'Active', desc: 'Students enrolled', count: u.active ?? 0, cls: 'usagePill--active' },
+    { key: 'engaged', label: 'Engaged', desc: 'Classes created', count: u.engaged ?? 0, cls: 'usagePill--engaged' },
+    { key: 'onboarding', label: 'Onboarding', desc: 'Members joined', count: u.onboarding ?? 0, cls: 'usagePill--onboarding' },
+    { key: 'registered', label: 'Registered', desc: 'Awaiting setup', count: u.registered ?? 0, cls: 'usagePill--registered' },
+  ]
+})
+
+const engagementSummaryCards = computed(() => {
+  const e = overview.value?.totals?.engagementSummary
+  if (!e) return []
+  return [
+    { key: 'active', label: 'Active', desc: 'Activity ≤7 days', count: e.active ?? 0, cls: 'usagePill--engActive' },
+    { key: 'recent', label: 'Recent', desc: 'Activity ≤30 days', count: e.recent ?? 0, cls: 'usagePill--engRecent' },
+    { key: 'dormant', label: 'Dormant', desc: 'No activity 30+ days', count: e.dormant ?? 0, cls: 'usagePill--engDormant' },
+    { key: 'never', label: 'Never', desc: 'No class/login activity', count: e.never ?? 0, cls: 'usagePill--engNever' },
+  ]
+})
+
+const filteredSchools = computed(() => {
+  let schools = overview.value?.schools || []
+  if (usageFilter.value !== 'all') {
+    schools = schools.filter((s) => s.usageStatus === usageFilter.value)
+  }
+  if (engagementFilter.value !== 'all') {
+    schools = schools.filter((s) => s.engagementStatus === engagementFilter.value)
+  }
+  return schools
+})
+
+const filteredRecentActivity = computed(() => {
+  const items = overview.value?.recentActivity || []
+  if (activityFilter.value === 'all') return items
+  const types = ACTIVITY_TYPE_GROUPS[activityFilter.value] || []
+  return items.filter((item) => types.includes(item.type))
 })
 
 const studentsBarData = computed(() => {
@@ -433,6 +532,107 @@ const revenueDoughnutData = computed(() => {
         hoverOffset: 8,
       },
     ],
+  }
+})
+
+const engagementDoughnutData = computed(() => {
+  const e = overview.value?.totals?.engagementSummary
+  if (!e) return null
+  const entries = [
+    { label: 'Active (7d)', value: e.active ?? 0, color: 'rgba(26, 147, 111, 0.85)' },
+    { label: 'Recent (30d)', value: e.recent ?? 0, color: 'rgba(0, 168, 232, 0.85)' },
+    { label: 'Dormant', value: e.dormant ?? 0, color: 'rgba(247, 183, 7, 0.85)' },
+    { label: 'Never', value: e.never ?? 0, color: 'rgba(148, 163, 184, 0.75)' },
+  ].filter((entry) => entry.value > 0)
+  if (!entries.length) return null
+  return {
+    labels: entries.map((entry) => entry.label),
+    datasets: [{
+      data: entries.map((entry) => entry.value),
+      backgroundColor: entries.map((entry) => entry.color),
+      borderWidth: 0,
+      hoverOffset: 8,
+    }],
+  }
+})
+
+const platformActivityData = computed(() => {
+  const weeks = overview.value?.platformActivityByWeek
+  if (!weeks?.length) return null
+  return {
+    labels: weeks.map((w) => w.label),
+    datasets: [
+      {
+        label: 'Points',
+        data: weeks.map((w) => w.pointsAwarded ?? 0),
+        borderColor: PALETTE[0],
+        backgroundColor: 'rgba(0,168,232,0.08)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 3,
+      },
+      {
+        label: 'Purchases',
+        data: weeks.map((w) => w.purchases ?? 0),
+        borderColor: PALETTE[1],
+        backgroundColor: 'transparent',
+        tension: 0.35,
+        pointRadius: 3,
+      },
+      {
+        label: 'Students added',
+        data: weeks.map((w) => w.studentsAdded ?? 0),
+        borderColor: PALETTE[2],
+        backgroundColor: 'transparent',
+        tension: 0.35,
+        pointRadius: 3,
+      },
+      {
+        label: 'Classes created',
+        data: weeks.map((w) => w.classesCreated ?? 0),
+        borderColor: PALETTE[3],
+        backgroundColor: 'transparent',
+        tension: 0.35,
+        pointRadius: 3,
+      },
+    ],
+  }
+})
+
+const usageDoughnutData = computed(() => {
+  const u = overview.value?.totals?.usageSummary
+  if (!u) return null
+  const entries = [
+    { label: 'Active', value: u.active ?? 0, color: 'rgba(26, 147, 111, 0.85)' },
+    { label: 'Engaged', value: u.engaged ?? 0, color: 'rgba(0, 168, 232, 0.85)' },
+    { label: 'Onboarding', value: u.onboarding ?? 0, color: 'rgba(247, 183, 7, 0.85)' },
+    { label: 'Registered', value: u.registered ?? 0, color: 'rgba(148, 163, 184, 0.75)' },
+  ].filter((e) => e.value > 0)
+  if (!entries.length) return null
+  return {
+    labels: entries.map((e) => e.label),
+    datasets: [{
+      data: entries.map((e) => e.value),
+      backgroundColor: entries.map((e) => e.color),
+      borderWidth: 0,
+      hoverOffset: 8,
+    }],
+  }
+})
+
+const classesBarData = computed(() => {
+  const schools = overview.value?.schools?.filter((s) => s.classCount > 0)
+  if (!schools?.length) return null
+  return {
+    labels: schools.map((s) => s.schoolName),
+    datasets: [{
+      label: 'Classes',
+      data: schools.map((s) => s.classCount),
+      backgroundColor: 'rgba(0, 168, 232, 0.75)',
+      borderRadius: 6,
+      borderSkipped: false,
+      maxBarThickness: 48,
+    }],
   }
 })
 
@@ -545,7 +745,7 @@ function formatZAR(n) {
   return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', maximumFractionDigits: 0 }).format(n)
 }
 function formatDate(ts) {
-  if (!ts) return ''
+  if (!ts) return '—'
   const d = new Date(ts)
   const now = new Date()
   const diff = now - d
@@ -556,133 +756,37 @@ function formatDate(ts) {
   return d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function usageStatusMeta(status) {
+  return USAGE_STATUS_META[status] || USAGE_STATUS_META.registered
+}
+
+function engagementStatusMeta(status) {
+  return ENGAGEMENT_STATUS_META[status] || ENGAGEMENT_STATUS_META.never
+}
+
+function setUsageFilter(value) {
+  usageFilter.value = value
+  engagementFilter.value = 'all'
+}
+
+function setEngagementFilter(value) {
+  engagementFilter.value = value
+  usageFilter.value = 'all'
+}
+
+function goToSchools() {
+  router.push('/AdminSchools')
+}
+
 async function loadOverview() {
   loadError.value = ''
   overviewLoading.value = true
   try {
     overview.value = await Server.getAdminOverview({ year: year.value, term: term.value })
-    if (!memberSchoolId.value && overview.value?.schools?.length) {
-      memberSchoolId.value = overview.value.schools[0].schoolId
-    }
-    if (!inviteSchoolId.value && overview.value?.schools?.length) {
-      inviteSchoolId.value = overview.value.schools[0].schoolId
-    }
   } catch (e) {
     loadError.value = e.response?.data?.message || e.message || 'Failed to load overview'
   } finally {
     overviewLoading.value = false
-  }
-}
-
-async function createSchool() {
-  const name = newSchoolName.value?.trim()
-  if (!name) return
-  creatingSchool.value = true
-  loadError.value = ''
-  try {
-    await Server.createAdminSchool({ name })
-    newSchoolName.value = ''
-    successMsg.value = `School "${name}" created`
-    await loadOverview()
-  } catch (e) {
-    loadError.value = e.response?.data?.message || e.message || 'Failed to create school'
-  } finally {
-    creatingSchool.value = false
-  }
-}
-
-async function addMember() {
-  if (!memberSchoolId.value) { loadError.value = 'Select a school'; return }
-  if (!memberUserId.value) { loadError.value = 'Select a user account'; return }
-  const body = { role: memberRole.value, userId: memberUserId.value }
-  addingMember.value = true
-  loadError.value = ''
-  try {
-    await Server.addAdminSchoolMember(memberSchoolId.value, body)
-    successMsg.value = `Member added as ${memberRole.value}`
-    memberUserId.value = ''
-    memberSearchQuery.value = ''
-    memberSearchResults.value = []
-  } catch (e) {
-    loadError.value = e.response?.data?.message || e.message || 'Failed to add member'
-  } finally {
-    addingMember.value = false
-  }
-}
-
-watch(memberSearchQuery, async (raw) => {
-  const q = raw?.trim() || ''
-  if (q.length < 2) {
-    memberSearchResults.value = []
-    memberSearchLoading.value = false
-    return
-  }
-  const requestId = ++memberSearchRequestId
-  memberSearchLoading.value = true
-  try {
-    const data = await Server.searchAdminUsers(q)
-    if (requestId !== memberSearchRequestId) return
-    memberSearchResults.value = (data.users || []).map((u) => ({
-      ...u,
-      label: `${u.name || 'Unnamed user'} - ${u.email || u.userId}`,
-    }))
-  } catch (e) {
-    if (requestId !== memberSearchRequestId) return
-    loadError.value = e.response?.data?.message || e.message || 'Failed to search users'
-  } finally {
-    if (requestId === memberSearchRequestId) {
-      memberSearchLoading.value = false
-    }
-  }
-})
-
-async function generateJoinCode(role) {
-  if (!inviteSchoolId.value) { loadError.value = 'Select a school first'; return }
-  if (role === 'teacher') creatingTeacherJoinCode.value = true
-  else creatingSchoolAdminJoinCode.value = true
-  loadError.value = ''
-  try {
-    const result = await Server.createAdminSchoolJoinCode(inviteSchoolId.value, role)
-    if (role === 'teacher') teacherJoinUrl.value = result.joinUrl
-    else schoolAdminJoinUrl.value = result.joinUrl
-  } catch (e) {
-    loadError.value = e.response?.data?.message || e.message || 'Failed to generate invite link'
-  } finally {
-    if (role === 'teacher') creatingTeacherJoinCode.value = false
-    else creatingSchoolAdminJoinCode.value = false
-  }
-}
-
-async function copyLink(url) {
-  if (!url) return
-  try {
-    await navigator.clipboard.writeText(url)
-    successMsg.value = 'Link copied to clipboard'
-  } catch {
-    loadError.value = 'Could not copy link'
-  }
-}
-
-function toggleSchoolExpand(schoolId) {
-  if (expandedSchool.value === schoolId) {
-    expandedSchool.value = null
-    schoolMembers.value = null
-    return
-  }
-  expandedSchool.value = schoolId
-  viewSchoolMembers(schoolId)
-}
-
-async function viewSchoolMembers(schoolId) {
-  schoolMembersLoading.value = true
-  schoolMembers.value = null
-  expandedSchool.value = schoolId
-  try {
-    schoolMembers.value = await Server.getAdminSchoolMembers(schoolId)
-  } catch (e) {
-    loadError.value = e.response?.data?.message || e.message || 'Failed to load members'
-  } finally {
-    schoolMembersLoading.value = false
   }
 }
 
@@ -705,7 +809,7 @@ onMounted(() => {
 
 .adminShell {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 0 1rem 2rem;
 }
@@ -830,8 +934,190 @@ onMounted(() => {
 
 @media (min-width: 1100px) {
   .kpiGrid {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
+}
+
+/* Usage pills */
+.usagePillRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .usagePillRow {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.usagePill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: rgba(var(--ink-rgb), 0.03);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+  font-family: var(--font);
+}
+
+@media (hover: hover) {
+  .usagePill:hover {
+    transform: translateY(-1px);
+    border-color: rgba(var(--ink-rgb), 0.18);
+  }
+}
+
+.usagePill--selected {
+  border-color: rgba(0, 168, 232, 0.35) !important;
+  background: rgba(0, 168, 232, 0.08) !important;
+}
+
+.usagePillCount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+}
+
+.usagePillLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(var(--ink-rgb), 0.85);
+}
+
+.usagePillDesc {
+  font-size: 0.72rem;
+  color: rgba(var(--ink-rgb), 0.4);
+}
+
+.usagePill--active .usagePillCount { color: rgba(26, 147, 111, 0.95); }
+.usagePill--engaged .usagePillCount { color: rgba(0, 168, 232, 0.95); }
+.usagePill--onboarding .usagePillCount { color: rgba(247, 183, 7, 0.95); }
+.usagePill--registered .usagePillCount { color: rgba(var(--ink-rgb), 0.55); }
+
+.tableHeadActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.65rem;
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: flex-end;
+}
+
+.filterChip {
+  text-transform: none !important;
+  font-family: var(--font) !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  color: rgba(var(--ink-rgb), 0.55) !important;
+  border-radius: 999px !important;
+}
+
+.filterChip--active {
+  color: var(--white) !important;
+  background: rgba(0, 168, 232, 0.18) !important;
+}
+
+.manageSchoolsBtn {
+  text-transform: none !important;
+  font-family: var(--font) !important;
+  font-weight: 600 !important;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  font-family: var(--font);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.status--active {
+  color: rgba(26, 147, 111, 0.95);
+  background: rgba(26, 147, 111, 0.12);
+  border: 1px solid rgba(26, 147, 111, 0.25);
+}
+
+.status--engaged {
+  color: rgba(0, 168, 232, 0.95);
+  background: rgba(0, 168, 232, 0.12);
+  border: 1px solid rgba(0, 168, 232, 0.25);
+}
+
+.status--onboarding {
+  color: rgba(247, 183, 7, 0.95);
+  background: rgba(247, 183, 7, 0.12);
+  border: 1px solid rgba(247, 183, 7, 0.25);
+}
+
+.status--registered {
+  color: rgba(var(--ink-rgb), 0.55);
+  background: rgba(var(--ink-rgb), 0.06);
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
+}
+
+.engagement--active {
+  color: rgba(26, 147, 111, 0.95);
+  background: rgba(26, 147, 111, 0.12);
+  border: 1px solid rgba(26, 147, 111, 0.25);
+}
+
+.engagement--recent {
+  color: rgba(0, 168, 232, 0.95);
+  background: rgba(0, 168, 232, 0.12);
+  border: 1px solid rgba(0, 168, 232, 0.25);
+}
+
+.engagement--dormant {
+  color: rgba(247, 183, 7, 0.95);
+  background: rgba(247, 183, 7, 0.12);
+  border: 1px solid rgba(247, 183, 7, 0.25);
+}
+
+.engagement--never {
+  color: rgba(var(--ink-rgb), 0.55);
+  background: rgba(var(--ink-rgb), 0.06);
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
+}
+
+.usagePill--engActive .usagePillCount { color: rgba(26, 147, 111, 0.95); }
+.usagePill--engRecent .usagePillCount { color: rgba(0, 168, 232, 0.95); }
+.usagePill--engDormant .usagePillCount { color: rgba(247, 183, 7, 0.95); }
+.usagePill--engNever .usagePillCount { color: rgba(var(--ink-rgb), 0.55); }
+
+.engagementPillRow {
+  margin-top: -0.25rem;
+}
+
+.filterChip--engagement.filterChip--active {
+  background: rgba(26, 147, 111, 0.18) !important;
+}
+
+.activityCell {
+  font-size: 0.82rem;
+  color: rgba(var(--ink-rgb), 0.55);
+  white-space: nowrap;
+}
+
+.usageRow td {
+  vertical-align: middle;
 }
 
 .kpiCard {
@@ -912,6 +1198,43 @@ onMounted(() => {
   .chartsRow {
     grid-template-columns: 3fr 2fr;
   }
+}
+
+.chartsRow--triple {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .chartsRow--triple {
+    grid-template-columns: 1.2fr 1.2fr 1fr;
+  }
+}
+
+.chartsRow--single {
+  grid-template-columns: 1fr;
+}
+
+.chartsRow--double {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .chartsRow--double {
+    grid-template-columns: 1fr 1.4fr;
+  }
+}
+
+.chartSubtitle {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  color: rgba(var(--ink-rgb), 0.45);
+  margin: -0.35rem 0 0.75rem;
+}
+
+.chartWrap--wide {
+  height: 240px;
+  max-width: 420px;
+  margin: 0 auto;
 }
 
 .chartPanel {
@@ -1382,6 +1705,14 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+.activityPanelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .activityList {
   display: flex;
   flex-direction: column;
@@ -1434,6 +1765,22 @@ onMounted(() => {
   box-shadow: 0 0 6px rgba(247, 183, 7, 0.45);
 }
 
+.activityDot--points_awarded {
+  background: rgba(247, 183, 7, 0.85);
+  box-shadow: 0 0 6px rgba(247, 183, 7, 0.45);
+}
+
+.activityDot--purchase_completed {
+  background: rgba(168, 51, 185, 0.8);
+  box-shadow: 0 0 6px rgba(168, 51, 185, 0.4);
+}
+
+.activityDot--student_added,
+.activityDot--student_removed {
+  background: rgba(0, 168, 232, 0.8);
+  box-shadow: 0 0 6px rgba(0, 168, 232, 0.4);
+}
+
 .activityBody {
   display: flex;
   flex-direction: column;
@@ -1446,6 +1793,12 @@ onMounted(() => {
   font-size: 0.85rem;
   color: rgba(var(--ink-rgb), 0.8);
   line-height: 1.35;
+}
+
+.activitySchool {
+  font-family: var(--font);
+  font-size: 0.72rem;
+  color: rgba(var(--ink-rgb), 0.5);
 }
 
 .activityDate {

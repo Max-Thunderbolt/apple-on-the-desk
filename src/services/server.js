@@ -383,6 +383,16 @@ class Server {
         }
     }
 
+    async deleteAdminSchool(schoolId) {
+        try {
+            const response = await this.http.delete(`/admin/schools/${encodeURIComponent(schoolId)}`)
+            return response.data
+        } catch (error) {
+            console.error('Error deleting school:', error)
+            throw error
+        }
+    }
+
     async deleteStudent(classId, studentId) {
         console.log('deleting student:', classId, studentId);
         try {

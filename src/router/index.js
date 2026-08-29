@@ -41,7 +41,7 @@ router.beforeEach(async (to) => {
     }
   }
 
-  if (to.path === '/AdminDashboard' && !isPlatformAdmin.value) {
+  if ((to.path === '/AdminDashboard' || to.path === '/AdminSchools') && !isPlatformAdmin.value) {
     return { path: '/' }
   }
   if (to.path === '/SchoolAdminDashboard' && schoolAdminSchoolIds.value.length === 0) {

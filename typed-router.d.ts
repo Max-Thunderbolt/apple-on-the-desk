@@ -21,6 +21,7 @@ declare module 'vue-router/auto-routes' {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/AddClass': RouteRecordInfo<'/AddClass', '/AddClass', Record<never, never>, Record<never, never>>,
     '/AdminDashboard': RouteRecordInfo<'/AdminDashboard', '/AdminDashboard', Record<never, never>, Record<never, never>>,
+    '/AdminSchools': RouteRecordInfo<'/AdminSchools', '/AdminSchools', Record<never, never>, Record<never, never>>,
     '/Class/[id]': RouteRecordInfo<'/Class/[id]', '/Class/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
     '/Classes': RouteRecordInfo<'/Classes', '/Classes', Record<never, never>, Record<never, never>>,
     '/Join/[code]': RouteRecordInfo<'/Join/[code]', '/Join/:code', { code: ParamValue<true> }, { code: ParamValue<false> }>,
@@ -52,6 +53,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/AdminDashboard.vue': {
       routes: '/AdminDashboard'
+      views: never
+    }
+    'src/pages/AdminSchools.vue': {
+      routes: '/AdminSchools'
       views: never
     }
     'src/pages/Class/[id].vue': {

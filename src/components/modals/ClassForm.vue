@@ -189,6 +189,7 @@ async function submit() {
                 name: studentName,
                 points: 0,
                 experience: 0,
+                addedAt: Date.now(),
             };
     });
     const payload = {
