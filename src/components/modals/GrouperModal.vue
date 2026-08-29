@@ -30,7 +30,7 @@
                         <v-icon>mdi-account-group</v-icon>
                         Current Groups
                     </div>
-                    <p class="dragHint">Drag students between groups to reassign, or edit a group name.</p>
+                    <p class="dragHint">Drag students between groups, right-click to send elsewhere, or edit a group name.</p>
                     <div class="existingGroupsList">
                         <div v-for="group in currentGroups" :key="group.name" class="groupCard"
                             :class="{ 'groupCard--drag-over': dragOverGroup === group.name }"
@@ -48,7 +48,8 @@
                             <div class="groupStudentsList">
                                 <div v-for="student in group.students" :key="student.id" class="studentChip" draggable="true"
                                     @dragstart="onStudentDragstart($event, student, group.name)"
-                                    @dragend="onStudentDragend">
+                                    @dragend="onStudentDragend"
+                                    @contextmenu.prevent="openStudentContextMenu($event, student, group.name)">
                                     <v-icon size="small" class="studentChipIcon">mdi-drag</v-icon>
                                     <span class="studentChipName">{{ student.name }}</span>
                                 </div>
@@ -87,12 +88,17 @@
             </v-card-actions>
         </v-card>
     </v-dialog>
+
+    <AppContextMenu :open="isContextMenuOpen" :x="contextMenuX" :y="contextMenuY" :min-width="220" :z-index="2600"
+        :items="contextMenuItems" @close="contextMenu.close()" @select="handleContextMenuAction" />
 </template>
 
 <script setup>
 import { ref, watch, computed } from 'vue';
 import Server from '../../services/server';
 import { toast } from 'vue-sonner';
+import { useContextMenu } from '../../composables/useContextMenu';
+import AppContextMenu from '../common/AppContextMenu.vue';
 
 const props = defineProps({
     modelValue: {
@@ -126,6 +132,33 @@ const dragOverGroup = ref(null);
 const draggingStudent = ref(null);
 const assigningStudentId = ref(null);
 const pendingGroupNames = ref({});
+const contextMenu = useContextMenu();
+
+const isContextMenuOpen = computed(() => contextMenu.isOpen.value);
+const contextMenuX = computed(() => contextMenu.x.value);
+const contextMenuY = computed(() => contextMenu.y.value);
+const contextMenuTarget = computed(() => contextMenu.target.value);
+
+const contextMenuItems = computed(() => {
+    const target = contextMenuTarget.value;
+    if (!target) return [];
+
+    const otherGroups = currentGroups.value
+        .filter((group) => group.name !== target.groupName)
+        .map((group) => ({
+            key: `send-to-group:${group.name}`,
+            label: group.name,
+            icon: 'mdi-account-group',
+        }));
+
+    return [{
+        key: 'send-to-group',
+        label: 'Send to group...',
+        icon: 'mdi-account-arrow-right',
+        disabled: otherGroups.length === 0 || loading.value,
+        children: otherGroups,
+    }];
+});
 
 const totalStudents = computed(() => props.students.length);
 const maxGroups = computed(() => props.students.length);
@@ -264,6 +297,39 @@ async function onGroupNameBlur(originalName) {
     }
 }
 
+async function moveStudentToGroup(studentId, fromGroupName, targetGroupName) {
+    if (!studentId || fromGroupName === targetGroupName) return;
+
+    assigningStudentId.value = studentId;
+    try {
+        const response = await Server.assignStudentToGroup(props.classId, studentId, targetGroupName);
+        if (response.success) {
+            toast.success(`Student moved to ${targetGroupName}`);
+            emit('groupsUpdated', response);
+            await loadCurrentGroups();
+        } else {
+            toast.error(response.message || 'Failed to move student');
+        }
+    } catch (error) {
+        console.error('Error assigning student to group:', error);
+        toast.error(error.response?.data?.message || 'Failed to move student.');
+    } finally {
+        assigningStudentId.value = null;
+    }
+}
+
+function openStudentContextMenu(event, student, groupName) {
+    contextMenu.open(event, { student, groupName });
+}
+
+async function handleContextMenuAction(actionKey) {
+    const target = contextMenuTarget.value;
+    if (!target || !actionKey.startsWith('send-to-group:')) return;
+
+    const targetGroupName = actionKey.slice('send-to-group:'.length);
+    await moveStudentToGroup(target.student.id, target.groupName, targetGroupName);
+}
+
 function onStudentDragstart(event, student, groupName) {
     draggingStudent.value = { studentId: student.id, groupName };
     event.dataTransfer.effectAllowed = 'move';
@@ -291,22 +357,7 @@ async function onGroupDrop(event, targetGroupName) {
     const payload = draggingStudent.value;
     if (!payload || payload.groupName === targetGroupName) return;
 
-    assigningStudentId.value = payload.studentId;
-    try {
-        const response = await Server.assignStudentToGroup(props.classId, payload.studentId, targetGroupName);
-        if (response.success) {
-            toast.success('Student moved to ' + targetGroupName);
-            emit('groupsUpdated', response);
-            await loadCurrentGroups();
-        } else {
-            toast.error(response.message || 'Failed to move student');
-        }
-    } catch (error) {
-        console.error('Error assigning student to group:', error);
-        toast.error(error.response?.data?.message || 'Failed to move student.');
-    } finally {
-        assigningStudentId.value = null;
-    }
+    await moveStudentToGroup(payload.studentId, payload.groupName, targetGroupName);
 }
 
 async function handleClearGroups() {
