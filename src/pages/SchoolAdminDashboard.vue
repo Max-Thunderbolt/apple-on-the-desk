@@ -1,23 +1,22 @@
 <template>
   <div class="container saPage">
     <div class="saShell">
+      <SchoolAdminNav />
+
       <header class="saHeader">
         <div class="saHeaderLeft">
           <p class="saEyebrow">School administration</p>
           <h1 class="saTitle">
             School <span class="titleAccent">dashboard</span>
           </h1>
+          <p v-if="selectedSchoolLabel" class="saSubtitle">{{ selectedSchoolLabel }}</p>
         </div>
         <div class="headerControls">
-
           <div class="termRow">
-            <v-select v-model="selectedSchoolId" :items="schoolOptions" item-title="schoolName" item-value="schoolId"
-              density="compact" hide-details variant="outlined" class="glassField schoolPicker"
+            <v-select v-if="schoolOptions.length > 1" v-model="selectedSchoolId" :items="schoolOptions"
+              item-title="schoolName" item-value="schoolId" density="compact" hide-details variant="outlined"
+              class="glassField schoolPicker" label="School"
               :menu-props="{ contentClass: 'dashboardSelectMenu' }" @update:model-value="loadDashboard" />
-            <!-- <v-select v-model="term" :items="termItems" density="compact" hide-details variant="outlined"
-              class="glassField termField" :menu-props="{ contentClass: 'dashboardSelectMenu' }" />
-            <v-text-field v-model.number="year" type="number" density="compact" hide-details variant="outlined"
-              class="glassField yearField" /> -->
             <v-btn class="refreshBtn" size="small" :loading="loading" icon="mdi-refresh" variant="flat"
               @click="loadDashboard" />
           </div>
@@ -61,20 +60,14 @@
                 <v-icon size="20" class="sectionTitleIcon">mdi-account-school-outline</v-icon>
                 Teachers
               </h2>
-              <p class="sectionDesc">Manage your teaching staff and invite new teachers.</p>
+              <p class="sectionDesc">Teaching staff at this school.</p>
             </div>
-            <div class="sectionBadge">{{ dash.teachers?.length ?? dash.teacherCount ?? 0 }} teachers</div>
-          </div>
-
-          <!-- Invite teacher -->
-          <div class="inviteBar">
-            <v-btn class="inviteBtn" size="small" :loading="generatingLink" prepend-icon="mdi-link-variant"
-              @click="generateTeacherLink">
-              Generate invite link
-            </v-btn>
-            <div v-if="teacherInviteUrl" class="inviteLinkDisplay">
-              <code class="linkCode">{{ teacherInviteUrl }}</code>
-              <v-btn icon="mdi-content-copy" size="x-small" variant="text" @click="copyLink(teacherInviteUrl)" />
+            <div class="sectionHeadActions">
+              <span class="sectionBadge">{{ dash.teachers?.length ?? dash.teacherCount ?? 0 }} teachers</span>
+              <v-btn size="small" variant="tonal" class="onboardingLinkBtn" prepend-icon="mdi-account-plus-outline"
+                @click="goToOnboarding">
+                Manage teachers
+              </v-btn>
             </div>
           </div>
 
@@ -97,11 +90,12 @@
                   <span class="statLabel">students</span>
                 </div>
               </div>
-              <v-btn class="removeTeacherBtn" variant="text" size="small" icon="mdi-account-remove-outline"
-                @click="openRemoveTeacherDialog(t)" />
             </div>
           </div>
-          <p v-else class="emptyNote">No teachers have joined yet. Share the invite link above.</p>
+          <p v-else class="emptyNote">
+            No teachers have joined yet.
+            <button type="button" class="inlineLink" @click="goToOnboarding">Invite teachers</button>
+          </p>
         </section>
 
         <!-- Charts -->
@@ -216,21 +210,6 @@
           </v-card>
         </v-dialog>
 
-        <v-dialog v-model="removeTeacherDialogOpen" max-width="460" persistent>
-          <v-card class="classActionModalCard">
-            <v-card-title class="classActionTitle">Remove teacher?</v-card-title>
-            <v-card-text class="removeTeacherText">
-              This will remove
-              <strong>{{ teacherToRemove?.name || teacherToRemove?.email || teacherToRemove?.userId || 'this teacher' }}</strong>
-              from the school and permanently delete all of their classes in this school. This cannot be undone.
-            </v-card-text>
-            <v-card-actions class="classActionButtons">
-              <v-btn variant="text" :disabled="removingTeacher" @click="removeTeacherDialogOpen = false">Cancel</v-btn>
-              <v-btn color="error" :loading="removingTeacher" @click="confirmRemoveTeacher">Remove teacher</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
         <!-- Cost summary -->
         <section class="costBar">
           <div class="costItem">
@@ -253,6 +232,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -268,6 +248,7 @@ import { useTheme } from '@/composables/useTheme'
 import Server from '@/services/server'
 import ClassForm from '@/components/modals/ClassForm.vue'
 import AppContextMenu from '@/components/common/AppContextMenu.vue'
+import SchoolAdminNav from '@/components/admin/SchoolAdminNav.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
@@ -284,8 +265,13 @@ const PALETTE = [
 
 const { schoolAdminSchools } = useUserProfile()
 const schoolOptions = computed(() => schoolAdminSchools.value)
+const route = useRoute()
+const router = useRouter()
 
 const selectedSchoolId = ref('')
+const selectedSchoolLabel = computed(() =>
+  schoolOptions.value.find((s) => s.schoolId === selectedSchoolId.value)?.schoolName ?? ''
+)
 const year = ref(new Date().getFullYear())
 const term = ref(1)
 const dash = ref(null)
@@ -295,17 +281,12 @@ const success = ref('')
 const { effectiveTheme } = useTheme()
 const isDarkTheme = computed(() => effectiveTheme.value === 'dark')
 
-const teacherInviteUrl = ref('')
-const generatingLink = ref(false)
 const classContextMenu = useContextMenu()
 const classActionLoading = ref(false)
 const classStudentsDialog = ref(false)
 const classStudentsData = ref(null)
 const classEditDialog = ref(false)
 const classToEdit = ref(null)
-const removeTeacherDialogOpen = ref(false)
-const teacherToRemove = ref(null)
-const removingTeacher = ref(false)
 
 const isClassContextMenuOpen = computed(() => classContextMenu.isOpen.value)
 const classContextMenuX = computed(() => classContextMenu.x.value)
@@ -473,52 +454,8 @@ async function loadDashboard() {
   }
 }
 
-async function generateTeacherLink() {
-  if (!selectedSchoolId.value) return
-  generatingLink.value = true
-  error.value = ''
-  try {
-    const result = await Server.createSchoolJoinCode(selectedSchoolId.value, 'teacher')
-    teacherInviteUrl.value = result.joinUrl
-    success.value = 'Teacher invite link generated'
-  } catch (e) {
-    error.value = e.response?.data?.message || e.message || 'Failed to generate invite link'
-  } finally {
-    generatingLink.value = false
-  }
-}
-
-async function copyLink(url) {
-  if (!url) return
-  try {
-    await navigator.clipboard.writeText(url)
-    success.value = 'Link copied to clipboard'
-  } catch {
-    error.value = 'Could not copy link'
-  }
-}
-
-function openRemoveTeacherDialog(teacher) {
-  teacherToRemove.value = teacher
-  removeTeacherDialogOpen.value = true
-}
-
-async function confirmRemoveTeacher() {
-  if (!selectedSchoolId.value || !teacherToRemove.value?.userId) return
-  removingTeacher.value = true
-  error.value = ''
-  try {
-    const result = await Server.removeSchoolTeacher(selectedSchoolId.value, teacherToRemove.value.userId)
-    const deletedClasses = result?.deleted?.classes ?? 0
-    success.value = `Teacher removed. Deleted ${deletedClasses} class${deletedClasses === 1 ? '' : 'es'}.`
-    removeTeacherDialogOpen.value = false
-    teacherToRemove.value = null
-    await loadDashboard()
-  } catch (e) {
-    error.value = e.response?.data?.message || e.message || 'Failed to remove teacher'
-  } finally {
-    removingTeacher.value = false
-  }
+function goToOnboarding() {
+  router.push({ path: '/SchoolAdminOnboarding', query: { schoolId: selectedSchoolId.value } })
 }
 
 function openClassContextMenu(e, classSummary) {
@@ -631,22 +568,33 @@ watch(
   schoolOptions,
   (opts) => {
     if (!opts?.length) return
+    const fromQuery = route.query.schoolId
+    const preferred = fromQuery && opts.some((o) => o.schoolId === fromQuery)
+      ? fromQuery
+      : opts[0].schoolId
     if (!selectedSchoolId.value || !opts.some((o) => o.schoolId === selectedSchoolId.value)) {
-      selectedSchoolId.value = opts[0].schoolId
+      selectedSchoolId.value = preferred
       loadDashboard()
     }
   },
   { immediate: true }
 )
 
+watch(
+  () => route.query.schoolId,
+  (schoolId) => {
+    if (schoolId && schoolOptions.value.some((o) => o.schoolId === schoolId)) {
+      selectedSchoolId.value = schoolId
+      loadDashboard()
+    }
+  }
+)
+
 watch(selectedSchoolId, () => {
-  teacherInviteUrl.value = ''
   closeClassContextMenu()
   classStudentsDialog.value = false
   closeClassEditModal()
   classStudentsData.value = null
-  removeTeacherDialogOpen.value = false
-  teacherToRemove.value = null
 })
 </script>
 
@@ -710,6 +658,13 @@ watch(selectedSchoolId, () => {
   line-height: 1.15;
   color: var(--white);
   margin: 0;
+}
+
+.saSubtitle {
+  font-family: var(--font);
+  font-size: 0.9rem;
+  color: rgba(var(--ink-rgb), 0.5);
+  margin: 0.5rem 0 0;
 }
 
 .headerControls {
@@ -906,6 +861,32 @@ watch(selectedSchoolId, () => {
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+.sectionHeadActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.onboardingLinkBtn {
+  text-transform: none !important;
+  font-family: var(--font) !important;
+  font-weight: 600 !important;
+}
+
+.inlineLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font);
+  font-size: inherit;
+  font-weight: 600;
+  color: rgba(0, 168, 232, 0.95);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .sectionTitle {

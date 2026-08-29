@@ -442,6 +442,16 @@ class Server {
         }
     }
 
+    async getSchoolAdminOverview(params = {}) {
+        try {
+            const response = await this.http.get('/schools/overview', { params })
+            return response.data
+        } catch (error) {
+            console.error('Error loading school admin overview:', error)
+            throw error
+        }
+    }
+
     async getSchoolDashboard(schoolId, params = {}) {
         try {
             const response = await this.http.get(

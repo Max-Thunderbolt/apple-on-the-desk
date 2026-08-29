@@ -29,6 +29,8 @@ declare module 'vue-router/auto-routes' {
     '/Onboarding': RouteRecordInfo<'/Onboarding', '/Onboarding', Record<never, never>, Record<never, never>>,
     '/Profile': RouteRecordInfo<'/Profile', '/Profile', Record<never, never>, Record<never, never>>,
     '/SchoolAdminDashboard': RouteRecordInfo<'/SchoolAdminDashboard', '/SchoolAdminDashboard', Record<never, never>, Record<never, never>>,
+    '/SchoolAdminOnboarding': RouteRecordInfo<'/SchoolAdminOnboarding', '/SchoolAdminOnboarding', Record<never, never>, Record<never, never>>,
+    '/SchoolAdminOverview': RouteRecordInfo<'/SchoolAdminOverview', '/SchoolAdminOverview', Record<never, never>, Record<never, never>>,
     '/Teacher': RouteRecordInfo<'/Teacher', '/Teacher', Record<never, never>, Record<never, never>>,
   }
 
@@ -85,6 +87,14 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/SchoolAdminDashboard.vue': {
       routes: '/SchoolAdminDashboard'
+      views: never
+    }
+    'src/pages/SchoolAdminOnboarding.vue': {
+      routes: '/SchoolAdminOnboarding'
+      views: never
+    }
+    'src/pages/SchoolAdminOverview.vue': {
+      routes: '/SchoolAdminOverview'
       views: never
     }
     'src/pages/Teacher.vue': {

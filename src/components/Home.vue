@@ -25,7 +25,7 @@
                             Admin dashboard
                         </v-btn>
                         <v-btn v-if="hasSchoolAdmin" class="schoolAdminDashButton"
-                            @click="navigateTo('/SchoolAdminDashboard')">
+                            @click="navigateTo('/SchoolAdminOverview')">
                             School dashboard
                         </v-btn>
                     </template>

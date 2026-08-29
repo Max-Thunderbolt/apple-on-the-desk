@@ -32,7 +32,7 @@
             Admin dashboard
           </v-btn>
           <v-btn v-if="hasSchoolAdmin" size="small" variant="tonal" class="dashLink"
-            @click="navigateTo('/SchoolAdminDashboard')">
+            @click="navigateTo('/SchoolAdminOverview')">
             School dashboard
           </v-btn>
         </div>

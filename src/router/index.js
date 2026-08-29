@@ -23,6 +23,12 @@ const router = createRouter({
 
 const PUBLIC_PATHS = new Set(['/', '/Login'])
 
+const SCHOOL_ADMIN_PATHS = new Set([
+  '/SchoolAdminOverview',
+  '/SchoolAdminDashboard',
+  '/SchoolAdminOnboarding',
+])
+
 router.beforeEach(async (to) => {
   const { authReady, isSignedIn } = useAuth()
   if (!authReady.value) return true
@@ -44,7 +50,7 @@ router.beforeEach(async (to) => {
   if ((to.path === '/AdminDashboard' || to.path === '/AdminSchools') && !isPlatformAdmin.value) {
     return { path: '/' }
   }
-  if (to.path === '/SchoolAdminDashboard' && schoolAdminSchoolIds.value.length === 0) {
+  if (SCHOOL_ADMIN_PATHS.has(to.path) && schoolAdminSchoolIds.value.length === 0) {
     return { path: '/' }
   }
 

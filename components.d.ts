@@ -35,6 +35,7 @@ declare module 'vue' {
     RankBadge: typeof import('./src/components/common/RankBadge.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SchoolAdminNav: typeof import('./src/components/admin/SchoolAdminNav.vue')['default']
     Shop: typeof import('./src/components/Shop.vue')['default']
     StepsAndVideo: typeof import('./src/components/tutorials/StepsAndVideo.vue')['default']
     StudentConstraintsModal: typeof import('./src/components/modals/StudentConstraintsModal.vue')['default']
