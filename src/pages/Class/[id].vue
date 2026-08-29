@@ -60,7 +60,8 @@
             <!-- CLASS LIST -->
             <ClassList v-if="classData && id" :shopCost="shopCost" :selected-shop-item-ids="selectedShopItemIds"
                 :isViewingShop="viewShopModal" :class-id="id" :students="classData.students || []"
-                :experience="classData.experience || 0" :view-mode="viewMode" :search-query="searchQuery"
+                :group-names="classData.groupNames || []" :experience="classData.experience || 0" :view-mode="viewMode"
+                :search-query="searchQuery"
                 @students-updated="onStudentsUpdated" @shopCostUpdated="onShopCostUpdated"
                 @purchase-completed="onPurchaseCompleted" />
         </div>

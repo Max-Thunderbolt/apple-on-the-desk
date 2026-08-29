@@ -216,12 +216,22 @@ class Server {
         }
     }
 
-    async generateGroups(classId, numberOfGroups, groupNamePrefix) {
+    async generateGroups(classId, numberOfGroups, groupNames) {
         try {
-            const response = await this.http.post(`/classes/${classId}/generate-groups`, { numberOfGroups, groupNamePrefix })
+            const response = await this.http.post(`/classes/${classId}/generate-groups`, { numberOfGroups, groupNames })
             return response.data
         } catch (error) {
             console.error('Error generating groups:', error)
+            throw error
+        }
+    }
+
+    async renameGroup(classId, oldName, newName) {
+        try {
+            const response = await this.http.put(`/classes/${classId}/groups/rename`, { oldName, newName })
+            return response.data
+        } catch (error) {
+            console.error('Error renaming group:', error)
             throw error
         }
     }

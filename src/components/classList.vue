@@ -12,7 +12,8 @@
         </div>
 
         <!-- Group View -->
-        <ClassGroupView v-else-if="viewMode === 'groups'" :students="displayedStudents" :shopCost="props.shopCost"
+        <ClassGroupView v-else-if="viewMode === 'groups'" :students="displayedStudents" :group-names="props.groupNames"
+            :shopCost="props.shopCost"
             :isViewingShop="props.isViewingShop" :selectedStudents="selectedStudents" @student-click="selectAction"
             @student-context-menu="openContextMenu" @group-click="handleGroupClick"
             @group-shop-select="handleGroupShopSelect" />
@@ -128,6 +129,10 @@ const props = defineProps({
         default: () => [],
     },
     students: {
+        type: Array,
+        default: () => [],
+    },
+    groupNames: {
         type: Array,
         default: () => [],
     },

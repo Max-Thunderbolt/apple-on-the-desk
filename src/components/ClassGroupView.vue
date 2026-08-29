@@ -7,33 +7,33 @@
             No groups have been created yet. Click "Create Groups" to get started.
         </div>
         <div v-else class="groupsContainer">
-            <div v-for="(groupStudents, groupName) in groupedStudents" :key="groupName" class="groupCard"
+            <div v-for="group in groups" :key="group.name" class="groupCard"
                 :class="{
-                    'groupCard--canAfford': props.isViewingShop && props.shopCost > 0 && groupCanAfford(groupStudents),
-                    'groupCard--cantAfford': props.isViewingShop && props.shopCost > 0 && !groupCanAfford(groupStudents),
-                    'groupCard--allSelected': props.isViewingShop && isGroupFullySelected(groupStudents),
+                    'groupCard--canAfford': props.isViewingShop && props.shopCost > 0 && groupCanAfford(group.students),
+                    'groupCard--cantAfford': props.isViewingShop && props.shopCost > 0 && !groupCanAfford(group.students),
+                    'groupCard--allSelected': props.isViewingShop && isGroupFullySelected(group.students),
                 }">
-                <div class="groupHeader" role="button" tabindex="0" @click="onGroupClick(groupStudents)"
-                    @keydown.enter="onGroupClick(groupStudents)" @keydown.space.prevent="onGroupClick(groupStudents)">
+                <div class="groupHeader" role="button" tabindex="0" @click="onGroupClick(group.students)"
+                    @keydown.enter="onGroupClick(group.students)" @keydown.space.prevent="onGroupClick(group.students)">
                     <div class="groupHeaderLeft">
                         <v-icon v-if="props.isViewingShop" class="groupSelectIcon" size="small">
-                            {{ isGroupFullySelected(groupStudents) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
+                            {{ isGroupFullySelected(group.students) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
                         </v-icon>
-                        <h3 class="groupTitle">{{ groupName }}</h3>
+                        <h3 class="groupTitle">{{ group.name }}</h3>
                     </div>
                     <div class="groupMeta">
-                        <span class="groupCount">{{ groupStudents.length }} student{{ groupStudents.length !== 1 ? 's' :
+                        <span class="groupCount">{{ group.students.length }} student{{ group.students.length !== 1 ? 's' :
                             '' }}</span>
-                        <span class="groupTotal">{{ formatCost(groupPoints(groupStudents)) }}</span>
+                        <span class="groupTotal">{{ formatCost(groupPoints(group.students)) }}</span>
                         <span v-if="props.isViewingShop && props.shopCost > 0" class="groupAffordLabel"
-                            :class="groupCanAfford(groupStudents) ? 'groupAffordLabel--yes' : 'groupAffordLabel--no'">
-                            {{ groupCanAfford(groupStudents) ? 'Can afford' : 'Short ' + formatCost(props.shopCost - groupPoints(groupStudents)) }}
+                            :class="groupCanAfford(group.students) ? 'groupAffordLabel--yes' : 'groupAffordLabel--no'">
+                            {{ groupCanAfford(group.students) ? 'Can afford' : 'Short ' + formatCost(props.shopCost - groupPoints(group.students)) }}
                         </span>
                     </div>
                     <v-icon v-if="!props.isViewingShop" class="groupAwardIcon" title="Award points to this group">mdi-trophy-outline</v-icon>
                 </div>
                 <div class="groupStudents">
-                    <div v-for="student in groupStudents" :key="student.id">
+                    <div v-for="student in group.students" :key="student.id">
                         <div v-if="props.isViewingShop && canAffordPoints(student)" class="studentRowCanAffordPoints"
                             @click="selectAction(student)" @contextmenu.prevent="openContextMenu($event, student)">
                             <span class="studentName"
@@ -75,6 +75,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    groupNames: {
+        type: Array,
+        default: () => [],
+    },
     shopCost: {
         type: Number,
         required: true,
@@ -91,25 +95,34 @@ const props = defineProps({
 
 const emit = defineEmits(['student-click', 'student-context-menu', 'group-click', 'group-shop-select']);
 
-const groupedStudents = computed(() => {
-    const groups = {};
+const groups = computed(() => {
+    const byName = {};
 
-    props.students.forEach(student => {
-        if (student.group) {
-            if (!groups[student.group]) {
-                groups[student.group] = [];
-            }
-            groups[student.group].push(student);
+    props.students.forEach((student) => {
+        if (!student.group) return;
+        if (!byName[student.group]) {
+            byName[student.group] = [];
         }
+        byName[student.group].push(student);
     });
 
-    // Sort group names (C02, C03, etc.)
-    const sortedGroups = {};
-    Object.keys(groups).sort().forEach(key => {
-        sortedGroups[key] = groups[key];
-    });
+    const ordered = [];
+    const seen = new Set();
 
-    return sortedGroups;
+    for (const name of props.groupNames) {
+        if (byName[name]?.length) {
+            ordered.push({ name, students: byName[name] });
+            seen.add(name);
+        }
+    }
+
+    for (const name of Object.keys(byName)) {
+        if (!seen.has(name)) {
+            ordered.push({ name, students: byName[name] });
+        }
+    }
+
+    return ordered;
 });
 
 const hasGroups = computed(() => {
