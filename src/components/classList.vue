@@ -59,29 +59,6 @@
         <div v-if="isViewingShop" class="shopTotalsContainer">
             <span class="classTotalLabel">Class total: {{ formatCost(classTotalPoints) }}</span>
         </div>
-        <div v-if="isViewingShop" class="shopSelectionActions">
-            <button type="button" class="selectAllBtn" @click="handleSelectAll">
-                <v-icon size="small">{{ isAllSelected ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}</v-icon>
-                {{ isAllSelected ? 'Deselect All' : 'Select Entire Class' }}
-            </button>
-            <span v-if="selectedStudents.length > 0" class="selectionCount">
-                {{ selectedStudents.length }} / {{ (props.students || []).length }} selected
-            </span>
-        </div>
-        <div v-if="isViewingShop" class="checkoutContainer">
-            <span class="checkoutTotal">
-                Total: {{ formatCost(totalSelectedPoints) }}
-                <span v-if="!canAffordShop" class="checkoutShortfall">
-                    ({{ formatCost(pointsRemaining) }} needed)
-                </span>
-                <span v-else class="checkoutExcess">
-                    ({{ formatCost(-pointsRemaining) }} excess)
-                </span>
-            </span>
-            <v-btn class="checkoutButton" :disabled="!canCheckout" @click="checkout">
-                Checkout
-            </v-btn>
-        </div>
 
         <AppContextMenu :open="isContextMenuOpen" :x="contextMenuX" :y="contextMenuY" :min-width="220"
             :items="contextMenuItems" @close="contextMenu.close()" @select="handleContextMenuAction" />
@@ -97,11 +74,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, toRef } from 'vue';
+import { ref, computed, watch, toRef, inject } from 'vue';
 import { useClasses } from '../composables/useClasses';
 import { useFormat } from '../composables/useFormat';
 import { useContextMenu } from '../composables/useContextMenu';
-import { useShopSelection } from '../composables/useShopSelection';
 import { useStudentListColumns } from '../composables/useStudentListColumns';
 import { useTheme } from '@/composables/useTheme';
 import { Toaster, toast } from 'vue-sonner';
@@ -168,8 +144,6 @@ const contextMenuItems = computed(() => ([
     { key: 'manage-constraints', label: 'Manage Pairing Constraints', icon: 'mdi-account-multiple-remove' },
     { key: 'delete-student', label: 'Delete Student', icon: 'mdi-delete', danger: true },
 ]));
-const shopCostRef = toRef(props, 'shopCost');
-const studentsRef = toRef(props, 'students');
 const isViewingShopRef = toRef(props, 'isViewingShop');
 
 const displayedStudents = computed(() => {
@@ -198,41 +172,15 @@ const classTotalPoints = computed(() => {
     return (props.students ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
 });
 
+const shopSelection = inject('shopSelection');
+const selectedStudents = shopSelection.selectedStudents;
 const {
-    selectedStudents,
-    totalSelectedPoints,
-    pointsRemaining,
-    canAffordShop,
     canAffordPoints,
     toggleStudent,
     toggleGroup,
-    selectAll,
     setSelection,
     clearSelection,
-    checkout: doCheckout,
-} = useShopSelection(shopCostRef);
-
-const isAllSelected = computed(() => {
-    const all = props.students || [];
-    return all.length > 0 && all.every(s => selectedStudents.value.some(sel => sel.id === s.id));
-});
-
-const canCheckout = computed(() => {
-    if (!canAffordShop.value) return false;
-    if (props.isViewingShop && (!props.selectedShopItemIds || props.selectedShopItemIds.length === 0)) return false;
-    return true;
-});
-
-function checkout() {
-    doCheckout(props.classId, props.students, updateClass, {
-        selectedShopItemIds: props.selectedShopItemIds || [],
-        purchaseItemsApi: Server.purchaseItems.bind(Server),
-        onPurchaseSuccess(students) {
-            emit('students-updated', { students });
-            emit('purchase-completed');
-        },
-    });
-}
+} = shopSelection;
 
 watch(() => props.isViewingShop, (viewingShop) => {
     if (viewingShop) {
@@ -278,10 +226,6 @@ function handleGroupClick(groupStudents) {
 function handleGroupShopSelect(groupStudents) {
     if (!groupStudents?.length) return;
     toggleGroup(groupStudents);
-}
-
-function handleSelectAll() {
-    selectAll(props.students || []);
 }
 
 function openContextMenu(event, student) {
@@ -432,9 +376,10 @@ function onConstraintsUpdated(updatedStudent) {
     max-width: 1000px;
     margin: 0 auto;
     padding: 0 0.75rem;
-    padding-bottom: 2rem;
+    padding-bottom: calc(var(--class-floating-bar-height, 100px) + 1rem);
     min-width: 0;
     box-sizing: border-box;
+    touch-action: pan-y;
 }
 
 /* Step columns by width – 1 → 2 → 3 → 4 so we never force too many columns on small screens */
@@ -475,8 +420,10 @@ function onConstraintsUpdated(updatedStudent) {
     border-radius: 10px;
     box-shadow: 4px 4px 8px 0 rgba(var(--shadow-rgb), 0.4);
     min-height: 48px;
-    transition: all 0.3s ease;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     -webkit-tap-highlight-color: transparent;
+    touch-action: pan-y;
+    cursor: pointer;
 }
 
 @media (min-width: 600px) {
@@ -490,11 +437,9 @@ function onConstraintsUpdated(updatedStudent) {
 
 @media (hover: hover) {
     .studentRow:hover {
-        transform: scale(1.05) translateY(-10px) !important;
-        box-shadow: 0 0 20px 0 var(--seaGreen) !important;
-        border: none !important;
-        color: var(--white) !important;
-        background-color: var(--seaGreen) !important;
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(var(--seaGreen-rgb), 0.4);
+        background-color: var(--seaGreen);
     }
 }
 
@@ -508,8 +453,10 @@ function onConstraintsUpdated(updatedStudent) {
     border-radius: 10px;
     box-shadow: 4px 4px 8px 0 rgba(var(--shadow-rgb), 0.4);
     min-height: 48px;
-    transition: all 0.3s ease;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     -webkit-tap-highlight-color: transparent;
+    touch-action: pan-y;
+    cursor: pointer;
 }
 
 @media (min-width: 600px) {
@@ -531,9 +478,11 @@ function onConstraintsUpdated(updatedStudent) {
     border-radius: 10px;
     box-shadow: 4px 4px 8px 0 rgba(var(--shadow-rgb), 0.4);
     min-height: 48px;
-    transition: all 0.3s ease;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     color: var(--white) !important;
     -webkit-tap-highlight-color: transparent;
+    touch-action: pan-y;
+    cursor: pointer;
 }
 
 @media (min-width: 600px) {
@@ -547,19 +496,15 @@ function onConstraintsUpdated(updatedStudent) {
 
 @media (hover: hover) {
     .studentRowCanAffordPoints:hover {
-        transform: scale(1.05) translateY(-10px) !important;
-        box-shadow: 0 0 20px 0 var(--seaGreen) !important;
-        border: none !important;
-        color: var(--white) !important;
-        background-color: var(--seaGreen) !important;
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(var(--seaGreen-rgb), 0.5);
+        filter: brightness(1.05);
     }
 
     .studentRowCantAffordPoints:hover {
-        transform: scale(1.05) translateY(-10px) !important;
-        box-shadow: 0 0 20px 0 var(--intenseCherry) !important;
-        border: none !important;
-        color: var(--white) !important;
-        background-color: var(--intenseCherry) !important;
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(var(--intenseCherry-rgb), 0.5);
+        filter: brightness(1.05);
     }
 }
 

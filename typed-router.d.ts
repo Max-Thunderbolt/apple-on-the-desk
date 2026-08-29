@@ -24,6 +24,7 @@ declare module 'vue-router/auto-routes' {
     '/AdminSchools': RouteRecordInfo<'/AdminSchools', '/AdminSchools', Record<never, never>, Record<never, never>>,
     '/Class/[id]': RouteRecordInfo<'/Class/[id]', '/Class/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
     '/Classes': RouteRecordInfo<'/Classes', '/Classes', Record<never, never>, Record<never, never>>,
+    '/GetStarted': RouteRecordInfo<'/GetStarted', '/GetStarted', Record<never, never>, Record<never, never>>,
     '/Join/[code]': RouteRecordInfo<'/Join/[code]', '/Join/:code', { code: ParamValue<true> }, { code: ParamValue<false> }>,
     '/Login': RouteRecordInfo<'/Login', '/Login', Record<never, never>, Record<never, never>>,
     '/Onboarding': RouteRecordInfo<'/Onboarding', '/Onboarding', Record<never, never>, Record<never, never>>,
@@ -67,6 +68,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/Classes.vue': {
       routes: '/Classes'
+      views: never
+    }
+    'src/pages/GetStarted.vue': {
+      routes: '/GetStarted'
       views: never
     }
     'src/pages/Join/[code].vue': {

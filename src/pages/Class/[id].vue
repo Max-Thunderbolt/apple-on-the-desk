@@ -1,20 +1,29 @@
 <template>
-    <v-breadcrumbs density="compact" :items="breadcrumbs" class="breadcrumbs">
-        <template v-slot:divider>
-            <v-icon>mdi-chevron-right</v-icon>
-        </template>
-    </v-breadcrumbs>
-    <div v-if="dataLoading" class="container dataLoadingPage">
-        <div class="dataLoading">
-            <v-progress-circular indeterminate color="primary" size="64" width="6" />
-            <span class="dataLoadingText">Loading class...</span>
-        </div>
-    </div>
-    <div v-else class="container" style="justify-content: flex-start !important;">
+    <div class="container classPage">
+        <div class="classPageShell">
+            <TeacherNav />
+            <div v-if="dataLoading" class="dataLoadingPage">
+                <div class="dataLoading">
+                    <v-progress-circular indeterminate color="primary" size="64" width="6" />
+                    <span class="dataLoadingText">Loading class...</span>
+                </div>
+            </div>
+            <div v-else class="classPageContent classPageContent--withFooter">
         <!-- ROYAL RANK HEADER -->
-        <div class="classRankContainer">
+        <div
+            ref="rankAnchorRef"
+            class="rankHeaderAnchor"
+            :style="rankAnchorHeight ? { minHeight: `${rankAnchorHeight}px` } : undefined"
+        >
+            <div
+                class="classRankContainer"
+                :class="{
+                    'classRankContainer--compact': isRankCompact,
+                    'classRankContainer--pinned': isRankCompact,
+                }"
+            >
             <div class="rankOrnament rankOrnamentLeft">✦</div>
-            <v-card class="classRankCard">
+            <v-card class="classRankCard" flat elevation="0">
                 <div class="rankCrown">
                     <RankBadge
                         :rank-index="currentRank.rankIndex"
@@ -38,25 +47,23 @@
                 </div>
             </v-card>
             <div class="rankOrnament rankOrnamentRight">✦</div>
+            </div>
         </div>
         <div class="classContent">
-            <!-- TIMER (kept in DOM with v-show so it keeps counting when Shop is visible) -->
-            <div v-show="!viewShopModal" class="timer">
-                <Timer :initialSeconds="300" :autoRepeat="false" />
-            </div>
             <!-- SHOP -->
             <div v-show="viewShopModal" class="shopModal">
-                <Shop :shopItems="shopItems" @cost-updated="onCostUpdated" @selection-updated="onShopSelectionUpdated"
+                <Shop :shopItems="filteredShopItems" @cost-updated="onCostUpdated" @selection-updated="onShopSelectionUpdated"
                     @item-context-menu="(e, item) => openShopItemContextMenu(e, item)" />
             </div>
-            <!-- CONTROLS: search, actions, list/group view -->
-            <div class="controlsWrapper">
-                <Controls v-model:search-query="searchQuery" v-model:view-mode="viewMode"
-                    :view-shop-modal="viewShopModal" :has-groups="hasGroups" :has-existing-groups="hasExistingGroups"
-                    :has-students="hasStudents" :shop-empty="shopItems.length === 0" @view-shop="viewShop()"
-                    @create-shop-item="openCreateShopItemModal" @award-class-points="handleAwardClassPoints"
-                    @create-groups="handleCreateGroups" />
-            </div>
+            <p v-if="searchQuery && !viewShopModal && hasStudents && filteredStudentCount === 0" class="searchResultHint searchResultHint--empty">
+                No students match "{{ searchQuery }}"
+            </p>
+            <p v-else-if="searchQuery && !viewShopModal && hasStudents && filteredStudentCount < totalStudentCount" class="searchResultHint">
+                Showing {{ filteredStudentCount }} of {{ totalStudentCount }} students
+            </p>
+            <p v-else-if="searchQuery && viewShopModal && filteredShopItems.length === 0" class="searchResultHint searchResultHint--empty">
+                No shop items match "{{ searchQuery }}"
+            </p>
             <!-- CLASS LIST -->
             <ClassList v-if="classData && id" :shopCost="shopCost" :selected-shop-item-ids="selectedShopItemIds"
                 :isViewingShop="viewShopModal" :class-id="id" :students="classData.students || []"
@@ -65,39 +72,71 @@
                 @students-updated="onStudentsUpdated" @shopCostUpdated="onShopCostUpdated"
                 @purchase-completed="onPurchaseCompleted" />
         </div>
+            </div>
+
+            <Teleport to="body">
+                <ClassFloatingBar
+                    v-if="!dataLoading && classData"
+                    v-model:search-query="searchQuery"
+                    v-model:view-mode="viewMode"
+                    :view-shop-modal="viewShopModal"
+                    :has-groups="hasGroups"
+                    :has-existing-groups="hasExistingGroups"
+                    :has-students="hasStudents"
+                    :shop-empty="shopItems.length === 0"
+                    :is-all-selected="isAllSelected"
+                    :selected-count="shopSelectedStudents.length"
+                    :total-students="totalStudentCount"
+                    :total-selected-points="totalSelectedPoints"
+                    :points-remaining="pointsRemaining"
+                    :can-afford-shop="canAffordShop"
+                    :can-checkout="canCheckout"
+                    @view-shop="viewShop()"
+                    @create-shop-item="openCreateShopItemModal"
+                    @award-class-points="handleAwardClassPoints"
+                    @create-groups="handleCreateGroups"
+                    @select-all="handleSelectAll"
+                    @checkout="handleCheckout"
+                />
+            </Teleport>
+
+            <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
+                :all-students="classData?.students || []" :class-id="id" scope="class" @studentsUpdated="onStudentsUpdated" />
+
+            <grouper-modal v-model="grouperModalOpen" :class-id="id" :students="classData?.students || []"
+                @groupsUpdated="onGroupsUpdated" />
+
+            <AppContextMenu :open="isShopItemContextMenuOpen" :x="shopItemContextMenuX" :y="shopItemContextMenuY"
+                :items="shopItemContextMenuItems" @close="closeShopItemContextMenu" @select="onShopItemContextSelect" />
+            <CreateItemModal v-model="createShopItemModalOpen" type="shopItem" :editing-item="shopItemToEdit"
+                @saved="onShopItemSaved" />
+        </div>
     </div>
-    <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
-        :all-students="classData?.students || []" :class-id="id" scope="class" @studentsUpdated="onStudentsUpdated" />
-
-    <grouper-modal v-model="grouperModalOpen" :class-id="id" :students="classData?.students || []"
-        @groupsUpdated="onGroupsUpdated" />
-
-    <AppContextMenu :open="isShopItemContextMenuOpen" :x="shopItemContextMenuX" :y="shopItemContextMenuY"
-        :items="shopItemContextMenuItems" @close="closeShopItemContextMenu" @select="onShopItemContextSelect" />
-    <CreateItemModal v-model="createShopItemModalOpen" type="shopItem" :editing-item="shopItemToEdit"
-        @saved="onShopItemSaved" />
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, defineEmits, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, defineEmits, watch, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useActiveClass } from '../../composables/useActiveClass';
 import { useContextMenu } from '../../composables/useContextMenu';
-import Timer from '../../components/Timer.vue';
+import { useShopSelection } from '../../composables/useShopSelection';
+import { useClasses } from '../../composables/useClasses';
 import ClassList from '../../components/classList.vue';
 import Shop from '../../components/Shop.vue';
-import Controls from '../../components/controls.vue';
+import ClassFloatingBar from '../../components/class/ClassFloatingBar.vue';
 import AppContextMenu from '../../components/common/AppContextMenu.vue';
 import Server from '../../services/server';
 import { toast } from 'vue-sonner';
-import { experienceToRank, MAX_RANK_INDEX } from '../../composables/useExperience';
+import { rankProgressFromExperience } from '../../composables/useExperience';
 import RankBadge from '../../components/common/RankBadge.vue';
 import AwardPointsModal from '../../components/modals/awardPointsModal.vue';
 import grouperModal from '../../components/modals/GrouperModal.vue';
 import CreateItemModal from '../../components/modals/CreateItemModal.vue';
+import TeacherNav from '@/components/navigation/TeacherNav.vue';
 
 const router = useRouter();
 const route = useRoute();
+const { updateClass } = useClasses();
 const { id } = route.params;
 const { setActiveClass, clearActiveClass } = useActiveClass();
 const classData = ref(null);
@@ -114,46 +153,57 @@ const createShopItemModalOpen = ref(false);
 const shopItemToEdit = ref(null);
 const shopItemContextMenu = useContextMenu();
 const dataLoading = ref(true);
-let breadcrumbs = computed(() => [
-    { title: 'Teacher', to: '/Teacher' },
-    { title: 'Classes', to: '/Classes' },
-    { title: dataLoading.value ? 'Loading...' : (classData.value?.name ?? 'Class'), to: `/Class/${id}` },
-]);
+const isRankCompact = ref(false);
+const rankAnchorRef = ref(null);
+const rankAnchorHeight = ref(null);
 
-const XP_PER_RANK = 100;
+const shopSelection = useShopSelection(shopCost);
+provide('shopSelection', shopSelection);
 
-const currentExperience = computed(() => Number(classData.value?.experience ?? 0));
+const {
+    selectedStudents: shopSelectedStudents,
+    totalSelectedPoints,
+    pointsRemaining,
+    canAffordShop,
+    selectAll,
+    clearSelection,
+    checkout: doCheckout,
+} = shopSelection;
 
-const currentRank = computed(() => experienceToRank(currentExperience.value));
+const totalStudentCount = computed(() => classData.value?.students?.length ?? 0);
 
-const currentRankIndex = computed(() =>
-    Math.min(Math.floor(currentExperience.value / XP_PER_RANK), MAX_RANK_INDEX)
-);
-
-const nextRankIndex = computed(() =>
-    Math.min(currentRankIndex.value + 1, MAX_RANK_INDEX)
-);
-
-const nextRank = computed(() => {
-    const xp = nextRankIndex.value * XP_PER_RANK;
-    return {
-        ...experienceToRank(xp),
-        experience: xp,
-    };
+const filteredStudentCount = computed(() => {
+    const list = classData.value?.students ?? [];
+    const q = searchQuery.value.trim().toLowerCase();
+    if (!q) return list.length;
+    return list.filter((s) => {
+        const nameMatch = (s.name || '').toLowerCase().includes(q);
+        const groupMatch = (s.group || '').toLowerCase().includes(q);
+        return nameMatch || groupMatch;
+    }).length;
 });
 
-const progressToNextRank = computed(() => {
-    if (currentRankIndex.value >= MAX_RANK_INDEX) {
-        return 100; // Max rank
-    }
-
-    const rankStartXp = currentRankIndex.value * XP_PER_RANK;
-    const nextRankXp = (currentRankIndex.value + 1) * XP_PER_RANK;
-    const expInCurrentRank = currentExperience.value - rankStartXp;
-    const expNeededForNextRank = nextRankXp - rankStartXp;
-
-    return Math.min(100, Math.floor((expInCurrentRank / expNeededForNextRank) * 100));
+const filteredShopItems = computed(() => {
+    const q = searchQuery.value.trim().toLowerCase();
+    if (!q) return shopItems.value;
+    return shopItems.value.filter((i) => (i.name || '').toLowerCase().includes(q));
 });
+
+const isAllSelected = computed(() => {
+    const all = classData.value?.students || [];
+    return all.length > 0 && all.every((s) => shopSelectedStudents.value.some((sel) => sel.id === s.id));
+});
+
+const canCheckout = computed(() => {
+    if (!canAffordShop.value) return false;
+    if (viewShopModal.value && (!selectedShopItemIds.value || selectedShopItemIds.value.length === 0)) return false;
+    return shopSelectedStudents.value.length > 0;
+});
+
+const rankProgress = computed(() => rankProgressFromExperience(classData.value?.experience ?? 0));
+const currentRank = computed(() => rankProgress.value.currentRank);
+const nextRank = computed(() => rankProgress.value.nextRank);
+const progressToNextRank = computed(() => rankProgress.value.progressPercent);
 
 const hasGroups = computed(() => classData.value?.students?.some((s) => s.group) ?? false);
 const hasExistingGroups = computed(() => hasGroups.value);
@@ -239,14 +289,47 @@ const loadShopItems = async () => {
 }
 
 function onShopCostUpdated(cost) {
-    console.log('cost', cost);
     if (Number(cost) === 0) {
-        selectedStudents.value = [];
+        clearSelection();
     }
     shopCost.value = Number(cost);
 }
 
+function handleSelectAll() {
+    selectAll(classData.value?.students || []);
+}
+
+function handleCheckout() {
+    doCheckout(id, classData.value?.students || [], updateClass, {
+        selectedShopItemIds: selectedShopItemIds.value || [],
+        purchaseItemsApi: Server.purchaseItems.bind(Server),
+        onPurchaseSuccess(students) {
+            onStudentsUpdated({ students });
+            onPurchaseCompleted();
+        },
+    });
+}
+
+function onScroll() {
+    const shouldCompact = window.scrollY > 60;
+    if (shouldCompact === isRankCompact.value) return;
+
+    if (shouldCompact) {
+        if (rankAnchorRef.value) {
+            rankAnchorHeight.value = rankAnchorRef.value.offsetHeight;
+        }
+        isRankCompact.value = true;
+        return;
+    }
+
+    isRankCompact.value = false;
+    requestAnimationFrame(() => {
+        rankAnchorHeight.value = null;
+    });
+}
+
 onMounted(async () => {
+    window.addEventListener('scroll', onScroll, { passive: true });
     dataLoading.value = true;
     try {
         await loadClass();
@@ -266,6 +349,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+    window.removeEventListener('scroll', onScroll);
     clearActiveClass();
 });
 
@@ -278,6 +362,7 @@ const viewShop = () => {
     viewShopModal.value = !viewShopModal.value;
     shopCost.value = 0;
     selectedShopItemIds.value = [];
+    clearSelection();
 }
 
 function onCostUpdated(cost) {
@@ -379,8 +464,57 @@ function handleCreateGroups() {
 </script>
 
 <style>
-.dataLoadingPage {
+.classPage {
+    align-items: stretch;
     justify-content: flex-start !important;
+    padding-top: 1rem;
+    padding-bottom: 3rem;
+}
+
+.classPageShell {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+}
+
+@media (min-width: 768px) {
+    .classPageShell {
+        padding: 0 1.5rem 3rem;
+    }
+}
+
+.classPageContent {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.classPageContent--withFooter {
+    padding-bottom: calc(var(--class-floating-bar-height, 100px) + 1.5rem);
+}
+
+.searchResultHint {
+    font-family: var(--font);
+    font-size: 0.9rem;
+    color: rgba(var(--ink-rgb), 0.65);
+    text-align: center;
+    margin: 0 0 0.75rem;
+    padding: 0 0.75rem;
+}
+
+.searchResultHint--empty {
+    opacity: 0.85;
+    padding: 1.5rem 0.75rem;
+}
+
+.dataLoadingPage {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .dataLoading {
@@ -656,6 +790,12 @@ function handleCreateGroups() {
     }
 }
 
+.rankHeaderAnchor {
+    position: relative;
+    width: 100%;
+    transition: min-height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .classRankContainer {
     position: relative;
     display: flex;
@@ -665,6 +805,85 @@ function handleCreateGroups() {
     padding: 0.5rem;
     max-width: 700px;
     gap: 0.5rem;
+    margin-left: auto;
+    margin-right: auto;
+    transition:
+        padding 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        gap 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        margin 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.classRankContainer--pinned {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin-bottom: 0 !important;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    background: transparent;
+}
+
+.classRankContainer--compact {
+    padding: 0.25rem 0.5rem;
+    gap: 0;
+    margin-bottom: 8px !important;
+}
+
+.classRankContainer--compact .rankOrnament {
+    opacity: 0;
+    transform: scale(0.5) rotate(45deg);
+    max-width: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.classRankContainer--compact .classRankCard {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem 1rem;
+    padding: 0.65rem 1rem !important;
+    border-radius: 20px !important;
+    min-width: 0 !important;
+    max-width: 100%;
+    box-shadow: none !important;
+}
+
+.classRankContainer--compact .classRankCard::before {
+    display: none;
+}
+
+.classRankContainer--compact .rankCrown {
+    width: 2.5rem;
+    animation: none;
+    transform: translateY(0);
+}
+
+.classRankContainer--compact .rankDisplay {
+    padding: 0.25rem 0.85rem;
+}
+
+.classRankContainer--compact .rankName {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+.classRankContainer--compact .experienceProgress {
+    flex: 1 1 180px;
+    min-width: 160px;
+    padding: 0.5rem 0.85rem;
+    gap: 0.35rem;
+    border-radius: 14px;
+}
+
+.classRankContainer--compact .progressInfo {
+    font-size: 0.75rem;
+    margin-bottom: 0;
+}
+
+.classRankContainer--compact .progressBarContainer {
+    height: 14px;
 }
 
 @media (min-width: 768px) {
@@ -680,6 +899,11 @@ function handleCreateGroups() {
     animation: sparkle 3s ease-in-out infinite;
     text-shadow: 0 0 20px rgba(var(--gold-rgb), 0.8),
         0 0 40px rgba(var(--gold-rgb), 0.6);
+    transition:
+        opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+        max-width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    max-width: 3rem;
 }
 
 @media (min-width: 768px) {
@@ -712,10 +936,8 @@ function handleCreateGroups() {
 
 .classRankCard {
     position: relative;
-    background: linear-gradient(135deg,
-            rgba(var(--gold-rgb), 0.15) 0%,
-            rgba(var(--amethyst-rgb), 0.15) 50%,
-            rgba(var(--gold-rgb), 0.15) 100%) !important;
+    background: transparent !important;
+    border: none !important;
     border-radius: 32px !important;
     padding: 1.5rem 1.5rem 1.5rem 1.5rem !important;
     display: flex;
@@ -724,12 +946,14 @@ function handleCreateGroups() {
     justify-content: center;
     gap: 1rem;
     overflow: visible;
-    box-shadow: 0 8px 32px rgba(var(--shadow-rgb), 0.4),
-        0 0 60px rgba(var(--gold-rgb), 0.3),
-        inset 0 1px 0 rgba(var(--ink-rgb), 0.1);
-    backdrop-filter: blur(10px);
+    box-shadow: none !important;
     width: 100%;
     max-width: 550px;
+    transition:
+        padding 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        gap 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        border-radius 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        flex-direction 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (min-width: 768px) {
@@ -740,20 +964,12 @@ function handleCreateGroups() {
 }
 
 .classRankCard::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(135deg,
-            rgba(var(--gold-rgb), 0.3),
-            rgba(var(--amethyst-rgb), 0.3),
-            rgba(var(--gold-rgb), 0.3));
-    border-radius: 32px;
-    z-index: -1;
-    filter: blur(15px);
-    opacity: 0.6;
+    display: none;
+}
+
+.classRankCard :deep(.v-card__overlay),
+.classRankCard :deep(.v-card__underlay) {
+    display: none;
 }
 
 .rankCrown {
@@ -761,6 +977,9 @@ function handleCreateGroups() {
     width: 4.5rem;
     animation: float 3s ease-in-out infinite;
     z-index: 10;
+    transition:
+        width 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .rankCrownBadge {
@@ -794,6 +1013,9 @@ function handleCreateGroups() {
     background: rgba(var(--shadow-rgb), 0.2);
     border-radius: 50px;
     border: 1px solid rgba(var(--gold-rgb), 0.3);
+    transition:
+        padding 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        border-radius 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .rankIcon {
@@ -824,9 +1046,9 @@ function handleCreateGroups() {
     letter-spacing: 2px;
     line-height: 1.2;
     white-space: nowrap;
-    /* text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.8),
-        0 0 20px rgba(var(--amethyst-rgb), 0.6),
-        0 2px 4px rgba(var(--shadow-rgb), 0.5); */
+    transition:
+        font-size 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        letter-spacing 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes shimmer {
@@ -850,6 +1072,11 @@ function handleCreateGroups() {
     background: rgba(var(--shadow-rgb), 0.3);
     border-radius: 20px;
     border: 1px solid rgba(var(--gold-rgb), 0.3);
+    transition:
+        padding 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        gap 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        border-radius 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        flex 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .progressInfo {
@@ -860,6 +1087,7 @@ function handleCreateGroups() {
     font-size: 0.85rem;
     color: var(--white);
     margin-bottom: 0.25rem;
+    transition: font-size 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .currentExp {
@@ -887,6 +1115,7 @@ function handleCreateGroups() {
     overflow: hidden;
     border: 1px solid rgba(var(--gold-rgb), 0.2);
     box-shadow: inset 0 2px 4px rgba(var(--shadow-rgb), 0.5);
+    transition: height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .progressBar {
@@ -972,6 +1201,7 @@ function handleCreateGroups() {
 }
 
 :root[data-theme='light'] .classRankCard {
-    box-shadow: 0 10px 30px rgba(13, 37, 48, 0.14), 0 0 30px rgba(var(--gold-rgb), 0.22);
+    background: transparent !important;
+    box-shadow: none !important;
 }
 </style>

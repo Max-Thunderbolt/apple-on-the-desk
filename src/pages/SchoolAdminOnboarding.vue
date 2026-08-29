@@ -27,6 +27,17 @@
         {{ success }}
       </v-alert>
 
+      <v-alert v-if="showWelcomeBanner" type="info" variant="tonal" class="saAlert welcomeAlert" rounded="lg" closable
+        @click:close="dismissWelcomeBanner">
+        <div class="welcomeAlertBody">
+          <p class="welcomeAlertTitle">Welcome to {{ selectedSchoolName }}!</p>
+          <p class="welcomeAlertText">
+            Invite your teachers to get started. Share the link below — they'll sign in and create their first class.
+          </p>
+          <v-btn size="small" class="welcomeAlertBtn" @click="scrollToInviteSection">Generate invite link</v-btn>
+        </div>
+      </v-alert>
+
       <div v-if="loading && !teachers.length && selectedSchoolId" class="loadingWrap">
         <v-progress-circular indeterminate color="primary" size="48" width="4" />
       </div>
@@ -50,7 +61,7 @@
           </div>
         </section>
 
-        <section class="actionCard">
+        <section ref="inviteSectionRef" class="actionCard">
           <div class="actionHeader">
             <v-icon size="22" color="var(--amethyst)">mdi-link-variant</v-icon>
             <h2 class="actionTitle">Teacher invite link</h2>
@@ -154,23 +165,32 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Server from '@/services/server'
 import { useUserProfile } from '@/composables/useUserProfile'
+import { useSchoolSetupStatus, clearSchoolSetupStatusCache } from '@/composables/useSchoolSetupStatus'
 import SchoolAdminNav from '@/components/admin/SchoolAdminNav.vue'
 
 const route = useRoute()
+const router = useRouter()
 const { schoolAdminSchools } = useUserProfile()
 const schoolOptions = computed(() => schoolAdminSchools.value)
 
 const selectedSchoolId = ref('')
-const teachers = ref([])
-const loading = ref(false)
 const error = ref('')
 const success = ref('')
 
+const setupStatus = useSchoolSetupStatus()
+const loading = setupStatus.loading
+const teachers = setupStatus.teachers
+
 const teacherInviteUrl = ref('')
 const generatingLink = ref(false)
+const inviteSectionRef = ref(null)
+
+const cameFromWelcome = ref(false)
+const welcomeDismissed = ref(false)
+const showWelcomeBanner = computed(() => cameFromWelcome.value && !welcomeDismissed.value)
 
 const memberUserId = ref('')
 const memberSearchQuery = ref('')
@@ -187,8 +207,8 @@ const selectedSchoolName = computed(() =>
   schoolOptions.value.find((s) => s.schoolId === selectedSchoolId.value)?.schoolName ?? ''
 )
 
-const teacherCount = computed(() => teachers.value.length)
-const hasActiveTeachers = computed(() => teachers.value.some((t) => (t.classCount ?? 0) > 0))
+const teacherCount = computed(() => setupStatus.teacherCount.value)
+const hasActiveTeachers = computed(() => setupStatus.hasActiveTeachers.value)
 
 function resolveInitialSchoolId() {
   const fromQuery = route.query.schoolId
@@ -200,16 +220,11 @@ function resolveInitialSchoolId() {
 
 async function loadTeachers() {
   if (!selectedSchoolId.value) return
-  loading.value = true
   error.value = ''
   try {
-    const dash = await Server.getSchoolDashboard(selectedSchoolId.value)
-    teachers.value = dash.teachers || []
+    await setupStatus.load(selectedSchoolId.value)
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to load teachers'
-    teachers.value = []
-  } finally {
-    loading.value = false
   }
 }
 
@@ -249,6 +264,7 @@ async function addTeacher() {
     memberUserId.value = ''
     memberSearchQuery.value = ''
     memberSearchResults.value = []
+    clearSchoolSetupStatusCache(selectedSchoolId.value)
     await loadTeachers()
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to add teacher'
@@ -282,6 +298,7 @@ async function confirmRemove() {
     success.value = `Teacher removed. Deleted ${deletedClasses} class${deletedClasses === 1 ? '' : 'es'}.`
     removeDialogOpen.value = false
     teacherToRemove.value = null
+    clearSchoolSetupStatusCache(selectedSchoolId.value)
     await loadTeachers()
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to remove teacher'
@@ -338,8 +355,36 @@ watch(
 )
 
 onMounted(() => {
-  if (selectedSchoolId.value) loadTeachers()
+  if (route.query.welcome === '1') {
+    cameFromWelcome.value = true
+    const schoolId = typeof route.query.schoolId === 'string' ? route.query.schoolId : selectedSchoolId.value
+    router.replace({
+      path: '/SchoolAdminOnboarding',
+      query: schoolId ? { schoolId } : {},
+    })
+  }
 })
+
+watch(
+  [selectedSchoolId, cameFromWelcome],
+  async ([sid, welcome]) => {
+    if (!sid) return
+    await loadTeachers()
+    if (welcome && !teacherInviteUrl.value && !generatingLink.value) {
+      await generateTeacherLink()
+    }
+  },
+  { immediate: true }
+)
+
+function dismissWelcomeBanner() {
+  welcomeDismissed.value = true
+}
+
+function scrollToInviteSection() {
+  inviteSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  if (!teacherInviteUrl.value) generateTeacherLink()
+}
 </script>
 
 <style scoped>
@@ -386,6 +431,32 @@ onMounted(() => {
 .schoolPicker { min-width: 220px; max-width: 300px; }
 .saAlert { margin-bottom: 1rem; font-family: var(--font); }
 .loadingWrap { display: flex; justify-content: center; padding: 3rem; }
+
+.welcomeAlertBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.welcomeAlertTitle {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.05rem;
+  font-family: var(--font);
+}
+
+.welcomeAlertText {
+  margin: 0;
+  font-family: var(--font);
+  opacity: 0.85;
+}
+
+.welcomeAlertBtn {
+  align-self: flex-start;
+  text-transform: none !important;
+  font-family: var(--font) !important;
+  font-weight: 600 !important;
+}
 
 .checklistPanel,
 .actionCard,

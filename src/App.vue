@@ -1,5 +1,6 @@
 <template>
   <v-app>
+    <!-- <Toaster position="top-right" /> -->
     <template v-if="authReady">
       <router-view />
     </template>

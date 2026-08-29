@@ -1,11 +1,7 @@
 <template>
-  <v-breadcrumbs v-if="!isChild" density="compact" :items="breadcrumbs" class="breadcrumbs">
-    <template v-slot:divider>
-      <v-icon>mdi-chevron-right</v-icon>
-    </template>
-  </v-breadcrumbs>
-
-  <div class="container onboardingPage">
+  <div class="container onboardingPage" :class="{ 'onboardingPage--child': isChild }">
+    <div class="onboardingShell" :class="{ 'onboardingShell--child': isChild }">
+      <TeacherNav v-if="!isChild" />
     <div v-if="loading && !loaded" class="loadingState">
       <v-progress-circular indeterminate color="primary" size="64" width="6" />
       <span class="loadingText">Loading...</span>
@@ -39,13 +35,7 @@
       </div>
 
       <div class="searchBarContainer">
-        <div class="searchBar" ref="searchBarRef">
-          <v-icon size="20" class="searchIcon">mdi-magnify</v-icon>
-          <input v-model="searchQuery" type="text" placeholder="Search tutorials" class="searchInput" />
-          <button v-if="searchQuery" class="clearSearch" @click="searchQuery = ''">
-            <v-icon size="18">mdi-close</v-icon>
-          </button>
-        </div>
+        <FloatingSearchBar ref="searchBarRef" v-model="searchQuery" placeholder="Search tutorials" />
       </div>
       <div class="onboardingFooter">
         <div class="footerActions">
@@ -53,12 +43,13 @@
             <v-icon start size="18">mdi-arrow-left</v-icon>
             Back to {{ className }}
           </v-btn>
-          <v-btn v-else class="homeButton" variant="flat" @click="$router.push('/')">
+          <v-btn v-else class="homeButton" variant="flat" @click="$router.push('/Classes')">
             Back to Home
           </v-btn>
         </div>
       </div>
     </template>
+    </div>
   </div>
 </template>
 
@@ -68,6 +59,8 @@ import { useRoute } from 'vue-router'
 import { useRouter } from 'vue-router'
 import { useOnboarding } from '@/composables/useOnboarding'
 import CategoryRenderer from '@/components/tutorials/CategoryRenderer.vue'
+import TeacherNav from '@/components/navigation/TeacherNav.vue'
+import FloatingSearchBar from '@/components/common/FloatingSearchBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -95,19 +88,6 @@ const className = computed(() => route.query.className || 'Classes')
 const classId = computed(() => route.query.classId || null)
 const cameFromClass = computed(() => !!classId.value && className.value !== 'Classes')
 const classRoute = computed(() => cameFromClass.value ? `/Class/${classId.value}` : '/')
-
-const breadcrumbs = computed(() => {
-  if (cameFromClass.value) {
-    return [
-      { title: className.value, to: classRoute.value },
-      { title: 'Tutorials', to: route.fullPath },
-    ]
-  }
-  return [
-    { title: 'Home', to: '/' },
-    { title: 'Tutorials', to: '/Onboarding' },
-  ]
-})
 
 // watch(isChild, (newVal) => {
 //   if (newVal) {
@@ -302,11 +282,8 @@ onMounted(async () => {
   await loadOnboarding()
   await nextTick()
   if (focusSearch.value) {
-    const input = searchBarRef.value?.querySelector('input')
-    if (input) {
-      input.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      input.focus()
-    }
+    searchBarRef.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    searchBarRef.value?.focus()
   } else if (focusedSection.value) {
     const el = document.getElementById(`category-${focusedSection.value}`)
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -316,11 +293,37 @@ onMounted(async () => {
 
 <style scoped>
 .onboardingPage {
+  align-items: stretch;
   justify-content: flex-start !important;
   padding-top: 1rem;
   padding-bottom: 3rem;
   gap: 0;
   border-radius: 16px;
+}
+
+.onboardingPage--child {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+  background-image: none;
+}
+
+.onboardingShell {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+.onboardingShell--child {
+  max-width: none;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .onboardingShell:not(.onboardingShell--child) {
+    padding: 0 1.5rem 3rem;
+  }
 }
 
 .loadingState {
@@ -451,59 +454,8 @@ onMounted(async () => {
   border-radius: 14px !important;
 }
 
-.searchBar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1rem;
-  width: 100%;
+.searchBarContainer :deep(.floatingSearchBar) {
   max-width: 700px;
-  background: rgba(var(--freshSky-rgb), 0.6);
-  border-radius: 999px;
-  border: 1px solid rgba(var(--ink-rgb), 0.45);
-  transition: border-color 0.2s ease;
-}
-
-.searchBar:focus-within {
-  border-color: rgba(var(--freshSky-rgb), 0.45);
-}
-
-.searchIcon {
-  color: rgba(var(--ink-rgb), 1);
-  flex-shrink: 0;
-}
-
-.searchInput {
-  width: 100%;
-  font-family: var(--font);
-  font-size: 0.95rem;
-  color: var(--white);
-  background: transparent;
-  border: none;
-  outline: none;
-}
-
-.searchInput::placeholder {
-  color: rgba(var(--ink-rgb), 1);
-}
-
-.clearSearch {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(var(--ink-rgb), 0.1);
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  cursor: pointer;
-  color: rgba(var(--ink-rgb), 1);
-  transition: background 0.15s ease;
-}
-
-.clearSearch:hover {
-  background: rgba(var(--ink-rgb), 0.2);
 }
 
 .noResults {

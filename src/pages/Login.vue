@@ -31,9 +31,7 @@
       </v-btn>
     </div>
 
-    <v-btn variant="text" class="backLink" @click="navigateTo('/')">
-      ← Back to home
-    </v-btn>
+    <a :href="INFO_SITE_URL" class="backLink">← Back to website</a>
   </div>
 </template>
 
@@ -41,15 +39,15 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-import { useOnboarding } from '@/composables/useOnboarding'
 import { toast } from 'vue-sonner'
 import server from '@/services/server'
 import { applyUserProfilePayload } from '@/composables/useUserProfile'
+import { resolvePostAuthDestinationAsync } from '@/composables/usePostAuthDestination'
+import { INFO_SITE_URL } from '@/config/siteUrls'
 
 const router = useRouter()
 const route = useRoute()
 const { signInWithEmail, registerWithEmail, signInWithGoogle } = useAuth()
-const { reset, loadOnboarding, needsOnboarding } = useOnboarding()
 
 async function postLoginRedirect() {
   try {
@@ -60,14 +58,15 @@ async function postLoginRedirect() {
       router.push(redirectTarget)
       return
     }
-    reset()
-    await loadOnboarding()
-    if (needsOnboarding.value) {
-      router.push('/Onboarding')
-      return
+    const dest = await resolvePostAuthDestinationAsync({})
+    if (typeof dest === 'string') {
+      router.push(dest)
+    } else {
+      router.push(dest)
     }
-  } catch { /* fall through to home */ }
-  router.push('/')
+  } catch {
+    router.push('/GetStarted')
+  }
 }
 
 const formRef = ref(null)
@@ -131,10 +130,6 @@ async function handleGoogleSignIn() {
   } finally {
     googleLoading.value = false
   }
-}
-
-function navigateTo(path) {
-  router.push(path)
 }
 </script>
 

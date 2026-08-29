@@ -25,11 +25,7 @@
             <span class="leaderboardRank">{{ row.rankName }}</span>
           </div>
           <div v-if="row.topStudents && row.topStudents.length" class="leaderboardTopThree">
-            <span v-for="(student, si) in row.topStudents" :key="row.id + '-top-' + si" class="topStudentChip" :class="[
-              si === 0 ? 'topStudentGold' : si === 1 ? 'topStudentSilver' : 'topStudentBronze'
-            ]" :title="`${student.name}: ${student.points} pts`">
-              {{ student.name }}
-            </span>
+            <TopStudentChips :students="row.topStudents" />
           </div>
         </li>
       </ul>
@@ -139,6 +135,7 @@ import { ref, computed } from 'vue';
 import { useClasses } from '@/composables/useClasses';
 import { experienceToRank } from '@/composables/useExperience';
 import RankBadge from '@/components/common/RankBadge.vue';
+import TopStudentChips from '@/components/common/TopStudentChips.vue';
 import server from '@/services/server';
 
 const { getClassNames, getClassById } = useClasses();
@@ -445,35 +442,6 @@ loadClassList();
   align-items: center;
   gap: 0.35rem;
   flex-shrink: 0;
-}
-
-.topStudentChip {
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.2rem 0.5rem;
-  border-radius: 8px;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.topStudentGold {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.5), rgba(184, 134, 11, 0.5));
-  color: #fff;
-  border: 1px solid rgba(212, 175, 55, 0.6);
-}
-
-.topStudentSilver {
-  background: linear-gradient(135deg, rgba(192, 192, 192, 0.45), rgba(128, 128, 128, 0.45));
-  color: #fff;
-  border: 1px solid rgba(192, 192, 192, 0.6);
-}
-
-.topStudentBronze {
-  background: linear-gradient(135deg, rgba(205, 127, 50, 0.5), rgba(139, 90, 43, 0.5));
-  color: #fff;
-  border: 1px solid rgba(205, 127, 50, 0.6);
 }
 
 .classSelect {

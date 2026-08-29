@@ -1,5 +1,6 @@
 <template>
-    <div class="timer">
+    <!-- Full variant (legacy inline layout) -->
+    <div v-if="variant === 'full'" class="timer timer--full">
         <div class="timerInputOrProgress">
             <div class="timerInput" v-if="!isRunning">
                 <v-text-field v-model.number="enteredDuration" type="text" inputmode="numeric" min="1" variant="plain"
@@ -12,9 +13,7 @@
         </div>
         <div class="timerDisplay">
             <div class="timeWrapper">
-                <div class="timeText">
-                    {{ formattedTime }}
-                </div>
+                <div class="timeText">{{ formattedTime }}</div>
             </div>
         </div>
         <div class="stats" v-if="totalIterations > 0 || totalTimeSeconds > 0">
@@ -28,16 +27,89 @@
             <v-btn class="controlButtonStop" @click="stopTimer" :disabled="!isRunning">
                 Stop
             </v-btn>
-            <v-btn class="controlButton" @click="resetTimer">
-                Reset
-            </v-btn>
+            <v-btn class="controlButton" @click="resetTimer">Reset</v-btn>
         </div>
+    </div>
+
+    <!-- Footer variant: compact trigger + expandable panel -->
+    <div v-else class="timer timer--footer" :class="{ 'timer--embedded': embedded }">
+        <div v-if="expanded" class="timerFooterPanel">
+            <div class="timerPresets">
+                <button
+                    v-for="preset in presets"
+                    :key="preset"
+                    type="button"
+                    class="presetChip"
+                    :class="{ 'presetChip--active': enteredDuration === preset }"
+                    @click="selectPreset(preset)"
+                >
+                    {{ formatPresetLabel(preset) }}
+                </button>
+            </div>
+            <div class="timerCustomInput">
+                <v-text-field
+                    v-model.number="enteredDuration"
+                    type="text"
+                    inputmode="numeric"
+                    variant="plain"
+                    density="compact"
+                    hide-details
+                    class="durationInput durationInput--footer"
+                    placeholder="Custom seconds"
+                    prepend-inner-icon="mdi-timer"
+                />
+            </div>
+            <div v-if="totalIterations > 0 || totalTimeSeconds > 0" class="stats stats--footer">
+                <span class="stat">Iterations: {{ totalIterations }}</span>
+                <span class="stat">Total: {{ formattedTotalTime }}</span>
+            </div>
+            <div class="controls controls--footer">
+                <v-btn class="controlButtonStart" @click="startTimer" :disabled="!enteredDuration || enteredDuration < 1">
+                    Start
+                </v-btn>
+                <v-btn class="controlButtonStop" @click="stopTimer" :disabled="!isRunning">
+                    Stop
+                </v-btn>
+                <v-btn class="controlButton" @click="resetTimer">Reset</v-btn>
+            </div>
+        </div>
+
+        <button
+            v-if="!embedded"
+            type="button"
+            class="timerFooterTrigger"
+            :class="{ 'timerFooterTrigger--running': isRunning, 'timerFooterTrigger--expanded': expanded }"
+            :aria-expanded="expanded"
+            aria-label="Timer"
+            @click="toggleExpanded"
+        >
+            <v-icon size="20" class="timerFooterIcon">mdi-timer</v-icon>
+            <span v-if="isRunning" class="timerFooterTime">{{ formattedTime }}</span>
+            <span v-if="isRunning" class="timerFooterProgress">
+                <span class="timerFooterProgressFill" :style="{ width: progress + '%' }" />
+            </span>
+        </button>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onUnmounted, watch } from 'vue';
 import swapSoundFile from '../assets/DriverNavigatorSwap.wav';
+
+const props = defineProps({
+    variant: {
+        type: String,
+        default: 'full',
+        validator: (v) => ['full', 'footer'].includes(v),
+    },
+    embedded: {
+        type: Boolean,
+        default: false,
+    },
+});
+
+const presets = [30, 60, 120, 300];
+const expanded = ref(false);
 
 const enteredDuration = ref(120);
 const timeRemaining = ref(120);
@@ -49,7 +121,6 @@ const totalTimeSeconds = ref(0);
 let intervalId = null;
 const durationPerIteration = ref(0);
 
-// Create audio element for the swap sound
 const swapSound = new Audio(swapSoundFile);
 
 const formattedTime = computed(() => {
@@ -78,9 +149,31 @@ const formattedTotalTime = computed(() => {
     return `${secs}s`;
 });
 
+function formatPresetLabel(seconds) {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = seconds / 60;
+    return mins % 1 === 0 ? `${mins}m` : `${mins}m`;
+}
+
+function selectPreset(seconds) {
+    enteredDuration.value = seconds;
+    timeRemaining.value = seconds;
+}
+
+function toggleExpanded() {
+    expanded.value = !expanded.value;
+}
+
+function openPanel() {
+    expanded.value = true;
+}
+
+function closePanel() {
+    expanded.value = false;
+}
+
 const tick = () => {
     if (timeRemaining.value <= 0) {
-        // Play sound when timer reaches 0
         playSwapSound();
         totalIterations.value++;
         totalTimeSeconds.value += durationPerIteration.value;
@@ -97,9 +190,8 @@ const tick = () => {
 
 const playSwapSound = () => {
     try {
-        // Reset audio to beginning in case it's already playing
         swapSound.currentTime = 0;
-        swapSound.play().catch(err => {
+        swapSound.play().catch((err) => {
             console.warn('Could not play swap sound:', err);
         });
     } catch (err) {
@@ -110,7 +202,6 @@ const playSwapSound = () => {
 const startTimer = () => {
     const duration = Math.max(1, Math.floor(Number(enteredDuration.value) || 60));
     enteredDuration.value = duration;
-    // Always update durationPerIteration from current input so next repetition and total time use it
     durationPerIteration.value = duration;
     const isResuming = !isRunning.value && timeRemaining.value > 0;
     if (!isResuming) {
@@ -123,6 +214,9 @@ const startTimer = () => {
     }
     isRunning.value = true;
     intervalId = setInterval(tick, 1000);
+    if (props.variant === 'footer') {
+        expanded.value = false;
+    }
 };
 
 const stopTimer = () => {
@@ -135,7 +229,7 @@ const stopTimer = () => {
 
 const resetTimer = () => {
     stopTimer();
-    timeRemaining.value = 0;
+    timeRemaining.value = enteredDuration.value || 120;
     progress.value = 0;
     durationPerIteration.value = 0;
     totalIterations.value = 0;
@@ -145,16 +239,160 @@ const resetTimer = () => {
 onUnmounted(() => {
     if (intervalId) clearInterval(intervalId);
 });
+
+defineExpose({
+    isRunning,
+    formattedTime,
+    progress,
+    expanded,
+    toggleExpanded,
+    openPanel,
+    closePanel,
+});
 </script>
 
-<style>
-.timer {
+<style scoped>
+.timer--full {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 20px;
-    padding: 20px 20px 20px 20px;
+    padding: 20px;
+}
+
+.timer--footer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.timer--footer.timer--embedded {
+    align-items: center;
+}
+
+.timer--footer.timer--embedded .timerFooterPanel {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(100% + 0.65rem);
+}
+
+.timerFooterPanel {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    right: 0;
+    min-width: 260px;
+    max-width: min(320px, 90vw);
+    padding: 0.85rem;
+    background: var(--inkBlack);
+    border: 1px solid rgba(var(--ink-rgb), 0.25);
+    border-radius: 16px;
+    box-shadow: 0 -8px 28px rgba(var(--shadow-rgb), 0.45);
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    z-index: 10;
+}
+
+.timerPresets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.presetChip {
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--white);
+    background: rgba(var(--ink-rgb), 0.12);
+    border: 1px solid rgba(var(--ink-rgb), 0.25);
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.presetChip:hover,
+.presetChip--active {
+    background: rgba(var(--seaGreen-rgb), 0.25);
+    border-color: var(--seaGreen);
+}
+
+.timerCustomInput {
+    width: 100%;
+}
+
+.timerFooterTrigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 0.65rem;
+    background: rgba(var(--ink-rgb), 0.08);
+    border: 1px solid rgba(var(--ink-rgb), 0.2);
+    border-radius: 999px;
+    color: var(--white);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.timerFooterTrigger:hover {
+    background: rgba(var(--ink-rgb), 0.14);
+    border-color: rgba(var(--ink-rgb), 0.35);
+}
+
+.timerFooterTrigger--running {
+    border-color: rgba(var(--seaGreen-rgb), 0.5);
+    padding-right: 0.85rem;
+}
+
+.timerFooterTrigger--expanded {
+    background: rgba(var(--seaGreen-rgb), 0.18);
+    border-color: var(--seaGreen);
+}
+
+.timerFooterIcon {
+    color: var(--seaGreen);
+    flex-shrink: 0;
+}
+
+.timerFooterTime {
+    font-family: var(--font);
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.timerFooterProgress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(var(--shadow-rgb), 0.4);
+}
+
+.timerFooterProgressFill {
+    display: block;
+    height: 100%;
+    background: var(--seaGreen);
+    transition: width 1s linear;
+}
+
+.stats--footer {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.controls--footer {
+    gap: 0.4rem;
 }
 
 .timerDisplay {
@@ -164,7 +402,7 @@ onUnmounted(() => {
     justify-content: center;
     background-color: var(--inkBlack);
     border-radius: 25px;
-    padding: 20px 20px 0px 20px;
+    padding: 20px 20px 0;
     width: 100%;
 }
 
@@ -175,7 +413,7 @@ onUnmounted(() => {
     justify-content: center;
     background-color: var(--inkBlack);
     border-radius: 25px;
-    padding: 20px 20px 20px 20px;
+    padding: 20px;
     width: 100%;
 }
 
@@ -202,13 +440,6 @@ onUnmounted(() => {
     justify-content: center;
 }
 
-.inputLabel {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--white);
-    font-family: var(--font);
-}
-
 .durationInput {
     max-width: 100%;
     font-weight: 600;
@@ -219,6 +450,12 @@ onUnmounted(() => {
     width: 100%;
     text-align: center;
     font-family: var(--font);
+}
+
+.durationInput--footer {
+    background: rgba(var(--ink-rgb), 0.08);
+    border-radius: 12px;
+    padding: 4px 12px;
 }
 
 .durationInput :deep(.v-field) {
@@ -246,17 +483,14 @@ onUnmounted(() => {
     display: none;
 }
 
-/* Hide number input spinners (Firefox + WebKit) - target both .durationInput and .timer for reliability */
 .durationInput input[type="number"],
-.timer input[type="number"] {
+.timer--full input[type="number"] {
     appearance: textfield;
     -moz-appearance: textfield;
 }
 
 .durationInput input[type="number"]::-webkit-outer-spin-button,
-.durationInput input[type="number"]::-webkit-inner-spin-button,
-.timer input[type="number"]::-webkit-outer-spin-button,
-.timer input[type="number"]::-webkit-inner-spin-button {
+.durationInput input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
@@ -274,20 +508,12 @@ onUnmounted(() => {
     opacity: 0.9;
     text-align: center;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.85rem;
     border-radius: 180px;
-    border: 2px solid var(--inkBlack);
-    background-color: var(--inkBlack);
-    padding: 6px 20px;
+    border: 1px solid rgba(var(--ink-rgb), 0.25);
+    background-color: rgba(var(--ink-rgb), 0.08);
+    padding: 0.35rem 0.75rem;
     color: var(--white);
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-        background-color: var(--inkBlack);
-    }
 }
 
 .progressBarBg {
@@ -325,28 +551,15 @@ onUnmounted(() => {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
+}
 
-    &:hover {
-        background-color: var(--intenseCherry);
-    }
+.controlButton:hover {
+    background-color: var(--intenseCherry) !important;
+}
 
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    &:active {
-        transform: scale(0.98);
-        box-shadow: 5px 5px 5px 0 rgba(var(--shadow-rgb), 0.5);
-    }
-
-    &:focus {
-        outline: none;
-    }
-
-    &:focus-visible {
-        outline: none;
-    }
+.controlButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .controlButtonStart {
@@ -361,24 +574,11 @@ onUnmounted(() => {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
+}
 
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    &:active {
-        transform: scale(0.98);
-        box-shadow: 5px 5px 5px 0 rgba(var(--shadow-rgb), 0.5);
-    }
-
-    &:focus {
-        outline: none;
-    }
-
-    &:focus-visible {
-        outline: none;
-    }
+.controlButtonStart:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .controlButtonStop {
@@ -392,23 +592,26 @@ onUnmounted(() => {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
+}
 
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
+.controlButtonStop:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
-    &:active {
-        transform: scale(0.98);
-        box-shadow: 5px 5px 5px 0 rgba(var(--shadow-rgb), 0.5);
-    }
+:root[data-theme='light'] .timerFooterPanel {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(13, 37, 48, 0.15);
+    box-shadow: 0 -8px 28px rgba(13, 37, 48, 0.12);
+}
 
-    &:focus {
-        outline: none;
-    }
+:root[data-theme='light'] .presetChip,
+:root[data-theme='light'] .stat {
+    color: rgba(13, 37, 48, 0.88);
+}
 
-    &:focus-visible {
-        outline: none;
-    }
+:root[data-theme='light'] .timerFooterTrigger {
+    color: rgba(13, 37, 48, 0.88);
+    background: rgba(13, 37, 48, 0.05);
 }
 </style>

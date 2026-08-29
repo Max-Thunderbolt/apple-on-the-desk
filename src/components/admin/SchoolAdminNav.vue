@@ -16,22 +16,35 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useUserProfile } from '@/composables/useUserProfile'
 
 const router = useRouter()
 const route = useRoute()
+const { teacherSchools } = useUserProfile()
 
-const items = [
-  { path: '/SchoolAdminOverview', label: 'Overview', icon: 'mdi-view-dashboard-outline' },
-  { path: '/SchoolAdminDashboard', label: 'Dashboard', icon: 'mdi-google-classroom' },
-  { path: '/SchoolAdminOnboarding', label: 'Teachers', icon: 'mdi-account-plus-outline' },
-]
+const items = computed(() => {
+  const nav = [
+    { path: '/SchoolAdminOnboarding', label: 'Teachers', icon: 'mdi-account-plus-outline' },
+    { path: '/SchoolAdminDashboard', label: 'Dashboard', icon: 'mdi-google-classroom' },
+    { path: '/SchoolAdminOverview', label: 'Overview', icon: 'mdi-view-dashboard-outline' },
+  ]
+  if (teacherSchools.value.length > 0) {
+    nav.push({ path: '/Classes', label: 'My classes', icon: 'mdi-book-open-variant' })
+  }
+  return nav
+})
 
 function isActive(path) {
   return route.path === path
 }
 
 function go(path) {
+  if (path === '/Classes') {
+    router.push('/Classes')
+    return
+  }
   const schoolId = route.query.schoolId
   if (schoolId && path !== '/SchoolAdminOverview') {
     router.push({ path, query: { schoolId } })

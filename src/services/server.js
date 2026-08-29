@@ -487,6 +487,16 @@ class Server {
         }
     }
 
+    async previewJoinCode(code) {
+        try {
+            const response = await this.http.get(`/schools/join/${encodeURIComponent(code)}/preview`)
+            return response.data
+        } catch (error) {
+            console.error('Error previewing join code:', error)
+            throw error
+        }
+    }
+
     async joinSchoolByCode(code) {
         try {
             const response = await this.http.post(`/schools/join/${encodeURIComponent(code)}`)

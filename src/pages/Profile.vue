@@ -87,7 +87,7 @@ async function handleSignOut() {
   try {
     await signOut()
     toast.success('Signed out')
-    router.push('/')
+    router.push('/Login')
   } catch (err) {
     toast.error(err?.message || 'Sign out failed')
   } finally {
@@ -102,7 +102,7 @@ async function handleDeleteAccount() {
     confirmDeleteOpen.value = false
     await signOut()
     toast.success('Account deleted')
-    router.push('/')
+    router.push('/Login')
   } catch (err) {
     toast.error(err?.response?.data?.message || err?.message || 'Failed to delete account')
   } finally {

@@ -1,5 +1,9 @@
 <template>
-    <div class="helpButton">
+    <div
+        class="helpButton"
+        :class="{ 'helpButton--dockAligned': alignWithDock }"
+        :style="alignWithDock ? undefined : { bottom: `${bottomOffset}px` }"
+    >
         <div v-if="showTutorialTip" class="tutorialTip">
             <p class="tutorialTipText">
                 Open this menu for tutorials and theme settings.
@@ -91,6 +95,8 @@ const TUTORIAL_TIP_STORAGE_KEY = 'apple-on-the-desk-tutorial-tip-dismissed';
 const props = defineProps({
     className: { type: String, default: 'Classes' },
     classId: { type: String, default: null },
+    bottomOffset: { type: Number, default: 20 },
+    alignWithDock: { type: Boolean, default: false },
 });
 
 const router = useRouter();
@@ -168,13 +174,18 @@ onMounted(() => {
 <style scoped>
 .helpButton {
     position: fixed;
-    bottom: 20px;
     right: 20px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 0.5rem;
+}
+
+.helpButton--dockAligned {
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    justify-content: center;
+    min-height: 44px;
 }
 
 .tutorialTip {

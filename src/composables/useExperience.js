@@ -74,8 +74,10 @@ const BADGE_VIEWBOXES = [
 
 export const MAX_RANK_INDEX = TIER_NAMES.length * DIVISIONS_PER_TIER - 1;
 
+export const XP_PER_RANK = 100;
+
 export function rankIndexFromExperience(experience) {
-    return Math.min(Math.floor(experience / 100), MAX_RANK_INDEX);
+    return Math.min(Math.floor(experience / XP_PER_RANK), MAX_RANK_INDEX);
 }
 
 /**
@@ -106,6 +108,45 @@ export function experienceToRank(experience) {
         rankIndex,
         viewBox: rankIndexToBadgeViewBox(rankIndex),
         name: `${TIER_NAMES[tierIndex]} ${division}`,
+    };
+}
+
+/**
+ * Rank progress for display (progress bar, XP to next rank).
+ * @param {number} experience
+ */
+export function rankProgressFromExperience(experience) {
+    const exp = Number(experience ?? 0);
+    const currentRank = experienceToRank(exp);
+    const currentRankIndex = rankIndexFromExperience(exp);
+    const isMaxRank = currentRankIndex >= MAX_RANK_INDEX;
+
+    if (isMaxRank) {
+        return {
+            currentRank,
+            nextRank: { ...currentRank, experience: exp },
+            progressPercent: 100,
+            xpToNext: 0,
+            isMaxRank: true,
+        };
+    }
+
+    const nextRankIndex = currentRankIndex + 1;
+    const rankStartXp = currentRankIndex * XP_PER_RANK;
+    const nextRankXp = nextRankIndex * XP_PER_RANK;
+    const expInCurrentRank = exp - rankStartXp;
+    const expNeededForNextRank = nextRankXp - rankStartXp;
+    const progressPercent = Math.min(100, Math.floor((expInCurrentRank / expNeededForNextRank) * 100));
+
+    return {
+        currentRank,
+        nextRank: {
+            ...experienceToRank(nextRankXp),
+            experience: nextRankXp,
+        },
+        progressPercent,
+        xpToNext: nextRankXp - exp,
+        isMaxRank: false,
     };
 }
 

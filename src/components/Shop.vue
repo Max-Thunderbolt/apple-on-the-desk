@@ -1,6 +1,6 @@
 <template>
     <div v-if="!shopItemsList.length && !shopItemsLoading" class="emptyShop">
-        No shop items available. Create some some in the actions menu below.
+        No shop items available. Create some using the + button in the footer bar.
 
     </div>
     <div v-else class="shopGrid">

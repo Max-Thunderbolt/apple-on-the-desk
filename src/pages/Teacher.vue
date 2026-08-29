@@ -1,12 +1,7 @@
 <template>
-  <v-breadcrumbs density="compact"
-    :items="[{ title: 'Home', to: '/' }, { title: 'Classes', to: '/classes' }, { title: 'Teacher', to: '/Teacher' }]"
-    class="breadcrumbs">
-    <template v-slot:divider>
-      <v-icon>mdi-chevron-right</v-icon>
-    </template>
-  </v-breadcrumbs>
   <div class="container teacherPage">
+    <div class="teacherShell">
+    <TeacherNav />
     <div v-if="!authReady" class="loadingState">
       <v-progress-circular indeterminate color="primary" size="64" width="6" />
       <span class="loadingText">Loading...</span>
@@ -59,6 +54,7 @@
         </v-window>
       </div>
     </template>
+    </div>
   </div>
 </template>
 
@@ -70,6 +66,7 @@ import { useUserProfile } from '@/composables/useUserProfile';
 import Profile from '@/pages/Profile.vue';
 import ClassPerformance from '@/components/ClassPerformance.vue';
 import Onboarding from '@/pages/Onboarding.vue';
+import TeacherNav from '@/components/navigation/TeacherNav.vue';
 
 const router = useRouter();
 const { authReady, isSignedIn } = useAuth();
@@ -97,8 +94,23 @@ function navigateTo(path) {
 }
 
 .teacherPage {
+  align-items: stretch;
   justify-content: flex-start !important;
   padding-top: 1rem;
+  padding-bottom: 3rem;
+}
+
+.teacherShell {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+@media (min-width: 768px) {
+  .teacherShell {
+    padding: 0 1.5rem 3rem;
+  }
 }
 
 .dashLinks {
@@ -160,7 +172,6 @@ function navigateTo(path) {
 
 .teacherContent {
   width: 100%;
-  max-width: 900px;
 }
 
 .teacherTabs :deep(.v-tab) {

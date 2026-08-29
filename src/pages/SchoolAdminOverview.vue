@@ -26,6 +26,11 @@
         </div>
       </header>
 
+      <v-alert v-if="setupCompleteBanner" type="success" variant="tonal" class="saAlert" rounded="lg" closable
+        @click:close="setupCompleteBanner = false">
+        Your school is active — teachers are using Apple on the Desk.
+      </v-alert>
+
       <v-alert v-if="error" type="error" variant="tonal" class="saAlert" rounded="lg" closable
         @click:close="error = ''">
         {{ error }}
@@ -127,12 +132,16 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Server from '@/services/server'
 import { useTheme } from '@/composables/useTheme'
+import { useUserProfile } from '@/composables/useUserProfile'
+import { isAdminSetupComplete } from '@/composables/useSchoolSetupStatus'
 import SchoolAdminNav from '@/components/admin/SchoolAdminNav.vue'
 
 const router = useRouter()
+const { schoolAdminSchools } = useUserProfile()
 const overview = ref(null)
 const loading = ref(false)
 const error = ref('')
+const setupCompleteBanner = ref(false)
 const year = ref(new Date().getFullYear())
 const term = ref(1)
 const { effectiveTheme } = useTheme()
@@ -210,12 +219,16 @@ async function loadOverview() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   const m = new Date().getMonth()
   if (m <= 3) term.value = 1
   else if (m <= 7) term.value = 2
   else term.value = 3
-  loadOverview()
+  await loadOverview()
+  if (schoolAdminSchools.value.length > 0) {
+    const schoolId = schoolAdminSchools.value[0].schoolId
+    setupCompleteBanner.value = await isAdminSetupComplete(schoolId)
+  }
 })
 </script>
 
