@@ -17,6 +17,12 @@
               item-title="schoolName" item-value="schoolId" density="compact" hide-details variant="outlined"
               class="glassField schoolPicker" label="School"
               :menu-props="{ contentClass: 'dashboardSelectMenu' }" @update:model-value="loadDashboard" />
+            <v-select v-model="year" :items="yearItems" density="compact" hide-details variant="outlined"
+              class="glassField yearField" label="Year"
+              :menu-props="{ contentClass: 'dashboardSelectMenu' }" @update:model-value="loadDashboard" />
+            <v-select v-model="term" :items="termItems" item-title="title" item-value="value" density="compact"
+              hide-details variant="outlined" class="glassField termField" label="Term"
+              :menu-props="{ contentClass: 'dashboardSelectMenu' }" @update:model-value="loadDashboard" />
             <v-btn class="refreshBtn" size="small" :loading="loading" icon="mdi-refresh" variant="flat"
               @click="loadDashboard" />
           </div>
@@ -99,28 +105,7 @@
         </section>
 
         <!-- Charts -->
-        <section class="chartsRow">
-          <div class="chartPanel">
-            <h2 class="chartTitle">
-              <v-icon size="20" class="chartTitleIcon">mdi-chart-bar</v-icon>
-              Students per class
-            </h2>
-            <div class="chartWrap">
-              <Bar v-if="studentsPerClassData" :data="studentsPerClassData" :options="barOptions" />
-              <div v-else class="chartEmpty">No class data</div>
-            </div>
-          </div>
-          <div class="chartPanel">
-            <h2 class="chartTitle">
-              <v-icon size="20" class="chartTitleIcon">mdi-star-four-points</v-icon>
-              Class experience (XP)
-            </h2>
-            <div class="chartWrap">
-              <Bar v-if="classXPData" :data="classXPData" :options="xpBarOptions" />
-              <div v-else class="chartEmpty">No XP data</div>
-            </div>
-          </div>
-        </section>
+        <SchoolClassBarCharts :classes="dash.classes || []" />
 
         <!-- Classes panel -->
         <section class="sectionPanel">
@@ -233,15 +218,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Bar } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-} from 'chart.js'
 import { useUserProfile } from '@/composables/useUserProfile'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTheme } from '@/composables/useTheme'
@@ -249,19 +225,7 @@ import Server from '@/services/server'
 import ClassForm from '@/components/modals/ClassForm.vue'
 import AppContextMenu from '@/components/common/AppContextMenu.vue'
 import SchoolAdminNav from '@/components/admin/SchoolAdminNav.vue'
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
-
-const PALETTE = [
-  'rgba(0, 168, 232, 0.85)',
-  'rgba(26, 147, 111, 0.85)',
-  'rgba(168, 51, 185, 0.85)',
-  'rgba(247, 183, 7, 0.85)',
-  'rgba(197, 40, 61, 0.85)',
-  'rgba(0, 168, 232, 0.5)',
-  'rgba(26, 147, 111, 0.5)',
-  'rgba(168, 51, 185, 0.5)',
-]
+import SchoolClassBarCharts from '@/components/charts/SchoolClassBarCharts.vue'
 
 const { schoolAdminSchools } = useUserProfile()
 const schoolOptions = computed(() => schoolAdminSchools.value)
@@ -273,7 +237,9 @@ const selectedSchoolLabel = computed(() =>
   schoolOptions.value.find((s) => s.schoolId === selectedSchoolId.value)?.schoolName ?? ''
 )
 const year = ref(new Date().getFullYear())
-const term = ref(1)
+const term = ref(null)
+const currentYear = new Date().getFullYear()
+const yearItems = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1]
 const dash = ref(null)
 const loading = ref(false)
 const error = ref('')
@@ -299,6 +265,7 @@ const classContextMenuItems = computed(() => ([
 ]))
 
 const termItems = [
+  { title: 'All terms', value: null },
   { title: 'T1 · Jan–Apr', value: 1 },
   { title: 'T2 · May–Aug', value: 2 },
   { title: 'T3 · Sep–Dec', value: 3 },
@@ -362,76 +329,6 @@ const classesByTeacher = computed(() => {
   return groups
 })
 
-const chartFont = { family: 'Advent Pro, sans-serif' }
-const chartTheme = computed(() => (
-  isDarkTheme.value
-    ? {
-      gridColor: 'rgba(255,255,255,0.08)',
-      tickColor: 'rgba(255,255,255,0.6)',
-      tooltipBg: 'rgba(8,33,42,0.96)',
-      tooltipBorder: 'rgba(255,255,255,0.16)',
-    }
-    : {
-      gridColor: 'rgba(13,37,48,0.12)',
-      tickColor: 'rgba(13,37,48,0.72)',
-      tooltipBg: 'rgba(255,255,255,0.98)',
-      tooltipBorder: 'rgba(13,37,48,0.2)',
-    }
-))
-
-const studentsPerClassData = computed(() => {
-  const classes = dash.value?.classes
-  if (!classes?.length) return null
-  return {
-    labels: classes.map((c) => c.name),
-    datasets: [{
-      label: 'Students',
-      data: classes.map((c) => c.numberOfStudents),
-      backgroundColor: classes.map((_, i) => PALETTE[i % PALETTE.length]),
-      borderRadius: 6,
-      borderSkipped: false,
-      maxBarThickness: 48,
-    }],
-  }
-})
-
-const classXPData = computed(() => {
-  const classes = dash.value?.classes?.filter((c) => (c.experience ?? 0) > 0)
-  if (!classes?.length) return null
-  return {
-    labels: classes.map((c) => c.name),
-    datasets: [{
-      label: 'XP',
-      data: classes.map((c) => c.experience ?? 0),
-      backgroundColor: classes.map((_, i) => PALETTE[(i + 2) % PALETTE.length]),
-      borderRadius: 6,
-      borderSkipped: false,
-      maxBarThickness: 48,
-    }],
-  }
-})
-
-const barOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: { titleFont: chartFont, bodyFont: chartFont, backgroundColor: chartTheme.value.tooltipBg, borderColor: chartTheme.value.tooltipBorder, borderWidth: 1 },
-  },
-  scales: {
-    x: { ticks: { color: chartTheme.value.tickColor, font: chartFont }, grid: { display: false } },
-    y: { ticks: { color: chartTheme.value.tickColor, font: chartFont }, grid: { color: chartTheme.value.gridColor }, beginAtZero: true },
-  },
-}))
-
-const xpBarOptions = computed(() => ({
-  ...barOptions.value,
-  plugins: {
-    ...barOptions.value.plugins,
-    tooltip: { ...barOptions.value.plugins.tooltip, callbacks: { label: (ctx) => `${ctx.parsed.y.toLocaleString()} XP` } },
-  },
-}))
-
 function formatZAR(n) {
   if (typeof n !== 'number') return 'R 0'
   return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', maximumFractionDigits: 0 }).format(n)
@@ -442,10 +339,12 @@ async function loadDashboard() {
   error.value = ''
   loading.value = true
   try {
-    dash.value = await Server.getSchoolDashboard(selectedSchoolId.value, {
-      year: year.value,
-      term: term.value,
-    })
+    const params = { year: year.value }
+    if (term.value != null) {
+      params.term = term.value
+      params.filterByTerm = '1'
+    }
+    dash.value = await Server.getSchoolDashboard(selectedSchoolId.value, params)
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to load dashboard'
     dash.value = null
@@ -558,11 +457,6 @@ async function onClassSaved() {
   closeClassEditModal()
   await loadDashboard()
 }
-
-const m = new Date().getMonth()
-if (m <= 3) term.value = 1
-else if (m <= 7) term.value = 2
-else term.value = 3
 
 watch(
   schoolOptions,

@@ -1,5 +1,5 @@
 <template>
-  <div class="classPerformance">
+  <div class="myClassInsights">
     <h2 class="sectionTitle">Class leaderboard</h2>
     <p class="sectionHint">Classes ranked by experience (highest rank first).</p>
     <div class="leaderboardSection">
@@ -31,8 +31,16 @@
       </ul>
     </div>
 
-    <h2 class="sectionTitle">Class comparison</h2>
-    <p class="sectionHint">Select one or more classes to compare. No limit on how many you can select.</p>
+    <div class="sectionHeadRow">
+      <div>
+        <h2 class="sectionTitle">Class comparison</h2>
+        <p class="sectionHint">Select one or more classes to compare.</p>
+      </div>
+      <v-btn size="small" variant="tonal" class="exportBtn" prepend-icon="mdi-download"
+        :disabled="comparisonRows.length === 0" @click="exportComparison">
+        Export CSV
+      </v-btn>
+    </div>
     <div class="selectRow">
       <v-select v-model="selectedClassIds" :items="classList" item-title="name" item-value="id"
         label="Classes to compare" multiple chips closable-chips class="classSelect classSelectMulti"
@@ -59,16 +67,30 @@
           <tr>
             <th class="tableHeader">Class name</th>
             <th class="tableHeader">Students</th>
+            <th v-if="hasSchoolAverages" class="tableHeader">vs school avg students</th>
             <th class="tableHeader">Experience</th>
+            <th v-if="hasSchoolAverages" class="tableHeader">
+              {{ normalizedPeerLabel }}
+            </th>
             <th class="tableHeader">Avg points / student</th>
+            <th v-if="hasSchoolAverages" class="tableHeader">vs school avg pts</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="row in comparisonRows" :key="row.id">
             <td class="tableCell">{{ row.name }}</td>
             <td class="tableCell">{{ row.studentCount }}</td>
+            <td v-if="hasSchoolAverages" class="tableCell">{{ formatDelta(row.studentCount, schoolAverages.avgStudents) }}</td>
             <td class="tableCell">{{ row.experience }}</td>
+            <td v-if="hasSchoolAverages" class="tableCell">
+              {{ formatPeerEngagementDelta(row) }}
+            </td>
             <td class="tableCell">{{ row.avgPoints != null ? row.avgPoints.toFixed(1) : '—' }}</td>
+            <td v-if="hasSchoolAverages" class="tableCell">
+              {{ row.avgPoints != null && schoolAverages.avgPointsPerStudent != null
+                ? formatDelta(row.avgPoints, schoolAverages.avgPointsPerStudent)
+                : '—' }}
+            </td>
           </tr>
         </tbody>
       </v-table>
@@ -137,10 +159,43 @@ import { experienceToRank } from '@/composables/useExperience';
 import RankBadge from '@/components/common/RankBadge.vue';
 import TopStudentChips from '@/components/common/TopStudentChips.vue';
 import server from '@/services/server';
+import { downloadCsv, formatDelta } from '@/utils/exportCsv';
+
+const props = defineProps({
+  schoolAverages: {
+    type: Object,
+    default: null,
+  },
+  useNormalizedEngagement: {
+    type: Boolean,
+    default: false,
+  },
+  peerClassScores: {
+    type: Map,
+    default: () => new Map(),
+  },
+});
 
 const { getClassNames, getClassById } = useClasses();
 
-/** Classes sorted by experience (rank) descending for the leaderboard */
+const hasSchoolAverages = computed(() => props.schoolAverages != null);
+
+const normalizedPeerLabel = computed(() =>
+  props.useNormalizedEngagement ? 'vs peer engagement rank' : 'vs school avg XP'
+);
+
+function formatPeerEngagementDelta(row) {
+  const avg = props.schoolAverages;
+  if (!avg) return '—';
+  if (props.useNormalizedEngagement) {
+    const peer = props.peerClassScores.get(row.id);
+    const score = peer?.teacherRelativeScore;
+    if (score == null || avg.avgTeacherRelativeScore == null) return '—';
+    return formatDelta(score, avg.avgTeacherRelativeScore);
+  }
+  return formatDelta(row.experience, avg.avgExperience);
+}
+
 const leaderboardRows = computed(() => {
   const list = classList.value ?? [];
   return [...list]
@@ -165,7 +220,6 @@ const maxLeaderboardExperience = computed(() => {
   return Math.max(...rows.map((r) => r.experience), 1);
 });
 
-/** Base width fits position + icon + class name + rank name; width scales with experience so higher rank = wider card */
 const LEADERBOARD_CARD_BASE_PX = 240;
 const LEADERBOARD_CARD_EXPERIENCE_PX = 220;
 
@@ -256,6 +310,45 @@ const studentComparisonRows = computed(() => {
   return rows;
 });
 
+function exportComparison() {
+  const avg = props.schoolAverages;
+  const columns = [
+    { key: 'name', label: 'Class name' },
+    { key: 'studentCount', label: 'Students' },
+  ];
+  if (avg) {
+    columns.push({ key: 'vsAvgStudents', label: 'vs school avg students' });
+  }
+  columns.push({ key: 'experience', label: 'Experience' });
+  if (avg) {
+    if (props.useNormalizedEngagement) {
+      columns.push({ key: 'vsEngagement', label: 'vs peer engagement rank' });
+    } else {
+      columns.push({ key: 'vsAvgXp', label: 'vs school avg XP' });
+    }
+  }
+  columns.push({ key: 'avgPoints', label: 'Avg points per student' });
+  if (avg) {
+    columns.push({ key: 'vsAvgPts', label: 'vs school avg pts' });
+  }
+
+  const rows = comparisonRows.value.map((row) => ({
+    name: row.name,
+    studentCount: row.studentCount,
+    vsAvgStudents: avg ? formatDelta(row.studentCount, avg.avgStudents) : '',
+    experience: row.experience,
+    vsAvgXp: avg && !props.useNormalizedEngagement ? formatDelta(row.experience, avg.avgExperience) : '',
+    vsEngagement: avg && props.useNormalizedEngagement ? formatPeerEngagementDelta(row) : '',
+    avgPoints: row.avgPoints != null ? row.avgPoints.toFixed(1) : '—',
+    vsAvgPts:
+      avg && row.avgPoints != null && avg.avgPointsPerStudent != null
+        ? formatDelta(row.avgPoints, avg.avgPointsPerStudent)
+        : '—',
+  }));
+
+  downloadCsv('my-classes-comparison', rows, columns);
+}
+
 async function loadClassList() {
   classesLoading.value = true;
   try {
@@ -314,7 +407,9 @@ async function onStudentClassChange() {
     ]);
     studentDetail.value = classData;
     purchaseHistoryMap.value = {
-      [selectedClassIdForStudents.value]: { purchaseHistory: (historyData && historyData.purchaseHistory) ? historyData.purchaseHistory : { students: [] } },
+      [selectedClassIdForStudents.value]: {
+        purchaseHistory: historyData?.purchaseHistory ? historyData.purchaseHistory : { students: [] },
+      },
     };
   } catch (e) {
     console.error('Failed to load class for students', e);
@@ -339,9 +434,24 @@ loadClassList();
 </script>
 
 <style scoped>
-.classPerformance {
+.myClassInsights {
   width: 100%;
   font-family: var(--font);
+}
+
+.sectionHeadRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.exportBtn {
+  text-transform: none !important;
+  font-family: var(--font) !important;
+  font-weight: 600 !important;
 }
 
 .sectionTitle {
@@ -589,7 +699,6 @@ loadClassList();
 }
 </style>
 
-<!-- Global styles for teleported dropdown menu (Vuetify overlays to body) -->
 <style>
 .classPerformanceMenu {
   background: var(--color-surface-elevated) !important;

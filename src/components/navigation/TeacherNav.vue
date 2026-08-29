@@ -2,13 +2,13 @@
   <nav class="teacherNav" aria-label="Teacher navigation">
     <v-btn
       v-for="item in items"
-      :key="item.path"
+      :key="item.key"
       size="small"
       variant="text"
       class="teacherNavBtn"
       :class="{ 'teacherNavBtn--active': isActive(item) }"
       :prepend-icon="item.icon"
-      @click="router.push(item.path)"
+      @click="navigate(item)"
     >
       {{ item.label }}
     </v-btn>
@@ -23,21 +23,39 @@ const route = useRoute()
 
 const items = [
   {
+    key: 'classes',
     path: '/Classes',
     label: 'Classes',
     icon: 'mdi-google-classroom',
     match: (p) => p === '/Classes' || p.startsWith('/Class/') || p === '/AddClass',
   },
   {
+    key: 'insights',
     path: '/Teacher',
-    label: 'Teacher',
-    icon: 'mdi-account-tie-outline',
-    match: (p) => p === '/Teacher' || p === '/Onboarding',
+    query: { tab: 'insights' },
+    label: 'Insights',
+    icon: 'mdi-chart-line',
+    match: (p) => p === '/Teacher',
+  },
+  {
+    key: 'onboarding',
+    path: '/Onboarding',
+    label: 'Tutorials',
+    icon: 'mdi-school-outline',
+    match: (p) => p === '/Onboarding',
   },
 ]
 
 function isActive(item) {
   return item.match(route.path)
+}
+
+function navigate(item) {
+  if (item.query) {
+    router.push({ path: item.path, query: item.query })
+  } else {
+    router.push(item.path)
+  }
 }
 </script>
 

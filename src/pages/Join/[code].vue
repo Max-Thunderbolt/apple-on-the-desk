@@ -32,6 +32,17 @@
             <v-progress-circular indeterminate color="primary" />
             <span>Joining {{ preview.school?.name }}...</span>
           </div>
+          <template v-else>
+            <p class="helpText">You're signed in. Tap below to join this school.</p>
+            <v-btn
+              class="joinBtn"
+              prepend-icon="mdi-account-plus"
+              :loading="joining"
+              @click="acceptInvite"
+            >
+              Join {{ preview.school?.name || 'school' }}
+            </v-btn>
+          </template>
         </div>
       </template>
     </div>
@@ -54,6 +65,7 @@ const previewError = ref('')
 const preview = ref(null)
 const joining = ref(false)
 const error = ref('')
+let joinInFlight = false
 
 const inviteRole = computed(() => preview.value?.role || 'teacher')
 
@@ -99,6 +111,7 @@ async function loadPreview() {
   try {
     const result = await Server.previewJoinCode(code)
     preview.value = result
+    await tryAutoJoin()
   } catch (e) {
     previewError.value =
       e.response?.data?.message || 'This invite link is invalid or has expired'
@@ -107,13 +120,19 @@ async function loadPreview() {
   }
 }
 
+async function tryAutoJoin() {
+  if (!authReady.value || !isSignedIn.value || !preview.value || joining.value) return
+  await acceptInvite()
+}
+
 async function acceptInvite() {
-  if (!isSignedIn.value || joining.value || !preview.value) return
+  if (joinInFlight || !isSignedIn.value || joining.value || !preview.value) return
   const code = String(route.params.code || '')
   if (!code) {
     error.value = 'Invite code is missing'
     return
   }
+  joinInFlight = true
   joining.value = true
   error.value = ''
   try {
@@ -125,6 +144,7 @@ async function acceptInvite() {
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Could not join school'
     joining.value = false
+    joinInFlight = false
   }
 }
 
@@ -132,10 +152,8 @@ onMounted(() => {
   loadPreview()
 })
 
-watch([authReady, isSignedIn], ([ready, signed]) => {
-  if (ready && signed && preview.value && !joining.value) {
-    acceptInvite()
-  }
+watch([authReady, isSignedIn, preview], () => {
+  tryAutoJoin()
 })
 </script>
 

@@ -170,6 +170,52 @@
           </div>
         </section>
 
+        <!-- Grouped billing -->
+        <section v-if="groupBillingRows.length" class="tablePanel">
+          <div class="tableHead">
+            <div>
+              <h2 class="sectionTitle">
+                <v-icon size="20" class="sectionTitleIcon">mdi-folder-multiple-outline</v-icon>
+                Grouped billing
+              </h2>
+              <p class="sectionDesc">
+                Term costs rolled up for named school groups. Manage groups on the School groups page.
+              </p>
+            </div>
+            <v-btn size="small" variant="tonal" class="manageSchoolsBtn" prepend-icon="mdi-folder-multiple-outline"
+              @click="goToSchoolGroups">
+              Manage groups
+            </v-btn>
+          </div>
+          <div class="tableWrap">
+            <table class="dataTable">
+              <thead>
+                <tr>
+                  <th>Group</th>
+                  <th class="num">Schools</th>
+                  <th class="num">Teachers</th>
+                  <th class="num">Classes</th>
+                  <th class="num">Students</th>
+                  <th class="num">Term cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in groupBillingRows" :key="row.groupId">
+                  <td>
+                    <span class="schoolName">{{ row.groupName }}</span>
+                    <span class="schoolIdMono">{{ row.schools?.map((s) => s.schoolName).join(', ') }}</span>
+                  </td>
+                  <td class="num">{{ row.schoolIds?.length ?? 0 }}</td>
+                  <td class="num">{{ row.teacherCount ?? 0 }}</td>
+                  <td class="num">{{ row.classCount ?? 0 }}</td>
+                  <td class="num">{{ formatInt(row.studentCount) }}</td>
+                  <td class="num costCell">{{ formatZAR(row.costZAR) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <!-- Engagement health + platform activity -->
         <section class="chartsRow chartsRow--double">
           <div class="chartPanel chartPanel--doughnut">
@@ -494,6 +540,8 @@ const filteredSchools = computed(() => {
   return schools
 })
 
+const groupBillingRows = computed(() => overview.value?.groupBilling ?? [])
+
 const filteredRecentActivity = computed(() => {
   const items = overview.value?.recentActivity || []
   if (activityFilter.value === 'all') return items
@@ -776,6 +824,10 @@ function setEngagementFilter(value) {
 
 function goToSchools() {
   router.push('/AdminSchools')
+}
+
+function goToSchoolGroups() {
+  router.push('/AdminSchoolGroups')
 }
 
 async function loadOverview() {

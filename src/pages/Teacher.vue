@@ -32,24 +32,15 @@
           </v-btn>
         </div>
         <v-tabs v-model="activeTab" class="teacherTabs" bg-color="transparent" grow>
+          <v-tab value="insights" class="teacherTab">Insights</v-tab>
           <v-tab value="profile" class="teacherTab">Profile</v-tab>
-          <v-tab v-if="!hasSchoolAdmin || !isPlatformAdmin" value="performance" class="teacherTab">Class
-            Performance</v-tab>
-          <v-tab v-if="!hasSchoolAdmin || !isPlatformAdmin" value="settings" class="teacherTab">School</v-tab>
-          <v-tab v-if="!hasSchoolAdmin || !isPlatformAdmin" value="Onboarding" class="teacherTab">Tutorials</v-tab>
         </v-tabs>
         <v-window v-model="activeTab" class="teacherWindow">
+          <v-window-item value="insights" class="insightsWindowItem">
+            <TeacherInsights class="insightsWindowItemContent" />
+          </v-window-item>
           <v-window-item value="profile" class="teacherWindowItem">
             <Profile class="teacherWindowItemContent" :embedded="true" />
-          </v-window-item>
-          <v-window-item value="performance" class="performanceWindowItem">
-            <ClassPerformance class="performanceWindowItemContent" />
-          </v-window-item>
-          <v-window-item value="settings" class="teacherWindowItem">
-            <!-- <School /> -->
-          </v-window-item>
-          <v-window-item value="Onboarding" class="onboardingWindowItem">
-            <Onboarding :isChild="true" class="onboardingWindowItemContent" />
           </v-window-item>
         </v-window>
       </div>
@@ -59,20 +50,31 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
 import { useUserProfile } from '@/composables/useUserProfile';
 import Profile from '@/pages/Profile.vue';
-import ClassPerformance from '@/components/ClassPerformance.vue';
-import Onboarding from '@/pages/Onboarding.vue';
+import TeacherInsights from '@/components/teacher/TeacherInsights.vue';
 import TeacherNav from '@/components/navigation/TeacherNav.vue';
 
 const router = useRouter();
+const route = useRoute();
 const { authReady, isSignedIn } = useAuth();
 const { isPlatformAdmin, schoolAdminSchoolIds } = useUserProfile();
 const hasSchoolAdmin = computed(() => schoolAdminSchoolIds.value.length > 0);
-const activeTab = ref('profile');
+const activeTab = ref('insights');
+
+function resolveTabFromQuery() {
+  const tab = route.query.tab;
+  if (tab === 'profile' || tab === 'insights') {
+    activeTab.value = tab;
+  }
+}
+
+onMounted(resolveTabFromQuery);
+
+watch(() => route.query.tab, resolveTabFromQuery);
 
 function navigateTo(path) {
   router.push(path);
@@ -91,6 +93,15 @@ function navigateTo(path) {
 .teacherWindowItemContent {
   width: 100%;
   max-width: 420px;
+}
+
+.insightsWindowItem {
+  padding: 1rem;
+  display: flex;
+}
+
+.insightsWindowItemContent {
+  width: 100%;
 }
 
 .teacherPage {
@@ -126,28 +137,11 @@ function navigateTo(path) {
   font-family: var(--font) !important;
 }
 
-.performanceWindowItem {
-  padding: 1rem;
-  display: flex;
-}
-
-.performanceWindowItemContent {
-  width: 100%;
-  /* max-width: 420px; */
-}
-
-.performancePage {
-  width: 100%;
-  height: 100%;
-}
-
 .loadingState,
 .signedOutState {
   display: flex;
   flex-direction: row;
   align-items: center;
-  /* gap: 1rem;
-  padding: 2rem; */
 }
 
 .loadingText,
@@ -207,26 +201,5 @@ function navigateTo(path) {
   border: 1px solid var(--freshSky);
   margin-bottom: 1rem;
   background-color: rgba(var(--freshSky-rgb), 0.1);
-}
-
-.onboardingWindowItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.comingSoonText {
-  font-family: var(--font);
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--white);
-}
-
-.comingSoon {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 </style>

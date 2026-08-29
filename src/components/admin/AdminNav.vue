@@ -24,6 +24,7 @@ const route = useRoute()
 const items = [
   { path: '/AdminDashboard', label: 'Overview', icon: 'mdi-view-dashboard-outline' },
   { path: '/AdminSchools', label: 'Schools', icon: 'mdi-domain' },
+  { path: '/AdminSchoolGroups', label: 'School groups', icon: 'mdi-folder-multiple-outline' },
 ]
 
 function isActive(path) {

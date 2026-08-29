@@ -13,11 +13,15 @@
           <div class="userDetails">
             <p class="displayName">{{ user.displayName || 'Signed-in user' }}</p>
             <p class="email">{{ user.email }}</p>
+            <div v-if="membershipChips.length" class="membershipChips">
+              <v-chip v-for="chip in membershipChips" :key="chip.key" size="small" variant="tonal"
+                :color="chip.color" class="membershipChip">
+                <v-icon v-if="chip.icon" start size="14">{{ chip.icon }}</v-icon>
+                {{ chip.label }}
+              </v-chip>
+            </div>
           </div>
         </div>
-        <v-btn class="billingButton" @click="navigateTo('/Billing')">
-          <v-icon>mdi-credit-card</v-icon> Billing
-        </v-btn>
         <v-btn class="signOutButton" @click="handleSignOut" :loading="signingOut">
           <v-icon>mdi-logout</v-icon> Sign out
         </v-btn>
@@ -62,6 +66,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useUserProfile } from '@/composables/useUserProfile'
 import { toast } from 'vue-sonner'
 import server from '@/services/server'
 
@@ -71,6 +76,7 @@ defineProps({
 
 const router = useRouter()
 const { user, authReady, signOut } = useAuth()
+const { isPlatformAdmin, teacherSchools, schoolAdminSchools } = useUserProfile()
 const signingOut = ref(false)
 const deletingAccount = ref(false)
 const confirmDeleteOpen = ref(false)
@@ -80,6 +86,30 @@ const avatarLetter = computed(() => {
   if (u?.displayName) return u.displayName.charAt(0).toUpperCase()
   if (u?.email) return u.email.charAt(0).toUpperCase()
   return '?'
+})
+
+const membershipChips = computed(() => {
+  const chips = []
+  if (isPlatformAdmin.value) {
+    chips.push({ key: 'platform-admin', label: 'Platform admin', icon: 'mdi-shield-crown', color: 'primary' })
+  }
+  for (const s of schoolAdminSchools.value) {
+    chips.push({
+      key: `admin-${s.schoolId}`,
+      label: `School admin · ${s.schoolName}`,
+      icon: 'mdi-shield-account',
+      color: 'secondary',
+    })
+  }
+  for (const s of teacherSchools.value) {
+    chips.push({
+      key: `teacher-${s.schoolId}`,
+      label: `Teacher · ${s.schoolName}`,
+      icon: 'mdi-account-school',
+      color: 'info',
+    })
+  }
+  return chips
 })
 
 async function handleSignOut() {
@@ -216,7 +246,19 @@ function navigateTo(path) {
   font-family: var(--font);
   font-size: 0.95rem;
   color: rgba(var(--ink-rgb), 0.7);
-  margin: 0;
+  margin: 0 0 0.5rem 0;
+}
+
+.membershipChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.membershipChip {
+  font-family: var(--font) !important;
+  font-size: 0.75rem !important;
 }
 
 .signedOutMessage {
@@ -226,8 +268,7 @@ function navigateTo(path) {
 }
 
 .signOutButton,
-.submitButton,
-.billingButton {
+.submitButton {
   width: 75% !important;
   font-family: var(--font) !important;
   font-weight: 600 !important;
@@ -238,8 +279,7 @@ function navigateTo(path) {
 }
 
 .signOutButton:hover,
-.submitButton:hover,
-.billingButton:hover {
+.submitButton:hover {
   transform: scale(1.02) translateY(-2px);
   transition-duration: 0.1s;
 }
@@ -248,15 +288,6 @@ function navigateTo(path) {
   background: rgba(197, 40, 61, 0.5) !important;
   color: var(--white) !important;
   border: 1px solid rgba(var(--ink-rgb), 0.2) !important;
-}
-
-.billingButton {
-  background: linear-gradient(135deg,
-      rgba(0, 168, 232, 0.55) 0%,
-      rgba(0, 168, 232, 0.35) 50%,
-      rgba(0, 168, 232, 0.45) 100%) !important;
-  color: var(--white) !important;
-  border: 1px solid rgba(var(--ink-rgb), 0.12) !important;
 }
 
 .deleteAccountButton {

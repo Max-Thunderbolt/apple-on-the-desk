@@ -316,6 +316,111 @@ class Server {
         }
     }
 
+    async listAdminSchoolGroups() {
+        try {
+            const response = await this.http.get('/admin/school-groups')
+            return response.data
+        } catch (error) {
+            console.error('Error listing school groups:', error)
+            throw error
+        }
+    }
+
+    async createAdminSchoolGroup(data) {
+        try {
+            const response = await this.http.post('/admin/school-groups', data)
+            return response.data
+        } catch (error) {
+            console.error('Error creating school group:', error)
+            throw error
+        }
+    }
+
+    async updateAdminSchoolGroup(groupId, data) {
+        try {
+            const response = await this.http.put(
+                `/admin/school-groups/${encodeURIComponent(groupId)}`,
+                data
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error updating school group:', error)
+            throw error
+        }
+    }
+
+    async deleteAdminSchoolGroup(groupId) {
+        try {
+            const response = await this.http.delete(
+                `/admin/school-groups/${encodeURIComponent(groupId)}`
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error deleting school group:', error)
+            throw error
+        }
+    }
+
+    async addSchoolToAdminGroup(groupId, schoolId) {
+        try {
+            const response = await this.http.post(
+                `/admin/school-groups/${encodeURIComponent(groupId)}/schools`,
+                { schoolId }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error adding school to group:', error)
+            throw error
+        }
+    }
+
+    async removeSchoolFromAdminGroup(groupId, schoolId) {
+        try {
+            const response = await this.http.delete(
+                `/admin/school-groups/${encodeURIComponent(groupId)}/schools/${encodeURIComponent(schoolId)}`
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error removing school from group:', error)
+            throw error
+        }
+    }
+
+    async getAdminSchoolGroupBilling(params = {}) {
+        try {
+            const response = await this.http.get('/admin/school-groups/billing', { params })
+            return response.data
+        } catch (error) {
+            console.error('Error loading school group billing:', error)
+            throw error
+        }
+    }
+
+    async getSchoolGroupContext(schoolId) {
+        try {
+            const response = await this.http.get(
+                `/schools/${encodeURIComponent(schoolId)}/group-context`
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error loading school group context:', error)
+            throw error
+        }
+    }
+
+    async getSchoolGroupTeacherInsights(groupId, params = {}) {
+        try {
+            const response = await this.http.get(
+                `/school-groups/${encodeURIComponent(groupId)}/teacher-insights`,
+                { params }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error loading school group teacher insights:', error)
+            throw error
+        }
+    }
+
     async createAdminSchool(data) {
         try {
             const response = await this.http.post('/admin/schools', data)
@@ -461,6 +566,19 @@ class Server {
             return response.data
         } catch (error) {
             console.error('Error loading school dashboard:', error)
+            throw error
+        }
+    }
+
+    async getSchoolTeacherInsights(schoolId, params = {}) {
+        try {
+            const response = await this.http.get(
+                `/schools/${encodeURIComponent(schoolId)}/teacher-insights`,
+                { params }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error loading school teacher insights:', error)
             throw error
         }
     }

@@ -99,7 +99,7 @@ router.beforeEach(async (to) => {
     return typeof dest === 'string' ? dest : dest
   }
 
-  if ((to.path === '/AdminDashboard' || to.path === '/AdminSchools') && !isPlatformAdmin.value) {
+  if ((to.path === '/AdminDashboard' || to.path === '/AdminSchools' || to.path === '/AdminSchoolGroups') && !isPlatformAdmin.value) {
     const dest = await getResolverDestination(true)
     return typeof dest === 'string' ? dest : dest
   }
