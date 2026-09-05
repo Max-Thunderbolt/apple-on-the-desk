@@ -93,7 +93,7 @@ async function handleSubmit() {
   loading.value = true
   try {
     await signInWithEmail(email.value, password.value)
-    toast.success('Signed in!')
+    toast.success('Signed in')
     await postLoginRedirect()
   } catch (err) {
     const tryRegister =
@@ -101,7 +101,7 @@ async function handleSubmit() {
     if (tryRegister) {
       try {
         await registerWithEmail(email.value, password.value)
-        toast.success('Account created!')
+        toast.success('Account created')
         await postLoginRedirect()
       } catch (regErr) {
         if (regErr?.code === 'auth/email-already-in-use') {
@@ -123,7 +123,7 @@ async function handleGoogleSignIn() {
   googleLoading.value = true
   try {
     await signInWithGoogle()
-    toast.success('Signed in with Google!')
+    toast.success('Signed in with Google')
     await postLoginRedirect()
   } catch (err) {
     errorMessage.value = err?.message?.replace('Firebase: ', '') || 'Google sign in failed.'

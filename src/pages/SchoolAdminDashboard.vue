@@ -195,6 +195,20 @@
           </v-card>
         </v-dialog>
 
+        <v-dialog v-model="deleteClassDialogOpen" max-width="420" persistent>
+          <v-card class="confirmCard">
+            <v-card-title class="confirmTitle">Delete class?</v-card-title>
+            <v-card-text class="confirmText">
+              Delete "{{ classToDelete?.name }}"? This cannot be undone.
+            </v-card-text>
+            <v-card-actions class="confirmActions">
+              <v-spacer />
+              <v-btn variant="text" :disabled="classActionLoading" @click="closeDeleteClassDialog">Cancel</v-btn>
+              <v-btn color="error" :loading="classActionLoading" @click="confirmDeleteClass">Delete</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
         <!-- Cost summary -->
         <section class="costBar">
           <div class="costItem">
@@ -253,6 +267,8 @@ const classStudentsDialog = ref(false)
 const classStudentsData = ref(null)
 const classEditDialog = ref(false)
 const classToEdit = ref(null)
+const deleteClassDialogOpen = ref(false)
+const classToDelete = ref(null)
 
 const isClassContextMenuOpen = computed(() => classContextMenu.isOpen.value)
 const classContextMenuX = computed(() => classContextMenu.x.value)
@@ -371,7 +387,7 @@ function handleClassContextAction(actionKey) {
     return
   }
   if (actionKey === 'delete-class') {
-    deleteSelectedClass()
+    openDeleteClassDialog()
   }
 }
 
@@ -421,22 +437,34 @@ async function openClassEditModal() {
   }
 }
 
-async function deleteSelectedClass() {
-  const classId = resolveClassId(classContextMenuTarget.value)
+function openDeleteClassDialog() {
+  const target = classContextMenuTarget.value
+  closeClassContextMenu()
+  if (!target) return
+  classToDelete.value = target
+  deleteClassDialogOpen.value = true
+}
+
+function closeDeleteClassDialog() {
+  deleteClassDialogOpen.value = false
+  classToDelete.value = null
+}
+
+async function confirmDeleteClass() {
+  const classId = resolveClassId(classToDelete.value)
   if (!classId) return
-  if (!window.confirm('Delete this class? This action cannot be undone.')) return
 
   error.value = ''
   classActionLoading.value = true
   try {
     await Server.deleteClass(classId)
     success.value = 'Class deleted successfully'
+    closeDeleteClassDialog()
     await loadDashboard()
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to delete class'
   } finally {
     classActionLoading.value = false
-    closeClassContextMenu()
   }
 }
 
@@ -1226,6 +1254,22 @@ watch(selectedSchoolId, () => {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  padding: 0 1rem 1rem;
+}
+
+.confirmCard {
+  font-family: var(--font);
+}
+
+.confirmTitle {
+  font-weight: 600;
+}
+
+.confirmText {
+  color: rgba(var(--ink-rgb), 0.85);
+}
+
+.confirmActions {
   padding: 0 1rem 1rem;
 }
 

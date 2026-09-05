@@ -210,6 +210,7 @@
               @keyup.enter="canConfirmDelete && confirmDeleteSchool()" />
           </v-card-text>
           <v-card-actions class="deleteDialogActions">
+            <v-spacer />
             <v-btn variant="text" :disabled="deletingSchool" @click="closeDeleteDialog">Cancel</v-btn>
             <v-btn color="error" :loading="deletingSchool" :disabled="!canConfirmDelete" @click="confirmDeleteSchool">
               Delete everything

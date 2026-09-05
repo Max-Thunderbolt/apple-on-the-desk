@@ -73,6 +73,9 @@
             <v-card-actions>
                 <v-spacer />
                 <div class="grouperDialogButtons">
+                    <v-btn class="cancelButton" variant="text" @click="closeDialog" :disabled="loading">
+                        Close
+                    </v-btn>
                     <v-btn v-if="hasExistingGroups" class="clearGroupsButton" variant="text" @click="handleClearGroups"
                         :disabled="loading">
                         Clear Groups
@@ -80,9 +83,6 @@
                     <v-btn class="generateButton" variant="text" @click="handleGenerateGroups"
                         :disabled="!isValidInput || loading">
                         {{ hasExistingGroups ? 'Regenerate' : 'Generate' }}
-                    </v-btn>
-                    <v-btn class="cancelButton" variant="text" @click="closeDialog" :disabled="loading">
-                        Close
                     </v-btn>
                 </div>
             </v-card-actions>
@@ -245,7 +245,7 @@ async function handleGenerateGroups() {
         const response = await Server.generateGroups(props.classId, numberOfGroups.value);
 
         if (response.success) {
-            toast.success('Groups generated successfully');
+            toast.success('Groups created');
             emit('groupsUpdated', response);
             await loadCurrentGroups();
         } else {
@@ -368,7 +368,7 @@ async function handleClearGroups() {
         const response = await Server.clearGroups(props.classId);
 
         if (response.success) {
-            toast.success('Groups cleared successfully');
+            toast.success('Groups cleared');
             emit('groupsUpdated', response);
             currentGroups.value = [];
         } else {

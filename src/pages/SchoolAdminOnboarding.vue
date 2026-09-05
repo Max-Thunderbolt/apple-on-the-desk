@@ -155,6 +155,7 @@
           Their classes at this school will be deleted.
         </v-card-text>
         <v-card-actions>
+          <v-spacer />
           <v-btn variant="text" :disabled="removing" @click="removeDialogOpen = false">Cancel</v-btn>
           <v-btn color="error" :loading="removing" @click="confirmRemove">Remove</v-btn>
         </v-card-actions>

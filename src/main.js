@@ -29,6 +29,7 @@ import { createApp } from 'vue'
 
 // Styles
 import 'unfonts.css'
+import 'vue-sonner/style.css'
 import '@/styles/style.css'
 
 import { initPwaUpdate } from '@/composables/usePwaUpdate'

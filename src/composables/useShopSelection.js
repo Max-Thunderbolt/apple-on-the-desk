@@ -85,7 +85,7 @@ export function useShopSelection(shopCostRef) {
                 selectedStudents.value = [];
                 onPurchaseSuccess?.(res.students);
                 toast.success('Purchase completed', {
-                    description: `Deducted ${formatCost(res.totalCost ?? totalCost)} from selected students`,
+                    description: `Deducted ${formatCost(res.totalCost ?? totalCost)}`,
                     duration: 3000,
                 });
             } catch (err) {
@@ -97,7 +97,7 @@ export function useShopSelection(shopCostRef) {
         }
 
         if (totalCost <= 0) {
-            toast.error('No items selected. Select shop items above.');
+            toast.error('Select shop items first');
             return;
         }
 
@@ -116,8 +116,8 @@ export function useShopSelection(shopCostRef) {
         }
 
         if (remaining > 0) {
-            toast.error('Selected students do not have enough points combined', {
-                description: `Need ${formatCost(remaining)} more`,
+            toast.error('Not enough points', {
+                description: `Need ${formatCost(remaining)} more across selected students`,
                 duration: 3000,
             });
             return;
@@ -135,7 +135,7 @@ export function useShopSelection(shopCostRef) {
             await updateClass(classId, { students: updated });
             selectedStudents.value = [];
             toast.success('Purchase completed', {
-                description: `Deducted ${formatCost(totalCost)} from selected students (least points first)`,
+                description: `Deducted ${formatCost(totalCost)}`,
                 duration: 3000,
             });
         } catch (err) {

@@ -1,11 +1,4 @@
 <template>
-    <Toaster position="top-right" :theme="effectiveTheme" :toast-options="{
-        classNames: {
-            toast: 'error-toast',
-            title: 'error-toast-title',
-            description: 'error-toast-description',
-        },
-    }" />
     <div class="classList">
         <div v-if="!students || students.length === 0" class="emptyState">
             No students in this class.
@@ -70,6 +63,41 @@
         <student-constraints-modal v-model="constraintsModalOpen" :class-id="props.classId"
             :student="selectedStudentForConstraints" :all-students="props.students"
             @constraintsUpdated="onConstraintsUpdated" />
+
+        <v-dialog v-model="deleteDialogOpen" max-width="420" persistent>
+            <v-card class="confirmCard">
+                <v-card-title class="confirmTitle">Delete student?</v-card-title>
+                <v-card-text class="confirmText">
+                    Delete "{{ studentToDelete?.name }}"? This cannot be undone.
+                </v-card-text>
+                <v-card-actions class="confirmActions">
+                    <v-spacer />
+                    <v-btn variant="text" :disabled="deletingStudent" @click="closeDeleteDialog">Cancel</v-btn>
+                    <v-btn color="error" :loading="deletingStudent" @click="confirmDeleteStudent">Delete</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <v-dialog v-model="editNameDialogOpen" max-width="420" persistent>
+            <v-card class="confirmCard">
+                <v-card-title class="confirmTitle">Edit student name</v-card-title>
+                <v-card-text>
+                    <v-text-field
+                        v-model="editNameValue"
+                        label="Student name"
+                        variant="outlined"
+                        hide-details="auto"
+                        autofocus
+                        @keyup.enter="confirmEditStudentName"
+                    />
+                </v-card-text>
+                <v-card-actions class="confirmActions">
+                    <v-spacer />
+                    <v-btn variant="text" :disabled="savingStudentName" @click="closeEditNameDialog">Cancel</v-btn>
+                    <v-btn color="primary" :loading="savingStudentName" @click="confirmEditStudentName">Save</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
@@ -79,8 +107,7 @@ import { useClasses } from '../composables/useClasses';
 import { useFormat } from '../composables/useFormat';
 import { useContextMenu } from '../composables/useContextMenu';
 import { useStudentListColumns } from '../composables/useStudentListColumns';
-import { useTheme } from '@/composables/useTheme';
-import { Toaster, toast } from 'vue-sonner';
+import { toast } from 'vue-sonner';
 import Server from '../services/server';
 import AwardPointsModal from './modals/awardPointsModal.vue';
 import StudentConstraintsModal from './modals/StudentConstraintsModal.vue';
@@ -128,7 +155,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['students-updated', 'experience-updated', 'purchase-completed']);
-const { effectiveTheme } = useTheme();
 
 const { updateClass } = useClasses();
 const { formatCost } = useFormat();
@@ -163,6 +189,13 @@ const pointsDialogOpen = ref(false);
 const awardPointsIsForGroup = ref(false);
 const constraintsModalOpen = ref(false);
 const selectedStudentForConstraints = ref({});
+const deleteDialogOpen = ref(false);
+const studentToDelete = ref(null);
+const deletingStudent = ref(false);
+const editNameDialogOpen = ref(false);
+const studentToEdit = ref(null);
+const editNameValue = ref('');
+const savingStudentName = ref(false);
 
 const hasGroups = computed(() => {
     return props.students?.some(s => s.group) || false;
@@ -236,48 +269,73 @@ function handleContextMenuAction(actionKey) {
     const student = contextMenuTarget.value;
     if (!student) return;
     if (actionKey === 'edit-name') {
-        editStudentName(student);
+        openEditNameDialog(student);
         return;
     }
     if (actionKey === 'manage-constraints') {
         openConstraintsModal(student);
     }
     if (actionKey === 'delete-student') {
-        deleteStudent(student);
+        openDeleteDialog(student);
     }
 }
 
-async function deleteStudent(student) {
-    // contextMenu.close();
+function openDeleteDialog(student) {
+    contextMenu.close();
     if (!student) return;
-    if (!window.confirm('Delete this student? This action cannot be undone.')) return;
+    studentToDelete.value = student;
+    deleteDialogOpen.value = true;
+}
+
+function closeDeleteDialog() {
+    deleteDialogOpen.value = false;
+    studentToDelete.value = null;
+}
+
+async function confirmDeleteStudent() {
+    const student = studentToDelete.value;
+    if (!student) return;
+    deletingStudent.value = true;
     try {
-        console.log('Deleting student:', student);
         await Server.deleteStudent(props.classId, student.id);
         emit('students-updated', { students: props.students.filter((s) => s.id !== student.id) });
         toast.success('Student deleted', {
             description: `${student.name} deleted`,
             duration: 3000,
         });
+        closeDeleteDialog();
     } catch (err) {
         console.error('Failed to delete student:', err);
         toast.error('Failed to delete student');
     } finally {
-        contextMenu.close();
+        deletingStudent.value = false;
     }
 }
 
-async function editStudentName(student) {
+function openEditNameDialog(student) {
     contextMenu.close();
+    if (!student) return;
+    studentToEdit.value = student;
+    editNameValue.value = student.name ?? '';
+    editNameDialogOpen.value = true;
+}
+
+function closeEditNameDialog() {
+    editNameDialogOpen.value = false;
+    studentToEdit.value = null;
+    editNameValue.value = '';
+}
+
+async function confirmEditStudentName() {
+    const student = studentToEdit.value;
     if (!student) return;
 
     const currentName = student.name ?? '';
-    const newName = window.prompt('Edit student name', currentName);
-
-    if (newName == null) return;
-
-    const trimmed = newName.trim();
-    if (!trimmed || trimmed === currentName) return;
+    const trimmed = editNameValue.value.trim();
+    if (!trimmed || trimmed === currentName) {
+        closeEditNameDialog();
+        return;
+    }
 
     const updated = props.students.map((s) =>
         s.id === student.id
@@ -285,6 +343,7 @@ async function editStudentName(student) {
             : { ...s }
     );
 
+    savingStudentName.value = true;
     try {
         await updateClass(props.classId, { students: updated });
         emit('students-updated', updated);
@@ -292,9 +351,12 @@ async function editStudentName(student) {
             description: `${currentName} → ${trimmed}`,
             duration: 3000,
         });
+        closeEditNameDialog();
     } catch (err) {
         console.error('Failed to update student name:', err);
         toast.error('Failed to update student name');
+    } finally {
+        savingStudentName.value = false;
     }
 }
 
@@ -728,5 +790,21 @@ function onConstraintsUpdated(updatedStudent) {
 .checkoutButton:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.confirmCard {
+    font-family: var(--font);
+}
+
+.confirmTitle {
+    font-weight: 600;
+}
+
+.confirmText {
+    color: rgba(var(--ink-rgb), 0.85);
+}
+
+.confirmActions {
+    padding: 0 1rem 1rem;
 }
 </style>

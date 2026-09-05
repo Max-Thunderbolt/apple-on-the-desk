@@ -14,7 +14,6 @@
                     @contextmenu.prevent="openCategoryContextMenu($event, category)">
                     <span class="pointsCategoryName">
                         {{ category.name }}
-                        <!-- <span v-if="category.global || category.default" class="categoryBadge">Global</span> -->
                     </span>
                     <span class="pointsCategoryValue">+{{ formatCost(category.value) }}</span>
                 </div>
@@ -28,9 +27,9 @@
             <v-card-actions>
                 <v-spacer />
                 <div class="pointsDialogButtons">
+                    <v-btn class="pointsDialogCancelButton" variant="text" @click="closePointsDialog">Cancel</v-btn>
                     <v-btn class="pointsDialogAwardButton" variant="text" @click="openCreateCategoryModal">Create
                         Category</v-btn>
-                    <v-btn class="pointsDialogCancelButton" variant="text" @click="closePointsDialog">Cancel</v-btn>
                 </div>
             </v-card-actions>
         </v-card>
@@ -43,7 +42,7 @@
                 <template v-slot:prepend><v-icon size="small">mdi-pencil</v-icon></template>
                 <v-list-item-title>Edit</v-list-item-title>
             </v-list-item>
-            <v-list-item @click="deleteCategoryFromMenu">
+            <v-list-item @click="openDeleteCategoryDialog">
                 <template v-slot:prepend><v-icon size="small">mdi-delete</v-icon></template>
                 <v-list-item-title>Delete</v-list-item-title>
             </v-list-item>
@@ -51,11 +50,27 @@
     </v-menu>
     <CreateItemModal v-model="createCategoryModalOpen" type="pointsCategory" :editing-item="categoryToEdit"
         :scope="scope" @saved="onCategorySaved" />
+
+    <v-dialog v-model="deleteCategoryDialogOpen" max-width="420" persistent>
+        <v-card class="confirmCard">
+            <v-card-title class="confirmTitle">Delete category?</v-card-title>
+            <v-card-text class="confirmText">
+                Delete "{{ categoryToDelete?.name }}"? This cannot be undone.
+            </v-card-text>
+            <v-card-actions class="confirmActions">
+                <v-spacer />
+                <v-btn variant="text" :disabled="deletingCategory" @click="closeDeleteCategoryDialog">Cancel</v-btn>
+                <v-btn color="error" :loading="deletingCategory" @click="confirmDeleteCategory">Delete</v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
 </template>
 
 <script setup>
 import { ref, watch, computed, toRef } from 'vue';
+import { toast } from 'vue-sonner';
 import { usePoints } from '../../composables/usePoints';
+import { useAuth } from '../../composables/useAuth';
 import CreateItemModal from './CreateItemModal.vue';
 
 const pointsCategories = ref([]);
@@ -66,6 +81,16 @@ const categoryContextMenuOpen = ref(false);
 const categoryContextMenuX = ref(0);
 const categoryContextMenuY = ref(0);
 const categoryContextTarget = ref(null);
+const deleteCategoryDialogOpen = ref(false);
+const categoryToDelete = ref(null);
+const deletingCategory = ref(false);
+
+const { user } = useAuth();
+
+function canManageCategory(category) {
+    const uid = user.value?.uid;
+    return !!uid && category?.userId != null && category.userId === uid;
+}
 
 const props = defineProps({
     selectedStudents: {
@@ -198,6 +223,7 @@ function openCreateCategoryModal() {
 }
 
 function openCategoryContextMenu(e, category) {
+    if (!canManageCategory(category)) return;
     categoryContextTarget.value = category;
     categoryContextMenuX.value = e.clientX;
     categoryContextMenuY.value = e.clientY;
@@ -205,7 +231,7 @@ function openCategoryContextMenu(e, category) {
 }
 
 function openEditCategoryModal() {
-    if (categoryContextTarget.value) {
+    if (categoryContextTarget.value && canManageCategory(categoryContextTarget.value)) {
         categoryToEdit.value = categoryContextTarget.value;
         categoryContextMenuOpen.value = false;
         createCategoryModalOpen.value = true;
@@ -213,19 +239,35 @@ function openEditCategoryModal() {
     categoryContextTarget.value = null;
 }
 
-async function deleteCategoryFromMenu() {
+function openDeleteCategoryDialog() {
     const cat = categoryContextTarget.value;
     categoryContextMenuOpen.value = false;
     categoryContextTarget.value = null;
+    if (!cat || !canManageCategory(cat)) return;
+    categoryToDelete.value = cat;
+    deleteCategoryDialogOpen.value = true;
+}
+
+function closeDeleteCategoryDialog() {
+    deleteCategoryDialogOpen.value = false;
+    categoryToDelete.value = null;
+}
+
+async function confirmDeleteCategory() {
+    const cat = categoryToDelete.value;
     if (!cat) return;
     const categoryId = cat.id || cat._id;
-    if (!confirm(`Delete category "${cat.name}"? This cannot be undone.`)) return;
+    deletingCategory.value = true;
     try {
         await deletePointsCategory(categoryId);
         loadPointsCategories();
+        closeDeleteCategoryDialog();
     } catch (err) {
         console.error('Failed to delete category:', err);
-        alert('Could not delete category. Please try again.');
+        const message = err?.response?.data?.message || 'Could not delete category. Please try again.';
+        toast.error(message);
+    } finally {
+        deletingCategory.value = false;
     }
 }
 
@@ -296,21 +338,6 @@ function onCategorySaved() {
 .pointsCategoryName {
     font-family: var(--font);
     font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.categoryBadge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.1rem 0.45rem;
-    border-radius: 999px;
-    border: 1px solid var(--white);
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    opacity: 0.9;
 }
 
 .pointsCategoryValue {
@@ -406,5 +433,21 @@ function onCategorySaved() {
     .contextMenuList .v-list-item:hover {
         background-color: var(--seaGreen) !important;
     }
+}
+
+.confirmCard {
+    font-family: var(--font);
+}
+
+.confirmTitle {
+    font-weight: 600;
+}
+
+.confirmText {
+    color: rgba(var(--ink-rgb), 0.85);
+}
+
+.confirmActions {
+    padding: 0 1rem 1rem;
 }
 </style>

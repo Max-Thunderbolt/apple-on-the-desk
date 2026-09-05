@@ -102,6 +102,20 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <v-dialog v-model="deleteDialogOpen" max-width="420" persistent>
+        <v-card class="confirmCard">
+          <v-card-title class="confirmTitle">Delete group?</v-card-title>
+          <v-card-text class="confirmText">
+            Delete "{{ selectedGroup?.name }}"? Schools will be ungrouped but not deleted.
+          </v-card-text>
+          <v-card-actions class="confirmActions">
+            <v-spacer />
+            <v-btn variant="text" :disabled="deleting" @click="deleteDialogOpen = false">Cancel</v-btn>
+            <v-btn color="error" :loading="deleting" @click="executeDelete">Delete</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
   </div>
 </template>
@@ -124,6 +138,8 @@ const selectedGroupId = ref('');
 const schoolToAdd = ref(null);
 const renameOpen = ref(false);
 const renameName = ref('');
+const deleteDialogOpen = ref(false);
+const deleting = ref(false);
 
 const selectedGroup = computed(() =>
   groups.value.find((g) => g.id === selectedGroupId.value) ?? null
@@ -225,14 +241,22 @@ async function saveRename() {
 
 async function confirmDelete() {
   if (!selectedGroupId.value) return;
-  if (!window.confirm('Delete this group? Schools will be ungrouped but not deleted.')) return;
+  deleteDialogOpen.value = true;
+}
+
+async function executeDelete() {
+  if (!selectedGroupId.value) return;
+  deleting.value = true;
   try {
     await Server.deleteAdminSchoolGroup(selectedGroupId.value);
     selectedGroupId.value = '';
+    deleteDialogOpen.value = false;
     await loadGroups();
     success.value = 'Group deleted';
   } catch (e) {
     error.value = e?.response?.data?.message || e?.message || 'Failed to delete group';
+  } finally {
+    deleting.value = false;
   }
 }
 
@@ -461,5 +485,21 @@ onMounted(loadGroups);
 
 .dialogCard {
   background: var(--inkBlack) !important;
+}
+
+.confirmCard {
+  font-family: var(--font);
+}
+
+.confirmTitle {
+  font-weight: 600;
+}
+
+.confirmText {
+  color: rgba(var(--ink-rgb), 0.85);
+}
+
+.confirmActions {
+  padding: 0 1rem 1rem;
 }
 </style>

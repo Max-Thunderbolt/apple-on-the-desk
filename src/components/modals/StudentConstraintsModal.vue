@@ -43,11 +43,11 @@
             <v-card-actions>
                 <v-spacer />
                 <div class="constraintsDialogButtons">
-                    <v-btn class="saveButton" variant="text" @click="handleSave" :disabled="loading">
-                        Save
-                    </v-btn>
                     <v-btn class="cancelButton" variant="text" @click="closeDialog" :disabled="loading">
                         Cancel
+                    </v-btn>
+                    <v-btn class="saveButton" variant="text" @click="handleSave" :disabled="loading">
+                        Save
                     </v-btn>
                 </div>
             </v-card-actions>
@@ -147,7 +147,7 @@ async function handleSave() {
         );
 
         if (response.success) {
-            toast.success('Constraints updated successfully');
+            toast.success('Constraints updated');
             emit('constraintsUpdated', response.student);
             closeDialog();
         } else {

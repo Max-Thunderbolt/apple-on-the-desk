@@ -1,6 +1,24 @@
 <template>
   <v-app>
-    <!-- <Toaster position="top-right" /> -->
+    <Toaster
+      position="top-right"
+      :theme="effectiveTheme"
+      :duration="3500"
+      :visible-toasts="4"
+      close-button
+      :toast-options="{
+        classNames: {
+          toast: 'app-toast',
+          title: 'app-toast__title',
+          description: 'app-toast__description',
+          closeButton: 'app-toast__close',
+          success: 'app-toast--success',
+          error: 'app-toast--error',
+          info: 'app-toast--info',
+          warning: 'app-toast--warning',
+        },
+      }"
+    />
     <PwaUpdatePrompt />
     <template v-if="authReady">
       <router-view />
@@ -19,10 +37,12 @@
 import { watch } from 'vue'
 import { Toaster } from 'vue-sonner'
 import { useAuth } from '@/composables/useAuth'
+import { useTheme } from '@/composables/useTheme'
 import { fetchUserProfile, clearUserProfile } from '@/composables/useUserProfile'
 import PwaUpdatePrompt from '@/components/common/PwaUpdatePrompt.vue'
 
 const { authReady, isSignedIn } = useAuth()
+const { effectiveTheme } = useTheme()
 
 watch(
   [authReady, isSignedIn],

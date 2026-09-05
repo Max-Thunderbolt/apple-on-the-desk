@@ -28,10 +28,10 @@
             <v-card-actions>
                 <v-spacer />
                 <div class="createItemDialogButtons">
+                    <v-btn class="cancelButton" variant="text" @click="closeDialog" :disabled="submitting">Cancel</v-btn>
                     <v-btn class="submitButton" variant="text" :disabled="!canSubmit || submitting" @click="submit">
                         {{ submitButtonText }}
                     </v-btn>
-                    <v-btn class="cancelButton" variant="text" @click="closeDialog" :disabled="submitting">Cancel</v-btn>
                 </div>
             </v-card-actions>
         </v-card>

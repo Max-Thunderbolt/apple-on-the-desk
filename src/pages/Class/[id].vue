@@ -110,6 +110,20 @@
                 :items="shopItemContextMenuItems" @close="closeShopItemContextMenu" @select="onShopItemContextSelect" />
             <CreateItemModal v-model="createShopItemModalOpen" type="shopItem" :editing-item="shopItemToEdit"
                 @saved="onShopItemSaved" />
+
+            <v-dialog v-model="deleteShopItemDialogOpen" max-width="420" persistent>
+                <v-card class="confirmCard">
+                    <v-card-title class="confirmTitle">Delete shop item?</v-card-title>
+                    <v-card-text class="confirmText">
+                        Delete "{{ shopItemToDelete?.name }}"? This cannot be undone.
+                    </v-card-text>
+                    <v-card-actions class="confirmActions">
+                        <v-spacer />
+                        <v-btn variant="text" :disabled="deletingShopItem" @click="closeDeleteShopItemDialog">Cancel</v-btn>
+                        <v-btn color="error" :loading="deletingShopItem" @click="confirmDeleteShopItem">Delete</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
         </div>
     </div>
 </template>
@@ -151,6 +165,9 @@ const searchQuery = ref('');
 const viewMode = ref('list');
 const createShopItemModalOpen = ref(false);
 const shopItemToEdit = ref(null);
+const deleteShopItemDialogOpen = ref(false);
+const shopItemToDelete = ref(null);
+const deletingShopItem = ref(false);
 const shopItemContextMenu = useContextMenu();
 const dataLoading = ref(true);
 const isRankCompact = ref(false);
@@ -241,7 +258,7 @@ function onStudentsUpdated(payload) {
     const updatedStudents = Array.isArray(payload) ? payload : payload?.updatedStudents ?? payload?.students;
     loadClass();
     const allCount = classData.value?.students?.length ?? 0;
-    let message = 'Points awarded successfully';
+    let message = 'Points awarded';
     if (payload && !Array.isArray(payload) && payload.selectedStudents?.length && !payload.students) {
         const selected = payload.selectedStudents;
         const isWholeClass = allCount > 0 && selected.length >= allCount;
@@ -249,7 +266,7 @@ function onStudentsUpdated(payload) {
             message = 'Points awarded to the class';
         } else if (payload.isForGroup && selected.length) {
             const groupName = selected[0]?.group || 'Group';
-            message = `Points awarded to group: ${groupName}`;
+            message = `Points awarded to ${groupName}`;
         } else {
             const names = selected.map((s) => s.name || 'Student').filter(Boolean);
             if (names.length <= 3) {
@@ -258,7 +275,7 @@ function onStudentsUpdated(payload) {
                 message = `Points awarded to ${names.slice(0, 2).join(', ')} and ${names.length - 2} more`;
             }
         }
-        toast?.success?.(message);
+        toast.success(message);
     }
 }
 
@@ -420,7 +437,7 @@ function onShopItemContextSelect(actionKey) {
         return;
     }
     if (actionKey === 'delete-shop-item') {
-        deleteShopItemFromMenu();
+        openDeleteShopItemDialog();
     }
 }
 
@@ -432,19 +449,34 @@ function openEditShopItemModal() {
     }
 }
 
-async function deleteShopItemFromMenu() {
+function openDeleteShopItemDialog() {
     const item = shopItemContextTarget.value;
     closeShopItemContextMenu();
     if (!item) return;
+    shopItemToDelete.value = item;
+    deleteShopItemDialogOpen.value = true;
+}
+
+function closeDeleteShopItemDialog() {
+    deleteShopItemDialogOpen.value = false;
+    shopItemToDelete.value = null;
+}
+
+async function confirmDeleteShopItem() {
+    const item = shopItemToDelete.value;
+    if (!item) return;
     const itemId = item._id != null ? String(item._id) : item.id;
     if (!itemId) return;
-    if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+    deletingShopItem.value = true;
     try {
         await Server.deleteShopItem(itemId);
         loadShopItems();
+        closeDeleteShopItemDialog();
     } catch (err) {
         console.error('Failed to delete shop item:', err);
-        alert('Could not delete shop item. Please try again.');
+        toast.error('Could not delete shop item');
+    } finally {
+        deletingShopItem.value = false;
     }
 }
 
@@ -1203,5 +1235,21 @@ function handleCreateGroups() {
 :root[data-theme='light'] .classRankCard {
     background: transparent !important;
     box-shadow: none !important;
+}
+
+.confirmCard {
+    font-family: var(--font);
+}
+
+.confirmTitle {
+    font-weight: 600;
+}
+
+.confirmText {
+    color: rgba(var(--ink-rgb), 0.85);
+}
+
+.confirmActions {
+    padding: 0 1rem 1rem;
 }
 </style>
