@@ -93,6 +93,7 @@
                     :can-checkout="canCheckout"
                     @view-shop="viewShop()"
                     @create-shop-item="openCreateShopItemModal"
+                    @view-receipts="openPurchaseHistory"
                     @award-class-points="handleAwardClassPoints"
                     @create-groups="handleCreateGroups"
                     @select-all="handleSelectAll"
@@ -105,6 +106,19 @@
 
             <grouper-modal v-model="grouperModalOpen" :class-id="id" :students="classData?.students || []"
                 @groupsUpdated="onGroupsUpdated" />
+
+            <PurchaseHistoryModal
+                v-model="purchaseHistoryOpen"
+                :purchases="classPurchases"
+                :loading="purchaseHistoryLoading"
+                @select="openReceiptFromHistory"
+            />
+            <PurchaseReceiptModal
+                v-model="receiptModalOpen"
+                :receipts="receiptModalReceipts"
+                :class-name="classData?.name || ''"
+                :initial-index="receiptModalIndex"
+            />
 
             <AppContextMenu :open="isShopItemContextMenuOpen" :x="shopItemContextMenuX" :y="shopItemContextMenuY"
                 :items="shopItemContextMenuItems" @close="closeShopItemContextMenu" @select="onShopItemContextSelect" />
@@ -146,6 +160,8 @@ import RankBadge from '../../components/common/RankBadge.vue';
 import AwardPointsModal from '../../components/modals/awardPointsModal.vue';
 import grouperModal from '../../components/modals/GrouperModal.vue';
 import CreateItemModal from '../../components/modals/CreateItemModal.vue';
+import PurchaseReceiptModal from '../../components/modals/PurchaseReceiptModal.vue';
+import PurchaseHistoryModal from '../../components/modals/PurchaseHistoryModal.vue';
 import TeacherNav from '@/components/navigation/TeacherNav.vue';
 
 const router = useRouter();
@@ -173,6 +189,12 @@ const dataLoading = ref(true);
 const isRankCompact = ref(false);
 const rankAnchorRef = ref(null);
 const rankAnchorHeight = ref(null);
+const receiptModalOpen = ref(false);
+const receiptModalReceipts = ref([]);
+const receiptModalIndex = ref(0);
+const purchaseHistoryOpen = ref(false);
+const purchaseHistoryLoading = ref(false);
+const classPurchases = ref([]);
 
 const shopSelection = useShopSelection(shopCost);
 provide('shopSelection', shopSelection);
@@ -320,11 +342,47 @@ function handleCheckout() {
     doCheckout(id, classData.value?.students || [], updateClass, {
         selectedShopItemIds: selectedShopItemIds.value || [],
         purchaseItemsApi: Server.purchaseItems.bind(Server),
-        onPurchaseSuccess(students) {
-            onStudentsUpdated({ students });
+        onPurchaseSuccess(res) {
+            onStudentsUpdated({ students: res?.students });
             onPurchaseCompleted();
+            const receipts = Array.isArray(res?.receipts) ? res.receipts : [];
+            if (receipts.length > 0) {
+                openReceipts(receipts, 0);
+                classPurchases.value = [...receipts, ...classPurchases.value];
+            }
         },
     });
+}
+
+async function loadClassPurchases() {
+    purchaseHistoryLoading.value = true;
+    try {
+        const response = await Server.getClassPurchases(id);
+        classPurchases.value = response.purchases ?? [];
+    } catch (error) {
+        console.error('Error loading purchases:', error);
+        toast.error('Could not load receipts');
+        classPurchases.value = [];
+    } finally {
+        purchaseHistoryLoading.value = false;
+    }
+}
+
+async function openPurchaseHistory() {
+    purchaseHistoryOpen.value = true;
+    await loadClassPurchases();
+}
+
+function openReceipts(receipts, startIndex = 0) {
+    receiptModalReceipts.value = Array.isArray(receipts) ? receipts : [];
+    receiptModalIndex.value = startIndex;
+    receiptModalOpen.value = true;
+}
+
+function openReceiptFromHistory(purchase) {
+    if (!purchase) return;
+    purchaseHistoryOpen.value = false;
+    openReceipts([purchase], 0);
 }
 
 function onScroll() {

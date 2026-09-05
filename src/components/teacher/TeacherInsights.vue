@@ -1,23 +1,63 @@
 <template>
   <div class="teacherInsights">
-    <div class="scopeRow">
-      <v-btn-toggle v-model="scope" mandatory density="comfortable" class="scopeToggle">
-        <v-btn value="myClasses" size="small">My classes</v-btn>
-        <v-btn value="mySchool" size="small">My school</v-btn>
+    <div class="insightsToolbar">
+      <v-btn-toggle v-model="scope" mandatory density="comfortable" class="scopeToggle" divided>
+        <v-btn value="myClasses" size="small" prepend-icon="mdi-google-classroom">
+          My classes
+        </v-btn>
+        <v-btn value="mySchool" size="small" prepend-icon="mdi-domain">
+          My school
+        </v-btn>
       </v-btn-toggle>
 
       <div v-if="scope === 'mySchool' && hasTeacherSchools" class="controlRow">
-        <v-select v-if="schoolOptions.length > 1" v-model="selectedSchoolId" :items="schoolOptions"
-          item-title="schoolName" item-value="schoolId" label="School" density="compact" hide-details
-          variant="outlined" class="controlField" :menu-props="{ contentClass: 'classPerformanceMenu' }"
-          @update:model-value="onSchoolOrTermChange" />
-        <v-select v-model="year" :items="yearItems" label="Year" density="compact" hide-details variant="outlined"
-          class="controlField yearField" :menu-props="{ contentClass: 'classPerformanceMenu' }"
-          @update:model-value="onSchoolOrTermChange" />
-        <v-select v-model="term" :items="termItems" item-title="title" item-value="value" label="Term"
-          density="compact" hide-details variant="outlined" class="controlField termField"
-          :menu-props="{ contentClass: 'classPerformanceMenu' }" @update:model-value="onSchoolOrTermChange" />
-        <v-btn size="small" icon="mdi-refresh" variant="tonal" :loading="loading" @click="loadInsights" />
+        <v-select
+          v-if="schoolOptions.length > 1"
+          v-model="selectedSchoolId"
+          :items="schoolOptions"
+          item-title="schoolName"
+          item-value="schoolId"
+          label="School"
+          density="compact"
+          hide-details
+          variant="outlined"
+          class="controlField glassField"
+          :menu-props="{ contentClass: 'classPerformanceMenu' }"
+          @update:model-value="onSchoolOrTermChange"
+        />
+        <v-select
+          v-model="year"
+          :items="yearItems"
+          label="Year"
+          density="compact"
+          hide-details
+          variant="outlined"
+          class="controlField yearField glassField"
+          :menu-props="{ contentClass: 'classPerformanceMenu' }"
+          @update:model-value="onSchoolOrTermChange"
+        />
+        <v-select
+          v-model="term"
+          :items="termItems"
+          item-title="title"
+          item-value="value"
+          label="Term"
+          density="compact"
+          hide-details
+          variant="outlined"
+          class="controlField termField glassField"
+          :menu-props="{ contentClass: 'classPerformanceMenu' }"
+          @update:model-value="onSchoolOrTermChange"
+        />
+        <v-btn
+          size="small"
+          icon="mdi-refresh"
+          variant="tonal"
+          class="refreshBtn"
+          :loading="loading"
+          aria-label="Refresh insights"
+          @click="loadInsights"
+        />
       </div>
     </div>
 
@@ -30,7 +70,8 @@
 
     <template v-else-if="scope === 'mySchool'">
       <div v-if="!hasTeacherSchools" class="noSchoolState">
-        <p class="noSchoolTitle">Join a school to compare with colleagues</p>
+        <v-icon size="48" class="noSchoolIcon">mdi-school-outline</v-icon>
+        <h3 class="noSchoolTitle">Join a school to compare with colleagues</h3>
         <p class="noSchoolText">
           School insights show how your classes compare to other teachers at your school.
         </p>
@@ -39,20 +80,37 @@
         </v-btn>
       </div>
       <template v-else>
-        <v-alert v-if="error" type="error" variant="tonal" class="insightsAlert" rounded="lg" closable
-          @click:close="clearError">
+        <v-alert
+          v-if="error"
+          type="error"
+          variant="tonal"
+          class="insightsAlert"
+          rounded="lg"
+          closable
+          @click:close="clearError"
+        >
           {{ error }}
         </v-alert>
-        <SchoolInsights :insights="insights" :loading="loading" :classes-by-teacher="classesByTeacher"
-          :is-own-class="isOwnClass" :school-averages="schoolAverages" :is-group-view="isGroupView"
+        <SchoolInsights
+          :insights="insights"
+          :loading="loading"
+          :classes-by-teacher="classesByTeacher"
+          :is-own-class="isOwnClass"
+          :school-averages="schoolAverages"
+          :is-group-view="isGroupView"
           :use-normalized-engagement="useNormalizedEngagement"
-          :display-title="displayTitle" :group-context="groupContext" />
+          :display-title="displayTitle"
+          :group-context="groupContext"
+        />
       </template>
     </template>
 
-    <p class="tutorialsLink">
-      <router-link to="/Onboarding" class="tutorialsAnchor">Tutorials</router-link>
-    </p>
+    <div class="insightsFooter">
+      <router-link to="/Onboarding" class="tutorialsAnchor">
+        <v-icon size="16">mdi-school-outline</v-icon>
+        Tutorials
+      </router-link>
+    </div>
   </div>
 </template>
 
@@ -143,23 +201,32 @@ onMounted(async () => {
 .teacherInsights {
   width: 100%;
   font-family: var(--font);
-}
-
-.insightsAlert {
-  margin-bottom: 1rem;
-}
-
-.scopeRow {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+}
+
+.insightsToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
+  background: rgba(var(--ink-rgb), 0.04);
+}
+
+.scopeToggle {
+  flex-wrap: wrap;
 }
 
 .scopeToggle :deep(.v-btn) {
   text-transform: none !important;
   font-family: var(--font) !important;
   font-weight: 600 !important;
+  letter-spacing: 0.01em;
 }
 
 .controlRow {
@@ -182,48 +249,83 @@ onMounted(async () => {
   max-width: 160px;
 }
 
-.noSchoolState {
-  text-align: center;
-  padding: 2rem 1rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-soft);
+.glassField :deep(.v-field) {
+  background: rgba(var(--ink-rgb), 0.04);
   border-radius: 12px;
+}
+
+.refreshBtn {
+  border-radius: 10px !important;
+}
+
+.insightsAlert {
+  margin: 0;
+}
+
+.noSchoolState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.65rem;
+  padding: 2.75rem 1.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
+  background: rgba(var(--ink-rgb), 0.04);
+}
+
+.noSchoolIcon {
+  color: rgba(var(--freshSky-rgb), 0.75);
+  margin-bottom: 0.15rem;
 }
 
 .noSchoolTitle {
   font-family: var(--font);
   font-weight: 600;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   color: var(--white);
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 }
 
 .noSchoolText {
   font-family: var(--font);
-  color: var(--color-text-muted);
-  margin: 0 0 1rem 0;
+  color: rgba(var(--ink-rgb), 0.65);
+  margin: 0;
+  max-width: 28rem;
+  line-height: 1.45;
 }
 
 .noSchoolBtn {
+  margin-top: 0.35rem;
   text-transform: none !important;
   font-family: var(--font) !important;
   font-weight: 600 !important;
 }
 
-.tutorialsLink {
-  margin-top: 2rem;
-  text-align: center;
+.insightsFooter {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.5rem;
 }
 
 .tutorialsAnchor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-family: var(--font);
-  color: rgba(0, 168, 232, 0.9);
+  color: rgba(var(--freshSky-rgb), 0.95);
   text-decoration: none;
   font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--freshSky-rgb), 0.28);
+  background: rgba(var(--freshSky-rgb), 0.08);
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .tutorialsAnchor:hover {
-  color: var(--freshSky);
-  text-decoration: underline;
+  background: rgba(var(--freshSky-rgb), 0.14);
+  border-color: rgba(var(--freshSky-rgb), 0.45);
 }
 </style>

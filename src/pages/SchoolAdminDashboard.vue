@@ -616,9 +616,10 @@ watch(selectedSchoolId, () => {
 }
 
 .refreshBtn {
-  background: rgba(0, 168, 232, 0.2) !important;
-  border: 1px solid rgba(0, 168, 232, 0.3) !important;
+  background: rgba(0, 168, 232, 0.18) !important;
+  border: 1px solid rgba(0, 168, 232, 0.32) !important;
   color: var(--white) !important;
+  border-radius: 10px !important;
 }
 
 .saAlert {
@@ -650,19 +651,37 @@ watch(selectedSchoolId, () => {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 1rem;
+  padding: 1rem 1rem 1rem 0.9rem;
   border-radius: 16px;
   border: 1px solid rgba(var(--ink-rgb), 0.1);
-  background: linear-gradient(145deg, rgba(var(--ink-rgb), 0.06) 0%, rgba(var(--ink-rgb), 0.02) 100%);
+  background: linear-gradient(145deg, rgba(var(--ink-rgb), 0.07) 0%, rgba(var(--ink-rgb), 0.02) 100%);
   backdrop-filter: blur(14px);
   box-shadow: 0 4px 24px rgba(var(--shadow-rgb), 0.18), inset 0 1px 0 rgba(var(--ink-rgb), 0.05);
-  transition: border-color 0.2s, transform 0.2s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
 }
+
+.kpiCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: rgba(var(--ink-rgb), 0.2);
+}
+
+.kpiCard--teachers::before { background: rgba(0, 168, 232, 0.85); }
+.kpiCard--classes::before { background: rgba(26, 147, 111, 0.85); }
+.kpiCard--students::before { background: rgba(168, 51, 185, 0.85); }
+.kpiCard--cost::before { background: rgba(247, 183, 7, 0.85); }
 
 @media (hover: hover) {
   .kpiCard:hover {
     border-color: rgba(var(--ink-rgb), 0.18);
     transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(var(--shadow-rgb), 0.24), inset 0 1px 0 rgba(var(--ink-rgb), 0.06);
   }
 }
 
@@ -915,22 +934,31 @@ watch(selectedSchoolId, () => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.85rem 1rem;
+  padding: 0.9rem 1rem;
   border-radius: 14px;
   border: 1px solid rgba(var(--ink-rgb), 0.08);
   background: rgba(var(--ink-rgb), 0.03);
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
 }
 
 @media (hover: hover) {
   .teacherCard:hover {
-    border-color: rgba(0, 168, 232, 0.25);
-    background: rgba(0, 168, 232, 0.04);
+    border-color: rgba(0, 168, 232, 0.28);
+    background: rgba(0, 168, 232, 0.05);
+    transform: translateY(-1px);
   }
 }
 
 .teacherAvatar {
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 168, 232, 0.12);
+  border: 1px solid rgba(0, 168, 232, 0.18);
 }
 
 .teacherInfo {
@@ -1009,8 +1037,8 @@ watch(selectedSchoolId, () => {
 .classTeacherGroup {
   border: 1px solid rgba(var(--ink-rgb), 0.08);
   border-radius: 14px;
-  padding: 0.8rem;
-  background: rgba(var(--ink-rgb), 0.02);
+  padding: 0.9rem;
+  background: linear-gradient(160deg, rgba(var(--ink-rgb), 0.04) 0%, rgba(var(--ink-rgb), 0.015) 100%);
 }
 
 .classTeacherGroupHeader {
@@ -1078,14 +1106,16 @@ watch(selectedSchoolId, () => {
   border-radius: 14px;
   border: 1px solid rgba(var(--ink-rgb), 0.08);
   background: rgba(var(--ink-rgb), 0.03);
-  transition: border-color 0.2s, background 0.2s;
-  cursor: context-menu;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
 }
 
 @media (hover: hover) {
   .classCard:hover {
-    border-color: rgba(26, 147, 111, 0.25);
-    background: rgba(26, 147, 111, 0.04);
+    border-color: rgba(26, 147, 111, 0.3);
+    background: rgba(26, 147, 111, 0.06);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(var(--shadow-rgb), 0.2);
   }
 }
 
@@ -1232,22 +1262,30 @@ watch(selectedSchoolId, () => {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.45rem 0.6rem;
+  padding: 0.55rem 0.7rem;
   border-radius: 10px;
   border: 1px solid rgba(var(--ink-rgb), 0.08);
   background: rgba(var(--ink-rgb), 0.03);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.studentRow:hover {
+  background: rgba(var(--ink-rgb), 0.06);
+  border-color: rgba(var(--ink-rgb), 0.12);
 }
 
 .studentName {
   font-family: var(--font);
-  color: rgba(var(--ink-rgb), 0.86);
-  font-size: 0.86rem;
+  color: var(--white);
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .studentPts {
   font-family: var(--font);
-  color: rgba(var(--ink-rgb), 0.45);
-  font-size: 0.75rem;
+  color: rgba(var(--ink-rgb), 0.5);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .classActionButtons {
@@ -1293,10 +1331,11 @@ watch(selectedSchoolId, () => {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
-  padding: 1rem 1.25rem;
-  border-radius: 14px;
-  border: 1px solid rgba(247, 183, 7, 0.15);
-  background: rgba(247, 183, 7, 0.04);
+  padding: 1.1rem 1.25rem;
+  border-radius: 18px;
+  border: 1px solid rgba(247, 183, 7, 0.2);
+  background: linear-gradient(145deg, rgba(247, 183, 7, 0.08) 0%, rgba(247, 183, 7, 0.02) 100%);
+  box-shadow: 0 4px 20px rgba(var(--shadow-rgb), 0.14), inset 0 1px 0 rgba(247, 183, 7, 0.08);
   margin-bottom: 1.25rem;
 }
 

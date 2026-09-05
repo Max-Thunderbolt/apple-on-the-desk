@@ -102,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, toRef, inject } from 'vue';
+import { ref, computed, watch, toRef, inject, onMounted } from 'vue';
 import { useClasses } from '../composables/useClasses';
 import { useFormat } from '../composables/useFormat';
 import { useContextMenu } from '../composables/useContextMenu';
@@ -156,20 +156,56 @@ const props = defineProps({
 
 const emit = defineEmits(['students-updated', 'experience-updated', 'purchase-completed']);
 
-const { updateClass } = useClasses();
+const { getClassNames } = useClasses();
 const { formatCost } = useFormat();
 const contextMenu = useContextMenu();
+
+const otherClasses = ref([]);
+
+onMounted(async () => {
+    try {
+        const names = await getClassNames();
+        otherClasses.value = (names || []).filter((c) => c.id && c.id !== props.classId);
+    } catch (err) {
+        console.error('Failed to load classes for move menu:', err);
+    }
+});
+
+watch(() => props.classId, async () => {
+    try {
+        const names = await getClassNames();
+        otherClasses.value = (names || []).filter((c) => c.id && c.id !== props.classId);
+    } catch {
+        /* ignore */
+    }
+});
 
 // Expose ref values so template sees actual booleans/numbers (nested refs in plain object aren't auto-unwrapped)
 const isContextMenuOpen = computed(() => contextMenu.isOpen.value);
 const contextMenuX = computed(() => contextMenu.x.value);
 const contextMenuY = computed(() => contextMenu.y.value);
 const contextMenuTarget = computed(() => contextMenu.target.value);
-const contextMenuItems = computed(() => ([
-    { key: 'edit-name', label: 'Edit Name', icon: 'mdi-pencil' },
-    { key: 'manage-constraints', label: 'Manage Pairing Constraints', icon: 'mdi-account-multiple-remove' },
-    { key: 'delete-student', label: 'Delete Student', icon: 'mdi-delete', danger: true },
-]));
+const contextMenuItems = computed(() => {
+    const moveChildren = otherClasses.value.map((c) => ({
+        key: `move-to:${c.id}`,
+        label: c.name || 'Untitled class',
+        icon: 'mdi-google-classroom',
+    }));
+    const items = [
+        { key: 'edit-name', label: 'Edit Name', icon: 'mdi-pencil' },
+        { key: 'manage-constraints', label: 'Manage Pairing Constraints', icon: 'mdi-account-multiple-remove' },
+    ];
+    if (moveChildren.length) {
+        items.push({
+            key: 'send-to-class',
+            label: 'Send to another class',
+            icon: 'mdi-account-switch',
+            children: moveChildren,
+        });
+    }
+    items.push({ key: 'delete-student', label: 'Delete Student', icon: 'mdi-delete', danger: true });
+    return items;
+});
 const isViewingShopRef = toRef(props, 'isViewingShop');
 
 const displayedStudents = computed(() => {
@@ -274,9 +310,34 @@ function handleContextMenuAction(actionKey) {
     }
     if (actionKey === 'manage-constraints') {
         openConstraintsModal(student);
+        return;
     }
     if (actionKey === 'delete-student') {
         openDeleteDialog(student);
+        return;
+    }
+    if (typeof actionKey === 'string' && actionKey.startsWith('move-to:')) {
+        const targetClassId = actionKey.slice('move-to:'.length);
+        moveStudentToClass(student, targetClassId);
+    }
+}
+
+async function moveStudentToClass(student, targetClassId) {
+    contextMenu.close();
+    if (!student?.id || !targetClassId) return;
+    const target = otherClasses.value.find((c) => c.id === targetClassId);
+    try {
+        await Server.moveStudent(student.id, targetClassId);
+        emit('students-updated', {
+            students: props.students.filter((s) => s.id !== student.id),
+        });
+        toast.success('Student moved', {
+            description: `${student.name} sent to ${target?.name || 'another class'}`,
+            duration: 3000,
+        });
+    } catch (err) {
+        console.error('Failed to move student:', err);
+        toast.error(err?.response?.data?.message || 'Failed to move student');
     }
 }
 
@@ -337,24 +398,21 @@ async function confirmEditStudentName() {
         return;
     }
 
-    const updated = props.students.map((s) =>
-        s.id === student.id
-            ? { ...s, name: trimmed }
-            : { ...s }
-    );
-
     savingStudentName.value = true;
     try {
-        await updateClass(props.classId, { students: updated });
+        await Server.patchStudent(student.id, { name: trimmed });
+        const updated = props.students.map((s) =>
+            s.id === student.id ? { ...s, name: trimmed } : { ...s }
+        );
         emit('students-updated', updated);
-        toast.success('Student name updated', {
+        toast.success('Student renamed', {
             description: `${currentName} → ${trimmed}`,
             duration: 3000,
         });
         closeEditNameDialog();
     } catch (err) {
-        console.error('Failed to update student name:', err);
-        toast.error('Failed to update student name');
+        console.error('Failed to rename student:', err);
+        toast.error('Failed to rename student');
     } finally {
         savingStudentName.value = false;
     }

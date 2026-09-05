@@ -1,18 +1,25 @@
 <template>
   <div class="myClassInsights">
-    <h2 class="sectionTitle">Class leaderboard</h2>
-    <p class="sectionHint">Classes ranked by experience (highest rank first).</p>
-    <div class="leaderboardSection">
+    <section class="insightPanel">
+      <div class="panelHead">
+        <div>
+          <h2 class="sectionTitle">Class leaderboard</h2>
+          <p class="sectionHint">Classes ranked by experience (highest first).</p>
+        </div>
+      </div>
+
       <div v-if="classesLoading" class="loadingRow">
         <v-progress-circular indeterminate color="primary" size="32" width="3" />
         <span>Loading classes...</span>
       </div>
-      <div v-else-if="leaderboardRows.length === 0" class="emptyState">
-        No classes yet. Create a class from the Classes page.
+      <div v-else-if="leaderboardRows.length === 0" class="emptyStateBlock">
+        <v-icon size="40" class="emptyStateIcon">mdi-google-classroom-outline</v-icon>
+        <p class="emptyStateTitle">No classes yet</p>
+        <p class="emptyStateText">Create a class from the Classes page to see rankings here.</p>
       </div>
       <ul v-else class="leaderboardList">
         <li v-for="(row, index) in leaderboardRows" :key="row.id" class="leaderboardItem">
-          <div class="leaderboardCard" :style="getLeaderboardCardStyle(row)">
+          <div class="leaderboardCard">
             <span class="leaderboardPosition">{{ index + 1 }}</span>
             <span class="leaderboardIcon" :title="row.rankName">
               <RankBadge
@@ -21,134 +28,199 @@
                 badge-class="leaderboardRankBadge"
               />
             </span>
-            <span class="leaderboardName">{{ row.name }}</span>
-            <span class="leaderboardRank">{{ row.rankName }}</span>
+            <div class="leaderboardMain">
+              <div class="leaderboardTop">
+                <span class="leaderboardName">{{ row.name }}</span>
+                <span class="leaderboardRank">{{ row.rankName }} · {{ row.experience }} XP</span>
+              </div>
+              <div class="leaderboardTrack" aria-hidden="true">
+                <div class="leaderboardFill" :style="{ width: `${xpRatio(row)}%` }" />
+              </div>
+            </div>
           </div>
           <div v-if="row.topStudents && row.topStudents.length" class="leaderboardTopThree">
             <TopStudentChips :students="row.topStudents" />
           </div>
         </li>
       </ul>
-    </div>
+    </section>
 
-    <div class="sectionHeadRow">
-      <div>
-        <h2 class="sectionTitle">Class comparison</h2>
-        <p class="sectionHint">Select one or more classes to compare.</p>
-      </div>
-      <v-btn size="small" variant="tonal" class="exportBtn" prepend-icon="mdi-download"
-        :disabled="comparisonRows.length === 0" @click="exportComparison">
-        Export CSV
-      </v-btn>
-    </div>
-    <div class="selectRow">
-      <v-select v-model="selectedClassIds" :items="classList" item-title="name" item-value="id"
-        label="Classes to compare" multiple chips closable-chips class="classSelect classSelectMulti"
-        density="comfortable" hide-details :loading="classesLoading"
-        :menu-props="{ contentClass: 'classPerformanceMenu' }" @update:model-value="onClassSelectionChange" />
-      <div class="selectAllActions">
-        <v-btn size="small" variant="text" class="selectAllBtn" @click="selectAllClasses">
-          Select all
-        </v-btn>
-        <v-btn size="small" variant="text" class="clearAllBtn" :disabled="selectedClassIds.length === 0"
-          @click="clearAllClasses">
-          Clear
+    <section class="insightPanel">
+      <div class="panelHead">
+        <div>
+          <h2 class="sectionTitle">Class comparison</h2>
+          <p class="sectionHint">Select one or more classes to compare.</p>
+        </div>
+        <v-btn
+          size="small"
+          variant="tonal"
+          class="exportBtn"
+          prepend-icon="mdi-download"
+          :disabled="comparisonRows.length === 0"
+          @click="exportComparison"
+        >
+          Export CSV
         </v-btn>
       </div>
-    </div>
 
-    <div v-if="selectedClassIds.length > 0" class="comparisonSection">
-      <div v-if="comparisonLoading" class="loadingRow">
+      <div class="selectRow">
+        <v-select
+          v-model="selectedClassIds"
+          :items="classList"
+          item-title="name"
+          item-value="id"
+          label="Classes to compare"
+          multiple
+          chips
+          closable-chips
+          class="classSelect classSelectMulti"
+          density="comfortable"
+          hide-details
+          :loading="classesLoading"
+          :menu-props="{ contentClass: 'classPerformanceMenu' }"
+          @update:model-value="onClassSelectionChange"
+        />
+        <div class="selectAllActions">
+          <v-btn size="small" variant="text" class="selectAllBtn" @click="selectAllClasses">
+            Select all
+          </v-btn>
+          <v-btn
+            size="small"
+            variant="text"
+            class="clearAllBtn"
+            :disabled="selectedClassIds.length === 0"
+            @click="clearAllClasses"
+          >
+            Clear
+          </v-btn>
+        </div>
+      </div>
+
+      <div v-if="selectedClassIds.length > 0" class="comparisonSection">
+        <div v-if="comparisonLoading" class="loadingRow">
+          <v-progress-circular indeterminate color="primary" size="32" width="3" />
+          <span>Loading class details...</span>
+        </div>
+        <div v-else class="tableWrap">
+          <v-table class="comparisonTable">
+            <thead>
+              <tr>
+                <th class="tableHeader">Class name</th>
+                <th class="tableHeader">Students</th>
+                <th v-if="hasSchoolAverages" class="tableHeader">vs school avg students</th>
+                <th class="tableHeader">Experience</th>
+                <th v-if="hasSchoolAverages" class="tableHeader">
+                  {{ normalizedPeerLabel }}
+                </th>
+                <th class="tableHeader">Avg points / student</th>
+                <th v-if="hasSchoolAverages" class="tableHeader">vs school avg pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in comparisonRows" :key="row.id">
+                <td class="tableCell tableCell--name">{{ row.name }}</td>
+                <td class="tableCell">{{ row.studentCount }}</td>
+                <td v-if="hasSchoolAverages" class="tableCell">
+                  {{ formatDelta(row.studentCount, schoolAverages.avgStudents) }}
+                </td>
+                <td class="tableCell">{{ row.experience }}</td>
+                <td v-if="hasSchoolAverages" class="tableCell">
+                  {{ formatPeerEngagementDelta(row) }}
+                </td>
+                <td class="tableCell">{{ row.avgPoints != null ? row.avgPoints.toFixed(1) : '—' }}</td>
+                <td v-if="hasSchoolAverages" class="tableCell">
+                  {{ row.avgPoints != null && schoolAverages.avgPointsPerStudent != null
+                    ? formatDelta(row.avgPoints, schoolAverages.avgPointsPerStudent)
+                    : '—' }}
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </div>
+      </div>
+      <p v-else class="emptyInline">Select classes above to build a comparison table.</p>
+    </section>
+
+    <section class="insightPanel">
+      <div class="panelHead">
+        <div>
+          <h2 class="sectionTitle">Student comparison</h2>
+          <p class="sectionHint">Choose a class to see student effort ratings (Z-score normalized).</p>
+        </div>
+      </div>
+
+      <v-select
+        v-model="selectedClassIdForStudents"
+        :items="classList"
+        item-title="name"
+        item-value="id"
+        label="Class for student comparison"
+        class="classSelect classSelectSingle"
+        density="comfortable"
+        hide-details
+        clearable
+        :loading="classesLoading"
+        :menu-props="{ contentClass: 'classPerformanceMenu' }"
+        @update:model-value="onStudentClassChange"
+      />
+
+      <div v-if="selectedClassIdForStudents && studentComparisonRows.length > 0" class="studentSection">
+        <div class="tableWrap">
+          <v-table class="comparisonTable studentTable">
+            <thead>
+              <tr>
+                <th class="tableHeader">Student</th>
+                <th class="tableHeader">Points</th>
+                <th class="tableHeader">Z-score</th>
+                <th class="tableHeader">Effort</th>
+                <th class="tableHeader">Label</th>
+                <th class="tableHeader">Purchases</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in studentComparisonRows" :key="row.id">
+                <td class="tableCell tableCell--name">{{ row.name }}</td>
+                <td class="tableCell">
+                  <span v-if="row.totalSpent != null && row.totalSpent > 0">
+                    {{ row.points }}
+                    <span class="mutedMeta">({{ row.pointsEarned }} earned)</span>
+                  </span>
+                  <span v-else>{{ row.points }}</span>
+                </td>
+                <td class="tableCell">{{ formatZ(row.zScore) }}</td>
+                <td class="tableCell">{{ row.effortIndex.toFixed(1) }}</td>
+                <td class="tableCell">
+                  <span class="effortChip" :class="`effortChip--${Math.round(row.effortIndex)}`">
+                    {{ row.effortLabel }}
+                  </span>
+                </td>
+                <td class="tableCell purchasesCell">
+                  <template v-if="row.purchases && row.purchases.length > 0">
+                    <ul class="purchasesList">
+                      <li v-for="(p, i) in row.purchases" :key="i">
+                        {{ p.itemName }} ({{ p.contributed }} pts)
+                      </li>
+                    </ul>
+                  </template>
+                  <span v-else class="mutedMeta">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </div>
+      </div>
+      <div v-else-if="selectedClassIdForStudents && studentsLoading" class="loadingRow">
         <v-progress-circular indeterminate color="primary" size="32" width="3" />
-        <span>Loading class details...</span>
+        <span>Loading students...</span>
       </div>
-      <v-table v-else class="comparisonTable">
-        <thead>
-          <tr>
-            <th class="tableHeader">Class name</th>
-            <th class="tableHeader">Students</th>
-            <th v-if="hasSchoolAverages" class="tableHeader">vs school avg students</th>
-            <th class="tableHeader">Experience</th>
-            <th v-if="hasSchoolAverages" class="tableHeader">
-              {{ normalizedPeerLabel }}
-            </th>
-            <th class="tableHeader">Avg points / student</th>
-            <th v-if="hasSchoolAverages" class="tableHeader">vs school avg pts</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in comparisonRows" :key="row.id">
-            <td class="tableCell">{{ row.name }}</td>
-            <td class="tableCell">{{ row.studentCount }}</td>
-            <td v-if="hasSchoolAverages" class="tableCell">{{ formatDelta(row.studentCount, schoolAverages.avgStudents) }}</td>
-            <td class="tableCell">{{ row.experience }}</td>
-            <td v-if="hasSchoolAverages" class="tableCell">
-              {{ formatPeerEngagementDelta(row) }}
-            </td>
-            <td class="tableCell">{{ row.avgPoints != null ? row.avgPoints.toFixed(1) : '—' }}</td>
-            <td v-if="hasSchoolAverages" class="tableCell">
-              {{ row.avgPoints != null && schoolAverages.avgPointsPerStudent != null
-                ? formatDelta(row.avgPoints, schoolAverages.avgPointsPerStudent)
-                : '—' }}
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
-    </div>
-
-    <h2 class="sectionTitle studentSectionTitle">Student comparison</h2>
-    <p class="sectionHint">Choose a class to see student effort ratings (Z-score normalized).</p>
-    <v-select v-model="selectedClassIdForStudents" :items="classList" item-title="name" item-value="id"
-      label="Class for student comparison" class="classSelect classSelectSingle" density="comfortable" hide-details
-      clearable :loading="classesLoading" :menu-props="{ contentClass: 'classPerformanceMenu' }"
-      @update:model-value="onStudentClassChange" />
-
-    <div v-if="selectedClassIdForStudents && studentComparisonRows.length > 0" class="studentSection">
-      <v-table class="comparisonTable studentTable">
-        <thead>
-          <tr>
-            <th class="tableHeader">Student</th>
-            <th class="tableHeader">Points</th>
-            <th class="tableHeader">Z-score</th>
-            <th class="tableHeader">Effort index</th>
-            <th class="tableHeader">Label</th>
-            <th class="tableHeader">Purchases</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in studentComparisonRows" :key="row.id">
-            <td class="tableCell">{{ row.name }}</td>
-            <td class="tableCell">
-              <span v-if="row.totalSpent != null && row.totalSpent > 0">
-                {{ row.points }} ({{ row.pointsEarned }} earned)
-              </span>
-              <span v-else>{{ row.points }}</span>
-            </td>
-            <td class="tableCell">{{ formatZ(row.zScore) }}</td>
-            <td class="tableCell">{{ row.effortIndex.toFixed(1) }}</td>
-            <td class="tableCell">{{ row.effortLabel }}</td>
-            <td class="tableCell purchasesCell">
-              <template v-if="row.purchases && row.purchases.length > 0">
-                <ul class="purchasesList">
-                  <li v-for="(p, i) in row.purchases" :key="i">
-                    {{ p.itemName }} ({{ p.contributed }} pts)
-                  </li>
-                </ul>
-              </template>
-              <span v-else>—</span>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
-    </div>
-    <div v-else-if="selectedClassIdForStudents && studentsLoading" class="loadingRow">
-      <v-progress-circular indeterminate color="primary" size="32" width="3" />
-      <span>Loading students...</span>
-    </div>
-    <div v-else-if="selectedClassIdForStudents && !studentsLoading && studentComparisonRows.length === 0"
-      class="emptyState">
-      No students in this class.
-    </div>
+      <div
+        v-else-if="selectedClassIdForStudents && !studentsLoading && studentComparisonRows.length === 0"
+        class="emptyStateBlock emptyStateBlock--compact"
+      >
+        <p class="emptyStateText">No students in this class.</p>
+      </div>
+      <p v-else class="emptyInline">Pick a class to review student effort.</p>
+    </section>
   </div>
 </template>
 
@@ -220,14 +292,10 @@ const maxLeaderboardExperience = computed(() => {
   return Math.max(...rows.map((r) => r.experience), 1);
 });
 
-const LEADERBOARD_CARD_BASE_PX = 240;
-const LEADERBOARD_CARD_EXPERIENCE_PX = 220;
-
-function getLeaderboardCardStyle(row) {
+function xpRatio(row) {
   const max = maxLeaderboardExperience.value;
-  const ratio = max > 0 ? row.experience / max : 0;
-  const widthPx = LEADERBOARD_CARD_BASE_PX + ratio * LEADERBOARD_CARD_EXPERIENCE_PX;
-  return { width: `${widthPx}px`, minWidth: `${widthPx}px` };
+  if (!max) return 0;
+  return Math.round(((row.experience || 0) / max) * 100);
 }
 
 const classList = ref([]);
@@ -437,15 +505,26 @@ loadClassList();
 .myClassInsights {
   width: 100%;
   font-family: var(--font);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.sectionHeadRow {
+.insightPanel {
+  width: 100%;
+  padding: 1.15rem 1.1rem 1.25rem;
+  border-radius: 18px;
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
+  background: rgba(var(--ink-rgb), 0.035);
+}
+
+.panelHead {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 1rem;
 }
 
 .exportBtn {
@@ -456,25 +535,18 @@ loadClassList();
 
 .sectionTitle {
   font-family: var(--font);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: var(--white);
-  margin: 0 0 0.5rem 0;
-}
-
-.studentSectionTitle {
-  margin-top: 2rem;
+  margin: 0 0 0.3rem;
 }
 
 .sectionHint {
   font-family: var(--font);
   font-size: 0.9rem;
-  color: var(--color-text-muted);
-  margin: 0 0 1rem 0;
-}
-
-.leaderboardSection {
-  margin-bottom: 2rem;
+  color: rgba(var(--ink-rgb), 0.6);
+  margin: 0;
+  line-height: 1.4;
 }
 
 .leaderboardList {
@@ -483,33 +555,41 @@ loadClassList();
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  max-width: 900px;
+  gap: 0.65rem;
+  width: 100%;
 }
 
 .leaderboardItem {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.45rem;
   font-family: var(--font);
+}
+
+@media (min-width: 900px) {
+  .leaderboardItem {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 .leaderboardCard {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  flex-shrink: 0;
+  flex: 1;
   min-width: 0;
-  padding: 0.75rem 1.15rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-soft);
-  border-radius: 12px;
-  transition: background 0.2s ease, border-color 0.2s ease, width 0.25s ease;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background: rgba(var(--ink-rgb), 0.04);
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
+  border-radius: 14px;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .leaderboardCard:hover {
-  background: var(--color-surface-hover);
-  border-color: var(--color-border);
+  background: rgba(var(--ink-rgb), 0.07);
+  border-color: rgba(var(--freshSky-rgb), 0.35);
 }
 
 .leaderboardPosition {
@@ -519,6 +599,7 @@ loadClassList();
   font-weight: 700;
   font-size: 1rem;
   color: var(--gold, #f7b707);
+  font-variant-numeric: tabular-nums;
 }
 
 .leaderboardIcon {
@@ -532,18 +613,52 @@ loadClassList();
   height: auto;
 }
 
-.leaderboardName {
+.leaderboardMain {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.leaderboardTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+}
+
+.leaderboardName {
   font-weight: 600;
   color: var(--white);
   font-size: 1rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .leaderboardRank {
+  font-size: 0.85rem;
+  color: rgba(var(--ink-rgb), 0.6);
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
+}
+
+.leaderboardTrack {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(var(--ink-rgb), 0.1);
+  overflow: hidden;
+}
+
+.leaderboardFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--freshSky), var(--seaGreen));
+  transition: width 0.35s ease;
 }
 
 .leaderboardTopThree {
@@ -552,17 +667,20 @@ loadClassList();
   align-items: center;
   gap: 0.35rem;
   flex-shrink: 0;
+  padding-left: 0.15rem;
 }
 
 .classSelect {
-  max-width: 480px;
+  max-width: 560px;
+  width: 100%;
 }
 
 .selectRow {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-width: 480px;
+  max-width: 560px;
+  width: 100%;
 }
 
 .selectAllActions {
@@ -589,17 +707,17 @@ loadClassList();
 }
 
 .clearAllBtn {
-  color: var(--color-text-muted) !important;
+  color: rgba(var(--ink-rgb), 0.55) !important;
 }
 
 .clearAllBtn:hover:not(:disabled) {
   color: var(--color-text) !important;
-  background: var(--color-surface-hover) !important;
+  background: rgba(var(--ink-rgb), 0.08) !important;
 }
 
 .classSelect :deep(.v-field) {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-soft);
+  background: rgba(var(--ink-rgb), 0.04);
+  border: 1px solid rgba(var(--ink-rgb), 0.14);
   border-radius: 12px;
   color: var(--color-text);
 }
@@ -609,12 +727,7 @@ loadClassList();
 }
 
 .classSelect :deep(.v-field .v-label) {
-  color: var(--color-text-muted);
-}
-
-.classSelect :deep(.v-field--focused .v-label),
-.classSelect :deep(.v-field--variant-filled .v-field__input) {
-  color: var(--color-text);
+  color: rgba(var(--ink-rgb), 0.55);
 }
 
 .classSelect :deep(.v-chip) {
@@ -624,15 +737,23 @@ loadClassList();
 }
 
 .classSelect :deep(.v-chip .v-icon) {
-  color: var(--color-text-muted) !important;
+  color: rgba(var(--ink-rgb), 0.55) !important;
 }
 
 .classSelect :deep(.v-checkbox-btn .v-icon) {
   color: var(--freshSky) !important;
 }
 
-.comparisonSection {
+.comparisonSection,
+.studentSection {
   margin-top: 1rem;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
 }
 
 .loadingRow {
@@ -645,14 +766,16 @@ loadClassList();
 }
 
 .comparisonTable {
-  background: var(--color-surface);
-  border-radius: 12px;
-  border: 1px solid var(--color-border-soft);
-  overflow: hidden;
+  background: transparent;
+  width: 100%;
 }
 
 .comparisonTable :deep(thead) {
-  background: var(--color-surface-hover);
+  background: rgba(var(--ink-rgb), 0.06);
+}
+
+.comparisonTable :deep(tbody tr:nth-child(even)) {
+  background: rgba(var(--ink-rgb), 0.025);
 }
 
 .tableHeader {
@@ -661,41 +784,120 @@ loadClassList();
   color: var(--white);
   padding: 12px 16px;
   text-align: left;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
 }
 
 .tableCell {
   font-family: var(--font);
   color: var(--color-text);
-  padding: 10px 16px;
+  padding: 11px 16px;
+  font-variant-numeric: tabular-nums;
 }
 
-.studentSection {
-  margin-top: 1rem;
+.tableCell--name {
+  font-weight: 600;
+  color: var(--white);
 }
 
-.studentTable {
-  margin-top: 0.5rem;
+.mutedMeta {
+  color: rgba(var(--ink-rgb), 0.5);
+  font-size: 0.85rem;
+}
+
+.effortChip {
+  display: inline-block;
+  max-width: 220px;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+  border: 1px solid transparent;
+}
+
+.effortChip--5 {
+  color: var(--seaGreen);
+  background: rgba(var(--seaGreen-rgb), 0.14);
+  border-color: rgba(var(--seaGreen-rgb), 0.3);
+}
+
+.effortChip--4 {
+  color: var(--freshSky);
+  background: rgba(var(--freshSky-rgb), 0.14);
+  border-color: rgba(var(--freshSky-rgb), 0.3);
+}
+
+.effortChip--3 {
+  color: rgba(var(--ink-rgb), 0.85);
+  background: rgba(var(--ink-rgb), 0.08);
+  border-color: rgba(var(--ink-rgb), 0.16);
+}
+
+.effortChip--2 {
+  color: rgba(247, 183, 7, 0.95);
+  background: rgba(247, 183, 7, 0.12);
+  border-color: rgba(247, 183, 7, 0.28);
+}
+
+.effortChip--1 {
+  color: rgba(197, 40, 61, 0.95);
+  background: rgba(197, 40, 61, 0.12);
+  border-color: rgba(197, 40, 61, 0.28);
 }
 
 .purchasesCell {
-  max-width: 200px;
+  max-width: 220px;
 }
 
 .purchasesList {
   margin: 0;
   padding-left: 1rem;
-  font-size: 0.9rem;
-  color: var(--color-text);
+  font-size: 0.88rem;
+  color: rgba(var(--ink-rgb), 0.8);
 }
 
 .purchasesList li {
   margin: 0.15rem 0;
 }
 
-.emptyState {
+.emptyStateBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.4rem;
+  padding: 1.75rem 1rem;
+}
+
+.emptyStateBlock--compact {
+  padding: 1.25rem 0.5rem;
+}
+
+.emptyStateIcon {
+  color: rgba(var(--ink-rgb), 0.4);
+  margin-bottom: 0.25rem;
+}
+
+.emptyStateTitle {
   font-family: var(--font);
-  color: var(--color-text-muted);
-  padding: 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--white);
+  margin: 0;
+}
+
+.emptyStateText,
+.emptyInline {
+  font-family: var(--font);
+  font-size: 0.9rem;
+  color: rgba(var(--ink-rgb), 0.55);
+  margin: 0;
+}
+
+.emptyInline {
+  padding: 0.35rem 0 0.15rem;
 }
 </style>
 

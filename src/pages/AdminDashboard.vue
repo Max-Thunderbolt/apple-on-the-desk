@@ -936,9 +936,10 @@ onMounted(() => {
   border-radius: 999px;
   font-family: var(--font);
   font-size: 0.75rem;
+  font-weight: 600;
   color: rgba(var(--ink-rgb), 0.7);
-  background: rgba(var(--ink-rgb), 0.05);
-  border: 1px solid rgba(var(--ink-rgb), 0.08);
+  background: rgba(247, 183, 7, 0.08);
+  border: 1px solid rgba(247, 183, 7, 0.2);
 }
 
 .chipIcon {
@@ -1009,26 +1010,30 @@ onMounted(() => {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.15rem;
-  padding: 0.9rem 1rem;
-  border-radius: 14px;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
   border: 1px solid rgba(var(--ink-rgb), 0.1);
-  background: rgba(var(--ink-rgb), 0.03);
+  background: linear-gradient(145deg, rgba(var(--ink-rgb), 0.06) 0%, rgba(var(--ink-rgb), 0.02) 100%);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 18px rgba(var(--shadow-rgb), 0.14), inset 0 1px 0 rgba(var(--ink-rgb), 0.04);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+  transition: border-color 0.15s, transform 0.15s, background 0.15s, box-shadow 0.15s;
   font-family: var(--font);
 }
 
 @media (hover: hover) {
   .usagePill:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     border-color: rgba(var(--ink-rgb), 0.18);
+    box-shadow: 0 8px 24px rgba(var(--shadow-rgb), 0.2), inset 0 1px 0 rgba(var(--ink-rgb), 0.05);
   }
 }
 
 .usagePill--selected {
-  border-color: rgba(0, 168, 232, 0.35) !important;
-  background: rgba(0, 168, 232, 0.08) !important;
+  border-color: rgba(0, 168, 232, 0.4) !important;
+  background: linear-gradient(145deg, rgba(0, 168, 232, 0.14) 0%, rgba(0, 168, 232, 0.05) 100%) !important;
+  box-shadow: 0 6px 22px rgba(0, 168, 232, 0.12), inset 0 1px 0 rgba(0, 168, 232, 0.1) !important;
 }
 
 .usagePillCount {
@@ -1172,23 +1177,55 @@ onMounted(() => {
   vertical-align: middle;
 }
 
+.usageRow {
+  transition: background 0.15s;
+}
+
+@media (hover: hover) {
+  .usageRow:hover td {
+    background: rgba(var(--ink-rgb), 0.04);
+  }
+}
+
 .kpiCard {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 1rem;
+  padding: 1rem 1rem 1rem 0.9rem;
   border-radius: 16px;
   border: 1px solid rgba(var(--ink-rgb), 0.1);
-  background: linear-gradient(145deg, rgba(var(--ink-rgb), 0.06) 0%, rgba(var(--ink-rgb), 0.02) 100%);
+  background: linear-gradient(145deg, rgba(var(--ink-rgb), 0.07) 0%, rgba(var(--ink-rgb), 0.02) 100%);
   backdrop-filter: blur(14px);
   box-shadow: 0 4px 24px rgba(var(--shadow-rgb), 0.18), inset 0 1px 0 rgba(var(--ink-rgb), 0.05);
-  transition: border-color 0.2s, transform 0.2s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
 }
+
+.kpiCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: rgba(var(--ink-rgb), 0.2);
+}
+
+.kpiCard--eng7::before,
+.kpiCard--teachers7::before { background: rgba(26, 147, 111, 0.85); }
+.kpiCard--eng30::before,
+.kpiCard--schools::before { background: rgba(0, 168, 232, 0.85); }
+.kpiCard--dormant::before { background: rgba(197, 40, 61, 0.85); }
+.kpiCard--students::before { background: rgba(168, 51, 185, 0.85); }
+.kpiCard--cost::before,
+.kpiCard--events::before { background: rgba(247, 183, 7, 0.85); }
 
 @media (hover: hover) {
   .kpiCard:hover {
     border-color: rgba(var(--ink-rgb), 0.18);
     transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(var(--shadow-rgb), 0.24), inset 0 1px 0 rgba(var(--ink-rgb), 0.06);
   }
 }
 
@@ -1304,9 +1341,9 @@ onMounted(() => {
 
 .chartTitle {
   font-family: var(--font);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(var(--ink-rgb), 0.85);
+  color: var(--white);
   margin: 0 0 1rem;
   display: flex;
   align-items: center;
@@ -1314,7 +1351,8 @@ onMounted(() => {
 }
 
 .chartTitleIcon {
-  opacity: 0.5;
+  opacity: 0.7;
+  color: var(--freshSky);
 }
 
 .chartWrap {
@@ -1494,9 +1532,10 @@ onMounted(() => {
 }
 
 .refreshBtn {
-  background: rgba(0, 168, 232, 0.2) !important;
-  border: 1px solid rgba(0, 168, 232, 0.3) !important;
+  background: rgba(0, 168, 232, 0.18) !important;
+  border: 1px solid rgba(0, 168, 232, 0.32) !important;
   color: var(--white) !important;
+  border-radius: 10px !important;
 }
 
 /* Table panel */
@@ -1507,7 +1546,7 @@ onMounted(() => {
   backdrop-filter: blur(14px);
   box-shadow: 0 6px 28px rgba(var(--shadow-rgb), 0.2), inset 0 1px 0 rgba(var(--ink-rgb), 0.04);
   overflow: hidden;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .tableHead {

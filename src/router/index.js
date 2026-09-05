@@ -39,6 +39,7 @@ const SCHOOL_ADMIN_PATHS = new Set([
   '/SchoolAdminOverview',
   '/SchoolAdminDashboard',
   '/SchoolAdminOnboarding',
+  '/SchoolAdminStudents',
 ])
 
 function isTeacherRoute(path) {

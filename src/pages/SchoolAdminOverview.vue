@@ -294,9 +294,10 @@ onMounted(async () => {
 .termField { max-width: 150px; }
 .yearField { max-width: 85px; }
 .refreshBtn {
-  background: rgba(26, 147, 111, 0.2) !important;
-  border: 1px solid rgba(26, 147, 111, 0.3) !important;
+  background: rgba(0, 168, 232, 0.18) !important;
+  border: 1px solid rgba(0, 168, 232, 0.32) !important;
   color: var(--white) !important;
+  border-radius: 10px !important;
 }
 
 .saAlert { margin-bottom: 1rem; font-family: var(--font); }
@@ -317,10 +318,38 @@ onMounted(async () => {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 1rem;
+  padding: 1rem 1rem 1rem 0.9rem;
   border-radius: 16px;
   border: 1px solid rgba(var(--ink-rgb), 0.1);
-  background: linear-gradient(145deg, rgba(var(--ink-rgb), 0.06) 0%, rgba(var(--ink-rgb), 0.02) 100%);
+  background: linear-gradient(145deg, rgba(var(--ink-rgb), 0.07) 0%, rgba(var(--ink-rgb), 0.02) 100%);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 24px rgba(var(--shadow-rgb), 0.18), inset 0 1px 0 rgba(var(--ink-rgb), 0.05);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpiCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: rgba(var(--ink-rgb), 0.2);
+}
+
+.kpiCard--schools::before { background: rgba(0, 168, 232, 0.85); }
+.kpiCard--teachers::before { background: rgba(26, 147, 111, 0.85); }
+.kpiCard--students::before { background: rgba(168, 51, 185, 0.85); }
+.kpiCard--cost::before { background: rgba(247, 183, 7, 0.85); }
+
+@media (hover: hover) {
+  .kpiCard:hover {
+    border-color: rgba(var(--ink-rgb), 0.18);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(var(--shadow-rgb), 0.24), inset 0 1px 0 rgba(var(--ink-rgb), 0.06);
+  }
 }
 
 .kpiIconWrap {
@@ -349,6 +378,7 @@ onMounted(async () => {
   font-weight: 700;
   color: var(--white);
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 .kpiValue--money { font-size: 1.25rem; }
@@ -359,6 +389,8 @@ onMounted(async () => {
   border-radius: 18px;
   border: 1px solid rgba(var(--ink-rgb), 0.1);
   background: linear-gradient(160deg, rgba(var(--color-bg-rgb), 0.65) 0%, rgba(var(--color-bg-rgb), 0.4) 100%);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 28px rgba(var(--shadow-rgb), 0.2), inset 0 1px 0 rgba(var(--ink-rgb), 0.04);
 }
 
 .tableHead {
@@ -375,19 +407,19 @@ onMounted(async () => {
   align-items: center;
   gap: 0.4rem;
   font-family: var(--font);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--white);
   margin: 0;
 }
 
-.sectionTitleIcon { opacity: 0.7; }
+.sectionTitleIcon { opacity: 0.5; }
 
 .sectionDesc {
   font-family: var(--font);
-  font-size: 0.82rem;
-  color: rgba(var(--ink-rgb), 0.45);
-  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: rgba(var(--ink-rgb), 0.4);
+  margin: 0.25rem 0 0;
 }
 
 .billingChip {
@@ -399,9 +431,9 @@ onMounted(async () => {
   font-family: var(--font);
   font-size: 0.72rem;
   font-weight: 600;
-  color: rgba(var(--ink-rgb), 0.65);
-  background: rgba(var(--ink-rgb), 0.05);
-  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  color: rgba(var(--ink-rgb), 0.7);
+  background: rgba(247, 183, 7, 0.08);
+  border: 1px solid rgba(247, 183, 7, 0.2);
 }
 
 .tableWrap { overflow-x: auto; }
@@ -415,28 +447,48 @@ onMounted(async () => {
 
 .dataTable th,
 .dataTable td {
-  padding: 0.65rem 0.75rem;
+  padding: 0.75rem 0.8rem;
   text-align: left;
   border-bottom: 1px solid rgba(var(--ink-rgb), 0.06);
 }
 
 .dataTable th.num,
-.dataTable td.num { text-align: right; }
+.dataTable td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .dataTable th {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(var(--ink-rgb), 0.45);
+  color: rgba(var(--ink-rgb), 0.4);
 }
 
-.schoolName { font-weight: 600; color: rgba(var(--ink-rgb), 0.9); }
-.activityCell { font-size: 0.82rem; color: rgba(var(--ink-rgb), 0.55); white-space: nowrap; }
+.schoolRow {
+  transition: background 0.15s;
+}
+
+.schoolRow:hover {
+  background: rgba(var(--ink-rgb), 0.04);
+}
+
+.schoolName { font-weight: 600; color: var(--white); }
+.activityCell { font-size: 0.82rem; color: rgba(var(--ink-rgb), 0.5); white-space: nowrap; }
 .costCell { color: rgba(247, 183, 7, 0.95); font-weight: 600; }
 .actionsCell { white-space: nowrap; }
-.rowActionBtn { text-transform: none !important; font-family: var(--font) !important; font-weight: 600 !important; }
-.totalsRow td { border-top: 1px solid rgba(var(--ink-rgb), 0.12); border-bottom: none; }
+
+.rowActionBtn {
+  text-transform: none !important;
+  font-family: var(--font) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+}
+
+.totalsRow td {
+  border-top: 1px solid rgba(var(--ink-rgb), 0.12);
+  border-bottom: none;
+  padding-top: 0.9rem;
+  color: var(--white);
+}
 
 .glassField :deep(.v-field) {
   border-radius: 10px !important;

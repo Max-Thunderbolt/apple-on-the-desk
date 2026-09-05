@@ -2,43 +2,57 @@
   <div class="container onboardingPage" :class="{ 'onboardingPage--child': isChild }">
     <div class="onboardingShell" :class="{ 'onboardingShell--child': isChild }">
       <TeacherNav v-if="!isChild" />
-    <div v-if="loading && !loaded" class="loadingState">
-      <v-progress-circular indeterminate color="primary" size="64" width="6" />
-      <span class="loadingText">Loading...</span>
-    </div>
 
-    <template v-else-if="config">
-      <div class="onboardingHeader">
-        <div class="title">
-          <span class="titleAccent">Tutorials</span>
-        </div>
-        <p class="onboardingSubtitle">
-          Walk through each section to learn how Apple On The Desk works.
-        </p>
+      <div v-if="loading && !loaded" class="loadingState">
+        <v-progress-circular indeterminate color="primary" size="64" width="6" />
+        <span class="loadingText">Loading...</span>
+      </div>
 
-        <div class="progressBarTutorials">
-          <div class="progressTrack">
-            <div class="progressFill" :style="{ width: progressPercent + '%' }" />
+      <template v-else-if="config">
+        <header class="onboardingHeader">
+          <div class="onboardingHeaderLeft">
+            <h1 class="onboardingTitle">
+              <span class="titleAccent">Tutorials</span>
+            </h1>
+            <p class="onboardingSubtitle">
+              Tutorials are currently being reworked to reflect the latest changes to the platform.
+              Thank you for your patience.
+            </p>
           </div>
-          <span class="progressLabel">{{ completedFieldCount }} of {{ totalFieldCount }} steps</span>
+        </header>
+
+        <div class="onboardingContent">
+          <div class="tutorialNotice">
+            <v-icon size="48" class="tutorialNoticeIcon">mdi-school-outline</v-icon>
+            <h2 class="tutorialNoticeTitle">Coming soon</h2>
+            <p class="tutorialNoticeText">
+              Step-by-step guides for points, shop, and groups will return here shortly.
+            </p>
+          </div>
+
+          <!--
+          <p v-if="searchQuery && !filteredCategories.length" class="noResults">
+            No results for "{{ searchQuery }}"
+          </p>
+
+          <div class="categoriesList">
+            <CategoryRenderer
+              v-for="category in filteredCategories"
+              :key="category.key"
+              :category="category"
+              :completed-field-keys="progress?.completedFieldKeys || []"
+              :start-expanded="category.key === focusedSection || !!searchQuery"
+              @toggle-field="handleToggleField"
+            />
+          </div>
+
+          <div class="searchBarContainer">
+            <FloatingSearchBar ref="searchBarRef" v-model="searchQuery" placeholder="Search tutorials" />
+          </div>
+          -->
         </div>
-      </div>
 
-      <p v-if="searchQuery && !filteredCategories.length" class="noResults">
-        No results for "{{ searchQuery }}"
-      </p>
-
-      <div class="categoriesList">
-        <CategoryRenderer v-for="category in filteredCategories" :key="category.key" :category="category"
-          :completed-field-keys="progress?.completedFieldKeys || []"
-          :start-expanded="category.key === focusedSection || !!searchQuery" @toggle-field="handleToggleField" />
-      </div>
-
-      <div class="searchBarContainer">
-        <FloatingSearchBar ref="searchBarRef" v-model="searchQuery" placeholder="Search tutorials" />
-      </div>
-      <div class="onboardingFooter">
-        <div class="footerActions">
+        <div class="onboardingFooter">
           <v-btn v-if="cameFromClass" class="homeButton" variant="flat" @click="$router.push(classRoute)">
             <v-icon start size="18">mdi-arrow-left</v-icon>
             Back to {{ className }}
@@ -47,20 +61,18 @@
             Back to Home
           </v-btn>
         </div>
-      </div>
-    </template>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useOnboarding } from '@/composables/useOnboarding'
-import CategoryRenderer from '@/components/tutorials/CategoryRenderer.vue'
 import TeacherNav from '@/components/navigation/TeacherNav.vue'
-import FloatingSearchBar from '@/components/common/FloatingSearchBar.vue'
+// import CategoryRenderer from '@/components/tutorials/CategoryRenderer.vue'
+// import FloatingSearchBar from '@/components/common/FloatingSearchBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -87,13 +99,7 @@ const isChild = computed(() => props.isChild)
 const className = computed(() => route.query.className || 'Classes')
 const classId = computed(() => route.query.classId || null)
 const cameFromClass = computed(() => !!classId.value && className.value !== 'Classes')
-const classRoute = computed(() => cameFromClass.value ? `/Class/${classId.value}` : '/')
-
-// watch(isChild, (newVal) => {
-//   if (newVal) {
-//     router.push('/Teacher')
-//   }
-// })
+const classRoute = computed(() => (cameFromClass.value ? `/Class/${classId.value}` : '/'))
 
 const inClassCategories = ['points', 'shop', 'groups_and_students']
 
@@ -120,11 +126,11 @@ const sortedCategories = computed(() => {
 
   if (!cameFromClass.value) return cats
 
-  return cats.map(cat => {
+  return cats.map((cat) => {
     if (!inClassCategories.includes(cat.key)) return cat
     return {
       ...cat,
-      fields: cat.fields.map(field => ({
+      fields: cat.fields.map((field) => ({
         ...field,
         route: categoryRouteMap[cat.key]?.(classId.value) || field.route,
         routeLabel: categoryRouteLabelMap[cat.key]?.(className.value),
@@ -167,14 +173,14 @@ const SYNONYMS = {
 }
 
 function extractKeywords(query) {
-  return query.toLowerCase().split(/\s+/).filter(w => w.length > 1 && !STOP_WORDS.has(w))
+  return query.toLowerCase().split(/\s+/).filter((w) => w.length > 1 && !STOP_WORDS.has(w))
 }
 
 function scoreFieldMatch(field, cat, keywords) {
   const primary = [field.name, field.key].join(' ').toLowerCase()
   const context = [cat.name, cat.key].join(' ').toLowerCase()
-  const sectionContent = (field.sections || []).flatMap(s =>
-    [s.label || '', s.warningText || '', ...(s.steps || [])]
+  const sectionContent = (field.sections || []).flatMap((s) =>
+    [s.label || '', s.warningText || '', ...(s.steps || [])],
   )
   const secondary = [
     field.description || '',
@@ -189,9 +195,9 @@ function scoreFieldMatch(field, cat, keywords) {
 
   for (const kw of keywords) {
     const variants = [kw, ...(SYNONYMS[kw] || [])]
-    const inPrimary = variants.some(v => primary.includes(v))
-    const inContext = variants.some(v => context.includes(v))
-    const inSecondary = variants.some(v => secondary.includes(v))
+    const inPrimary = variants.some((v) => primary.includes(v))
+    const inContext = variants.some((v) => context.includes(v))
+    const inSecondary = variants.some((v) => secondary.includes(v))
 
     if (inPrimary) {
       score += 10
@@ -206,7 +212,7 @@ function scoreFieldMatch(field, cat, keywords) {
     }
   }
 
-  return (allMatched && anyPrimaryMatch) ? score : 0
+  return allMatched && anyPrimaryMatch ? score : 0
 }
 
 const filteredCategories = computed(() => {
@@ -224,7 +230,7 @@ const filteredCategories = computed(() => {
     }
 
     const scored = cat.fields
-      .map(f => {
+      .map((f) => {
         if (f.name.toLowerCase().includes(q)) return { field: f, score: 100 }
         if (!keywords.length) return null
         const s = scoreFieldMatch(f, cat, keywords)
@@ -235,14 +241,14 @@ const filteredCategories = computed(() => {
 
     if (scored.length) {
       scoredFieldMatches.push({
-        cat: { ...cat, fields: scored.map(s => s.field) },
+        cat: { ...cat, fields: scored.map((s) => s.field) },
         topScore: scored[0].score,
       })
     }
   }
 
   scoredFieldMatches.sort((a, b) => b.topScore - a.topScore)
-  return [...categoryMatches, ...scoredFieldMatches.map(s => s.cat)]
+  return [...categoryMatches, ...scoredFieldMatches.map((s) => s.cat)]
 })
 
 const progressPercent = computed(() => {
@@ -262,8 +268,8 @@ async function handleToggleField(fieldKey) {
 function autoCompleteCategories() {
   if (!config.value || !progress.value) return
   for (const cat of config.value.categories) {
-    const allDone = cat.fields.every(f =>
-      progress.value.completedFieldKeys?.includes(f.key)
+    const allDone = cat.fields.every((f) =>
+      progress.value.completedFieldKeys?.includes(f.key),
     )
     if (allDone && !progress.value.completedCategoryKeys?.includes(cat.key)) {
       const keys = new Set(progress.value.completedCategoryKeys || [])
@@ -298,7 +304,6 @@ onMounted(async () => {
   padding-top: 1rem;
   padding-bottom: 3rem;
   gap: 0;
-  border-radius: 16px;
 }
 
 .onboardingPage--child {
@@ -313,6 +318,9 @@ onMounted(async () => {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .onboardingShell--child {
@@ -340,52 +348,79 @@ onMounted(async () => {
 }
 
 .onboardingHeader {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
   width: 100%;
-  max-width: 700px;
-  padding: 1rem 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.onboardingHeaderLeft {
+  min-width: 0;
+  flex: 1;
+}
+
+.onboardingTitle {
+  font-family: var(--font);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 0.35rem;
 }
 
 .onboardingSubtitle {
   font-family: var(--font);
-  font-size: clamp(0.95rem, 2vw, 1.1rem);
-  color: rgba(var(--ink-rgb), 0.65);
-  text-align: center;
+  font-size: 0.95rem;
+  color: rgba(var(--ink-rgb), 0.7);
   margin: 0;
+  max-width: 36rem;
+  line-height: 1.45;
 }
 
-.progressBarTutorials {
+.onboardingContent {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
+  align-items: stretch;
+  gap: 1rem;
 }
 
-.progressTrack {
+.tutorialNotice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.65rem;
   width: 100%;
-  height: 8px;
-  background: rgba(var(--ink-rgb), 0.08);
-  border-radius: 100px;
-  overflow: hidden;
+  padding: 2.75rem 1.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
+  background: rgba(var(--ink-rgb), 0.04);
+  backdrop-filter: blur(12px);
 }
 
-.progressFill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--freshSky), var(--seaGreen));
-  border-radius: 100px;
-  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+.tutorialNoticeIcon {
+  color: rgba(var(--freshSky-rgb), 0.75);
+  margin-bottom: 0.25rem;
 }
 
-.progressLabel {
+.tutorialNoticeTitle {
   font-family: var(--font);
-  font-size: 0.8rem;
-  color: rgba(var(--ink-rgb), 0.5);
-  text-align: right;
+  font-size: 1.35rem;
   font-weight: 600;
+  color: var(--white);
+  margin: 0;
+}
+
+.tutorialNoticeText {
+  font-family: var(--font);
+  font-size: 0.95rem;
+  color: rgba(var(--ink-rgb), 0.65);
+  margin: 0;
+  max-width: 28rem;
+  line-height: 1.45;
 }
 
 .categoriesList {
@@ -393,8 +428,6 @@ onMounted(async () => {
   flex-direction: column;
   gap: 0.75rem;
   width: 100%;
-  max-width: 700px;
-  padding: 1.5rem 1rem;
 }
 
 .onboardingFooter {
@@ -402,9 +435,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  padding: 1rem;
+  padding: 1.75rem 0 0;
   width: 100%;
-  max-width: 700px;
 }
 
 .searchBarContainer {
@@ -413,32 +445,9 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* gap: 0.75rem; */
-  padding: 1rem;
-  /* width: 100%; */
-  height: 75%;
-  max-width: 700px;
-  /* padding-top: 2rem; */
+  padding: 1rem 0;
+  width: 100%;
   z-index: 10;
-}
-
-.footerActions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.skipButton {
-  font-family: var(--font) !important;
-  text-transform: none !important;
-  font-weight: 600 !important;
-  color: rgba(var(--ink-rgb), 0.5) !important;
-  border-radius: 14px !important;
-}
-
-.skipButton:hover {
-  color: var(--white) !important;
 }
 
 .homeButton {
@@ -455,6 +464,7 @@ onMounted(async () => {
 }
 
 .searchBarContainer :deep(.floatingSearchBar) {
+  width: 100%;
   max-width: 700px;
 }
 

@@ -34,6 +34,8 @@ declare module 'vue' {
     HelpButton: typeof import('./src/components/navigation/helpButton.vue')['default']
     Home: typeof import('./src/components/Home.vue')['default']
     MyClassInsights: typeof import('./src/components/teacher/MyClassInsights.vue')['default']
+    PurchaseHistoryModal: typeof import('./src/components/modals/PurchaseHistoryModal.vue')['default']
+    PurchaseReceiptModal: typeof import('./src/components/modals/PurchaseReceiptModal.vue')['default']
     PwaInstallPrompt: typeof import('./src/components/common/PwaInstallPrompt.vue')['default']
     PwaUpdatePrompt: typeof import('./src/components/common/PwaUpdatePrompt.vue')['default']
     RankBadge: typeof import('./src/components/common/RankBadge.vue')['default']

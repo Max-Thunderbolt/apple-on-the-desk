@@ -83,10 +83,10 @@ export function useShopSelection(shopCostRef) {
                 const studentIds = selected.map(s => s.id);
                 const res = await purchaseItemsApi(classId, studentIds, selectedShopItemIds);
                 selectedStudents.value = [];
-                onPurchaseSuccess?.(res.students);
+                onPurchaseSuccess?.(res);
                 toast.success('Purchase completed', {
                     description: `Deducted ${formatCost(res.totalCost ?? totalCost)}`,
-                    duration: 3000,
+                    duration: 2500,
                 });
             } catch (err) {
                 console.error('Failed to checkout', err);

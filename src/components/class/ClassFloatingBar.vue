@@ -65,6 +65,25 @@
                 @update:model-value="emit('update:searchQuery', $event)"
             />
 
+            <Transition name="dock-timer-chip">
+                <button
+                    v-if="showCollapsedTimer"
+                    type="button"
+                    class="dockTimerChip"
+                    :aria-label="`Timer ${timerDisplay} remaining`"
+                    :title="`Timer ${timerDisplay}`"
+                    @click.stop="openTimerFromCollapsed"
+                >
+                    <span class="dockTimerChipBody">
+                        <v-icon size="16" class="dockTimerChipIcon">mdi-timer-outline</v-icon>
+                        <span class="dockTimerChipTime">{{ timerDisplay }}</span>
+                    </span>
+                    <span class="dockTimerChipTrack" aria-hidden="true">
+                        <span class="dockTimerChipFill" :style="{ width: `${timerProgress}%` }" />
+                    </span>
+                </button>
+            </Transition>
+
             <button
                 type="button"
                 class="dockLauncher"
@@ -74,7 +93,6 @@
                 @click.stop="toggleDock"
             >
                 <v-icon size="20">{{ dockExpanded ? 'mdi-close' : 'mdi-apps' }}</v-icon>
-                <span v-if="timerRunning && !dockExpanded" class="dockLauncherDot" aria-hidden="true" />
             </button>
         </div>
     </div>
@@ -113,6 +131,7 @@ const emit = defineEmits([
     'update:viewMode',
     'viewShop',
     'createShopItem',
+    'viewReceipts',
     'awardClassPoints',
     'createGroups',
     'selectAll',
@@ -128,12 +147,14 @@ const dockExpanded = ref(false);
 const timerPanelOpen = ref(false);
 const timerIsRunning = ref(false);
 const timerDisplay = ref('');
+const timerProgress = ref(0);
 
 const searchPlaceholder = computed(() =>
     props.viewShopModal ? 'Search shop' : 'Search',
 );
 
 const timerRunning = computed(() => timerIsRunning.value);
+const showCollapsedTimer = computed(() => timerRunning.value && !dockExpanded.value);
 
 const dockActions = computed(() => {
     const actions = [
@@ -185,6 +206,15 @@ const dockActions = computed(() => {
             highlight: props.shopEmpty,
             showDot: false,
         });
+        actions.splice(2, 0, {
+            key: 'receipts',
+            label: 'View receipts',
+            shortLabel: 'Receipts',
+            icon: 'mdi-receipt-text-outline',
+            active: false,
+            highlight: false,
+            showDot: false,
+        });
     }
 
     if (props.hasStudents && props.hasGroups) {
@@ -222,6 +252,13 @@ function toggleDock() {
     }
 }
 
+function openTimerFromCollapsed() {
+    dockExpanded.value = true;
+    timerPanelOpen.value = true;
+    timerRef.value?.openPanel?.();
+    requestAnimationFrame(updateBarHeight);
+}
+
 function collapseDock() {
     dockExpanded.value = false;
     closeDockPanels();
@@ -247,6 +284,10 @@ function onOrbClick(action) {
         break;
     case 'create':
         emit('createShopItem');
+        collapseDock();
+        break;
+    case 'receipts':
+        emit('viewReceipts');
         collapseDock();
         break;
     case 'groups':
@@ -331,6 +372,8 @@ onMounted(() => {
         timerIsRunning.value = running?.value ?? running ?? false;
         const time = timerRef.value?.formattedTime;
         timerDisplay.value = time?.value ?? time ?? '';
+        const prog = timerRef.value?.progress;
+        timerProgress.value = prog?.value ?? prog ?? 0;
     };
     syncTimerRunning();
     timerSyncInterval = setInterval(syncTimerRunning, 500);
@@ -446,16 +489,84 @@ defineExpose({ searchRef, timerRef });
     border-color: rgba(var(--seaGreen-rgb), 0.45);
 }
 
-.dockLauncherDot {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--seaGreen);
-    box-shadow: 0 0 8px rgba(var(--seaGreen-rgb), 0.9);
-    animation: pulseDot 1.5s ease-in-out infinite;
+.dockTimerChip {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: 0.28rem;
+    height: 44px;
+    min-width: 5.6rem;
+    padding: 0.4rem 0.7rem 0.38rem;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--seaGreen-rgb), 0.28);
+    background:
+        linear-gradient(180deg, rgba(var(--seaGreen-rgb), 0.16), rgba(var(--seaGreen-rgb), 0.06)),
+        rgba(var(--ink-rgb), 0.14);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: var(--white);
+    box-shadow: 0 8px 32px rgba(var(--shadow-rgb), 0.3);
+    cursor: pointer;
+    transition:
+        transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1),
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.dockTimerChip:hover {
+    transform: translateY(-1px) scale(1.03);
+    border-color: rgba(var(--seaGreen-rgb), 0.48);
+    background:
+        linear-gradient(180deg, rgba(var(--seaGreen-rgb), 0.24), rgba(var(--seaGreen-rgb), 0.1)),
+        rgba(var(--ink-rgb), 0.16);
+    box-shadow: 0 12px 36px rgba(var(--shadow-rgb), 0.36);
+}
+
+.dockTimerChip:active {
+    transform: scale(0.98);
+}
+
+.dockTimerChipBody {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.28rem;
+    line-height: 1;
+}
+
+.dockTimerChipIcon {
+    color: var(--seaGreen);
+    flex-shrink: 0;
+    opacity: 0.95;
+}
+
+.dockTimerChipTime {
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    line-height: 1;
+}
+
+.dockTimerChipTrack {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(var(--shadow-rgb), 0.28);
+}
+
+.dockTimerChipFill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(var(--seaGreen-rgb), 0.75), var(--seaGreen));
+    transition: width 1s linear;
 }
 
 .dockOrb {
@@ -506,6 +617,7 @@ defineExpose({ searchRef, timerRef });
 .dockOrb--groups .dockOrbIconWrap { color: orange; }
 .dockOrb--points .dockOrbIconWrap { color: var(--gold, gold); }
 .dockOrb--create .dockOrbIconWrap { color: var(--seaGreen); }
+.dockOrb--receipts .dockOrbIconWrap { color: var(--freshSky); }
 .dockOrb--view .dockOrbIconWrap { color: var(--white); }
 
 .dockOrbLabel {
@@ -651,11 +763,6 @@ defineExpose({ searchRef, timerRef });
     }
 }
 
-@keyframes pulseDot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.6; transform: scale(0.85); }
-}
-
 .dock-panel-enter-active,
 .dock-panel-leave-active {
     transition: opacity 0.2s ease, transform 0.22s ease;
@@ -667,6 +774,20 @@ defineExpose({ searchRef, timerRef });
     transform: translateY(8px);
 }
 
+.dock-timer-chip-enter-active {
+    transition: opacity 0.28s ease, transform 0.34s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.dock-timer-chip-leave-active {
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.dock-timer-chip-enter-from,
+.dock-timer-chip-leave-to {
+    opacity: 0;
+    transform: scale(0.82);
+}
+
 :root[data-theme='light'] .dockLauncher,
 :root[data-theme='light'] .dockOrbIconWrap,
 :root[data-theme='light'] .dockCheckout {
@@ -674,6 +795,26 @@ defineExpose({ searchRef, timerRef });
     border-color: rgba(13, 37, 48, 0.12);
     box-shadow: 0 10px 32px rgba(13, 37, 48, 0.14);
     color: rgba(13, 37, 48, 0.88);
+}
+
+:root[data-theme='light'] .dockTimerChip {
+    color: rgba(13, 37, 48, 0.88);
+    border-color: rgba(var(--seaGreen-rgb), 0.32);
+    background:
+        linear-gradient(180deg, rgba(var(--seaGreen-rgb), 0.14), rgba(255, 255, 255, 0.55)),
+        rgba(255, 255, 255, 0.72);
+    box-shadow: 0 10px 32px rgba(13, 37, 48, 0.12);
+}
+
+:root[data-theme='light'] .dockTimerChip:hover {
+    border-color: rgba(var(--seaGreen-rgb), 0.48);
+    background:
+        linear-gradient(180deg, rgba(var(--seaGreen-rgb), 0.2), rgba(255, 255, 255, 0.65)),
+        rgba(255, 255, 255, 0.8);
+}
+
+:root[data-theme='light'] .dockTimerChipTrack {
+    background: rgba(13, 37, 48, 0.1);
 }
 
 :root[data-theme='light'] .dockOrbLabel,

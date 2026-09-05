@@ -18,7 +18,8 @@
                     <p class="welcomeAlertText">Create your first class to start awarding points.</p>
                     <div class="welcomeAlertActions">
                         <v-btn size="small" class="welcomeAlertBtn" @click="openAddClassModal">Create class</v-btn>
-                        <v-btn size="small" variant="text" class="welcomeSkipBtn" @click="dismissWelcomeBanner">Skip for now</v-btn>
+                        <v-btn size="small" variant="text" class="welcomeSkipBtn" @click="dismissWelcomeBanner">Skip for
+                            now</v-btn>
                     </div>
                 </div>
             </v-alert>

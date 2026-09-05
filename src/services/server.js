@@ -202,6 +202,16 @@ class Server {
         }
     }
 
+    async getClassPurchases(classId) {
+        try {
+            const response = await this.http.get(`/classes/${classId}/purchases`)
+            return response.data
+        } catch (error) {
+            console.error('Error fetching class purchases:', error)
+            throw error
+        }
+    }
+
     async awardPoints(classId, categoryId, selectedStudentIds, isForGroup = false) {
         try {
             const response = await this.http.post(`/classes/${classId}/award-points`, {
@@ -506,6 +516,74 @@ class Server {
             return response.data
         } catch (error) {
             console.error('Error deleting student:', error)
+            throw error
+        }
+    }
+
+    async getClassStudents(classId) {
+        try {
+            const response = await this.http.get(`/classes/${encodeURIComponent(classId)}/students`)
+            return response.data
+        } catch (error) {
+            console.error('Error listing class students:', error)
+            throw error
+        }
+    }
+
+    async addClassStudents(classId, payload) {
+        try {
+            const response = await this.http.post(`/classes/${encodeURIComponent(classId)}/students`, payload)
+            return response.data
+        } catch (error) {
+            console.error('Error adding class students:', error)
+            throw error
+        }
+    }
+
+    async syncClassStudents(classId, students) {
+        try {
+            const response = await this.http.put(`/classes/${encodeURIComponent(classId)}/students`, {
+                students,
+            })
+            return response.data
+        } catch (error) {
+            console.error('Error syncing class students:', error)
+            throw error
+        }
+    }
+
+    async patchStudent(studentId, data) {
+        try {
+            const response = await this.http.patch(
+                `/students/${encodeURIComponent(studentId)}`,
+                data
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error updating student:', error)
+            throw error
+        }
+    }
+
+    async deleteStudentById(studentId) {
+        try {
+            const response = await this.http.delete(`/students/${encodeURIComponent(studentId)}`)
+            return response.data
+        } catch (error) {
+            console.error('Error deleting student:', error)
+            throw error
+        }
+    }
+
+    async moveStudent(studentId, targetClassId) {
+        try {
+            const response = await this.http.post(
+                `/students/${encodeURIComponent(studentId)}/move`,
+                { targetClassId }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error moving student:', error)
             throw error
         }
     }

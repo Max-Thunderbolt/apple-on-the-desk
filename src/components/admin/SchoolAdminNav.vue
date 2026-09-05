@@ -27,6 +27,7 @@ const { teacherSchools } = useUserProfile()
 const items = computed(() => {
   const nav = [
     { path: '/SchoolAdminOnboarding', label: 'Teachers', icon: 'mdi-account-plus-outline' },
+    { path: '/SchoolAdminStudents', label: 'Students', icon: 'mdi-account-group-outline' },
     { path: '/SchoolAdminDashboard', label: 'Dashboard', icon: 'mdi-google-classroom' },
     { path: '/SchoolAdminOverview', label: 'Overview', icon: 'mdi-view-dashboard-outline' },
   ]
