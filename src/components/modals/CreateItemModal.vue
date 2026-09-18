@@ -8,7 +8,7 @@
             <v-card-subtitle v-if="subtitle" class="createItemDialogSubtitle">
                 {{ subtitle }}
             </v-card-subtitle>
-            <v-card-text class="createItemDialogContent">
+            <v-card-text class="createItemDialogContent createItemDialogContent--scrollable">
                 <div class="formGroup">
                     <label class="formLabel">Name</label>
                     <input v-model="name" type="text" class="formInput" :placeholder="namePlaceholder" maxlength="120" />
@@ -25,7 +25,7 @@
                 </div>
                 <p v-if="submitError" class="formError">{{ submitError }}</p>
             </v-card-text>
-            <v-card-actions>
+            <v-card-actions class="createItemDialogActions createItemDialogActions--sticky">
                 <v-spacer />
                 <div class="createItemDialogButtons">
                     <v-btn class="cancelButton" variant="text" @click="closeDialog" :disabled="submitting">Cancel</v-btn>
@@ -189,6 +189,9 @@ async function submit() {
     border-radius: 25px;
     border: 1px solid var(--white);
     padding: 0 0 0.5rem;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
 }
 
 .createItemDialogTitle {
@@ -198,6 +201,7 @@ async function submit() {
     color: var(--white);
     text-align: center;
     padding: 0.5rem 0;
+    flex-shrink: 0;
 }
 
 .createItemDialogSubtitle {
@@ -210,10 +214,29 @@ async function submit() {
     text-align: center;
     padding: 0.5rem 0;
     border-bottom: 1px solid var(--white);
+    flex-shrink: 0;
 }
 
 .createItemDialogContent {
     padding-top: 1rem;
+}
+
+.createItemDialogContent--scrollable {
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.createItemDialogActions {
+    padding: 0.75rem 1rem 0.5rem !important;
+}
+
+.createItemDialogActions--sticky {
+    position: sticky;
+    bottom: 0;
+    background: var(--inkBlack);
+    border-top: 1px solid rgba(var(--ink-rgb), 0.15);
+    z-index: 10;
+    flex-shrink: 0;
 }
 
 .formGroup {

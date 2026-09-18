@@ -11,6 +11,16 @@
                 </div>
             </header>
 
+            <ClassesFloatingBar
+                v-if="!classesLoading"
+                v-model:search-query="searchQuery"
+                v-model:sort-by="sortBy"
+                v-model:view-mode="viewMode"
+                :can-create-class="canCreateClass"
+                :has-classes="classes.length > 0"
+                @create-class="openAddClassModal"
+            />
+
             <v-alert v-if="showWelcomeBanner" type="success" variant="tonal" class="welcomeAlert" rounded="lg" closable
                 @click:close="dismissWelcomeBanner">
                 <div class="welcomeAlertBody">
@@ -146,12 +156,6 @@
             <award-points-modal v-model:pointsDialogOpen="awardPointsModalOpen"
                 v-model:selectedStudents="awardSelectedStudents" :all-students="awardClassStudents"
                 :class-id="awardClassId" scope="class" @studentsUpdated="onAwardPointsUpdated" />
-
-            <Teleport to="body">
-                <ClassesFloatingBar v-if="!classesLoading" v-model:search-query="searchQuery" v-model:sort-by="sortBy"
-                    v-model:view-mode="viewMode" :can-create-class="canCreateClass" :has-classes="classes.length > 0"
-                    @create-class="openAddClassModal" />
-            </Teleport>
         </div>
     </div>
 </template>
@@ -407,7 +411,7 @@ const navigateTo = (path) => {
     align-items: stretch;
     justify-content: flex-start !important;
     padding-top: 1rem;
-    padding-bottom: calc(var(--class-floating-bar-height, 100px) + 1.5rem);
+    padding-bottom: 3rem;
 }
 
 .classesShell {

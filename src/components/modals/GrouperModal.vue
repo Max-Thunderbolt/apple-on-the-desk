@@ -8,7 +8,7 @@
             <v-card-subtitle class="grouperDialogSubtitle">
                 Automatically divide students into groups
             </v-card-subtitle>
-            <v-card-text class="grouperDialogContent">
+            <v-card-text class="grouperDialogContent grouperDialogContent--scrollable">
                 <!-- Number of groups input -->
                 <div class="inputContainer">
                     <label class="inputLabel">Number of Groups</label>
@@ -70,7 +70,7 @@
                     <span class="loadingText">Generating groups...</span>
                 </div>
             </v-card-text>
-            <v-card-actions>
+            <v-card-actions class="grouperDialogActions grouperDialogActions--sticky">
                 <v-spacer />
                 <div class="grouperDialogButtons">
                     <v-btn class="cancelButton" variant="text" @click="closeDialog" :disabled="loading">
@@ -396,6 +396,9 @@ function closeDialog() {
     border-radius: 25px;
     border: 2px solid rgba(var(--amethyst-rgb), 0.1);
     box-shadow: 0 0 10px 0 rgba(var(--amethyst-rgb), 0.5);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
 }
 
 .grouperDialogTitle {
@@ -405,6 +408,7 @@ function closeDialog() {
     color: var(--white);
     text-align: center;
     padding: 1rem 0 0.5rem;
+    flex-shrink: 0;
 }
 
 .grouperDialogSubtitle {
@@ -416,10 +420,29 @@ function closeDialog() {
     text-align: center;
     padding: 0.5rem 1rem;
     border-bottom: 1px solid rgba(var(--ink-rgb), 0.2);
+    flex-shrink: 0;
 }
 
 .grouperDialogContent {
     padding: 1.5rem 1rem;
+}
+
+.grouperDialogContent--scrollable {
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.grouperDialogActions {
+    padding: 0.75rem 1rem 1rem !important;
+}
+
+.grouperDialogActions--sticky {
+    position: sticky;
+    bottom: 0;
+    background: var(--inkBlack);
+    border-top: 1px solid rgba(var(--ink-rgb), 0.15);
+    z-index: 10;
+    flex-shrink: 0;
 }
 
 .groupNameInput {

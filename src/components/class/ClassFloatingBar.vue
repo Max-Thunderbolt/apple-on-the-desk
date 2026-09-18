@@ -1,62 +1,35 @@
 <template>
-    <div class="classFloatingDock" ref="barRef" :class="{ 'classFloatingDock--expanded': dockExpanded }">
-        <Transition name="dock-panel">
-            <div v-if="viewShopModal" class="dockCheckout">
-                <button type="button" class="dockCheckoutChip" @click="emit('selectAll')">
+    <div class="classToolbar" ref="barRef">
+        <!-- Checkout panel (shown when in shop mode with selections) -->
+        <Transition name="toolbar-panel">
+            <div v-if="viewShopModal && (selectedCount > 0 || isAllSelected)" class="toolbarCheckout">
+                <button type="button" class="checkoutChip" @click="emit('selectAll')">
                     <v-icon size="16">{{ isAllSelected ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}</v-icon>
                     {{ isAllSelected ? 'Deselect' : 'Select all' }}
                 </button>
-                <span v-if="selectedCount > 0" class="dockCheckoutMeta">{{ selectedCount }}/{{ totalStudents }}</span>
-                <span class="dockCheckoutMeta">
+                <span v-if="selectedCount > 0" class="checkoutMeta">{{ selectedCount }}/{{ totalStudents }}</span>
+                <span class="checkoutMeta">
                     {{ formatCost(totalSelectedPoints) }}
                     <span v-if="!canAffordShop" class="checkoutShortfall"> · need {{ formatCost(pointsRemaining) }}</span>
                 </span>
-                <button type="button" class="dockCheckoutBtn" :disabled="!canCheckout" @click="emit('checkout')">
+                <button type="button" class="checkoutBtn" :disabled="!canCheckout" @click="emit('checkout')">
                     Checkout
                 </button>
             </div>
         </Transition>
 
-        <div class="dockTimerHost" :class="{ 'dockTimerHost--active': timerPanelOpen }">
+        <!-- Timer modal (shown when opened) -->
+        <div v-if="timerPanelOpen" class="toolbarTimerHost">
             <Timer
                 ref="timerRef"
                 variant="footer"
                 embedded
-                class="dockTimer"
+                class="toolbarTimer"
             />
         </div>
 
-        <div
-            class="dockOrbs"
-            :class="{ 'dockOrbs--visible': dockExpanded }"
-            role="toolbar"
-            aria-label="Class actions"
-            :aria-hidden="!dockExpanded"
-        >
-            <button
-                v-for="(action, index) in dockActions"
-                :key="action.key"
-                type="button"
-                class="dockOrb"
-                :tabindex="dockExpanded ? 0 : -1"
-                :class="[
-                    `dockOrb--${action.key}`,
-                    { 'dockOrb--active': action.active, 'dockOrb--highlight': action.highlight },
-                ]"
-                :style="{ '--orb-index': index }"
-                :aria-label="action.label"
-                :title="action.label"
-                @click.stop="onOrbClick(action)"
-            >
-                <span class="dockOrbIconWrap">
-                    <v-icon size="22">{{ action.icon }}</v-icon>
-                    <span v-if="action.showDot" class="dockOrbDot" aria-hidden="true" />
-                </span>
-                <span class="dockOrbLabel">{{ action.shortLabel }}</span>
-            </button>
-        </div>
-
-        <div class="dockBar" @click.stop>
+        <!-- Main toolbar -->
+        <div class="toolbarMain">
             <FloatingSearchBar
                 ref="searchRef"
                 compact
@@ -65,36 +38,42 @@
                 @update:model-value="emit('update:searchQuery', $event)"
             />
 
-            <Transition name="dock-timer-chip">
+            <div class="toolbarActions" role="toolbar" aria-label="Class actions">
                 <button
-                    v-if="showCollapsedTimer"
+                    v-for="action in toolbarActions"
+                    :key="action.key"
                     type="button"
-                    class="dockTimerChip"
-                    :aria-label="`Timer ${timerDisplay} remaining`"
-                    :title="`Timer ${timerDisplay}`"
-                    @click.stop="openTimerFromCollapsed"
+                    class="toolbarBtn"
+                    :class="[
+                        { 'toolbarBtn--active': action.active, 'toolbarBtn--highlight': action.highlight },
+                    ]"
+                    :aria-label="action.label"
+                    :title="action.label"
+                    @click="onActionClick(action)"
                 >
-                    <span class="dockTimerChipBody">
-                        <v-icon size="16" class="dockTimerChipIcon">mdi-timer-outline</v-icon>
-                        <span class="dockTimerChipTime">{{ timerDisplay }}</span>
-                    </span>
-                    <span class="dockTimerChipTrack" aria-hidden="true">
-                        <span class="dockTimerChipFill" :style="{ width: `${timerProgress}%` }" />
-                    </span>
+                    <v-icon size="18">{{ action.icon }}</v-icon>
+                    <span class="toolbarBtnLabel">{{ action.shortLabel }}</span>
+                    <span v-if="action.showDot" class="toolbarBtnDot" aria-hidden="true" />
                 </button>
-            </Transition>
-
-            <button
-                type="button"
-                class="dockLauncher"
-                :class="{ 'dockLauncher--open': dockExpanded }"
-                :aria-expanded="dockExpanded"
-                aria-label="Class actions"
-                @click.stop="toggleDock"
-            >
-                <v-icon size="20">{{ dockExpanded ? 'mdi-close' : 'mdi-apps' }}</v-icon>
-            </button>
+            </div>
         </div>
+
+        <!-- Inline timer display when running (collapsed) -->
+        <Transition name="toolbar-timer">
+            <div
+                v-if="showCollapsedTimer"
+                class="toolbarTimerChip"
+                :aria-label="`Timer ${timerDisplay} remaining`"
+                :title="`Timer ${timerDisplay}`"
+                @click="openTimerFromCollapsed"
+            >
+                <v-icon size="16" class="timerChipIcon">mdi-timer-outline</v-icon>
+                <span class="timerChipTime">{{ timerDisplay }}</span>
+                <span class="timerChipTrack" aria-hidden="true">
+                    <span class="timerChipFill" :style="{ width: `${timerProgress}%` }" />
+                </span>
+            </div>
+        </Transition>
     </div>
 </template>
 
@@ -103,7 +82,6 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import FloatingSearchBar from '@/components/common/FloatingSearchBar.vue';
 import Timer from '@/components/Timer.vue';
 import { useFormat } from '@/composables/useFormat';
-import { setClassFloatingBarHeight, clearClassFloatingBarHeight } from '@/composables/useClassFloatingBarHeight';
 
 const props = defineProps({
     searchQuery: { type: String, default: '' },
@@ -143,7 +121,6 @@ const { formatCost } = useFormat();
 const barRef = ref(null);
 const searchRef = ref(null);
 const timerRef = ref(null);
-const dockExpanded = ref(false);
 const timerPanelOpen = ref(false);
 const timerIsRunning = ref(false);
 const timerDisplay = ref('');
@@ -154,9 +131,9 @@ const searchPlaceholder = computed(() =>
 );
 
 const timerRunning = computed(() => timerIsRunning.value);
-const showCollapsedTimer = computed(() => timerRunning.value && !dockExpanded.value);
+const showCollapsedTimer = computed(() => timerRunning.value && !timerPanelOpen.value);
 
-const dockActions = computed(() => {
+const toolbarActions = computed(() => {
     const actions = [
         {
             key: 'shop',
@@ -232,47 +209,15 @@ const dockActions = computed(() => {
     return actions;
 });
 
-function blurSearch() {
-    searchRef.value?.inputRef?.blur?.();
-    if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-    }
-}
-
-function closeDockPanels() {
-    timerPanelOpen.value = false;
-    timerRef.value?.closePanel?.();
-    blurSearch();
-}
-
-function toggleDock() {
-    dockExpanded.value = !dockExpanded.value;
-    if (!dockExpanded.value) {
-        closeDockPanels();
-    }
-}
-
 function openTimerFromCollapsed() {
-    dockExpanded.value = true;
     timerPanelOpen.value = true;
     timerRef.value?.openPanel?.();
-    requestAnimationFrame(updateBarHeight);
 }
 
-function collapseDock() {
-    dockExpanded.value = false;
-    closeDockPanels();
-    requestAnimationFrame(() => {
-        updateBarHeight();
-        requestAnimationFrame(updateBarHeight);
-    });
-}
-
-function onOrbClick(action) {
+function onActionClick(action) {
     switch (action.key) {
     case 'shop':
         emit('viewShop');
-        collapseDock();
         break;
     case 'timer':
         timerPanelOpen.value = !timerPanelOpen.value;
@@ -284,19 +229,15 @@ function onOrbClick(action) {
         break;
     case 'create':
         emit('createShopItem');
-        collapseDock();
         break;
     case 'receipts':
         emit('viewReceipts');
-        collapseDock();
         break;
     case 'groups':
         emit('createGroups');
-        collapseDock();
         break;
     case 'points':
         emit('awardClassPoints');
-        collapseDock();
         break;
     case 'view':
         emit('update:viewMode', props.viewMode === 'list' ? 'groups' : 'list');
@@ -306,67 +247,9 @@ function onOrbClick(action) {
     }
 }
 
-function onDocumentClick(event) {
-    if (!dockExpanded.value && !timerPanelOpen.value) return;
-    const target = event.target;
-    if (barRef.value?.contains(target)) return;
-    collapseDock();
-}
-
-function setDocumentClickListening(shouldListen) {
-    if (shouldListen) {
-        document.addEventListener('click', onDocumentClick, true);
-    } else {
-        document.removeEventListener('click', onDocumentClick, true);
-    }
-}
-
-function isTypingTarget(el) {
-    if (!el) return false;
-    const tag = el.tagName?.toLowerCase();
-    return tag === 'input' || tag === 'textarea' || el.isContentEditable;
-}
-
-function onKeydown(event) {
-    if (event.key === 'Escape' && dockExpanded.value) {
-        collapseDock();
-        return;
-    }
-    if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return;
-    if (isTypingTarget(event.target)) return;
-    event.preventDefault();
-    searchRef.value?.focus();
-}
-
-function updateBarHeight() {
-    const height = barRef.value?.offsetHeight ?? 0;
-    document.documentElement.style.setProperty('--class-floating-bar-height', `${height}px`);
-    setClassFloatingBarHeight(height);
-}
-
-let resizeObserver = null;
 let timerSyncInterval = null;
 
-watch(() => props.viewShopModal, () => {
-    requestAnimationFrame(updateBarHeight);
-});
-
-watch(dockExpanded, (expanded) => {
-    setDocumentClickListening(expanded || timerPanelOpen.value);
-    requestAnimationFrame(updateBarHeight);
-});
-
-watch(timerPanelOpen, (open) => {
-    setDocumentClickListening(open || dockExpanded.value);
-});
-
 onMounted(() => {
-    window.addEventListener('keydown', onKeydown);
-    updateBarHeight();
-    if (typeof ResizeObserver !== 'undefined' && barRef.value) {
-        resizeObserver = new ResizeObserver(updateBarHeight);
-        resizeObserver.observe(barRef.value);
-    }
     const syncTimerRunning = () => {
         const running = timerRef.value?.isRunning;
         timerIsRunning.value = running?.value ?? running ?? false;
@@ -380,452 +263,297 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    window.removeEventListener('keydown', onKeydown);
-    setDocumentClickListening(false);
-    resizeObserver?.disconnect();
     if (timerSyncInterval) clearInterval(timerSyncInterval);
-    document.documentElement.style.removeProperty('--class-floating-bar-height');
-    clearClassFloatingBarHeight();
 });
 
 defineExpose({ searchRef, timerRef });
 </script>
 
 <style scoped>
-.classFloatingDock {
-    position: fixed;
-    bottom: calc(var(--floating-dock-bottom-offset, 1.5rem) + env(safe-area-inset-bottom, 0px));
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 900;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.65rem;
-    pointer-events: none;
-    background: transparent;
-    overflow: visible;
-}
-
-.dockBar,
-.dockCheckout {
-    pointer-events: auto;
-}
-
-.dockOrbs {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 0.65rem;
-    padding: 0 0.25rem;
-    max-height: 0;
-    opacity: 0;
-    transform: translateY(12px);
-    overflow: hidden;
-    pointer-events: none;
-    visibility: hidden;
-    transition:
-        opacity 0.22s ease,
-        transform 0.22s ease,
-        max-height 0.22s ease,
-        visibility 0s linear 0.22s;
-}
-
-.dockOrbs--visible {
-    max-height: 160px;
-    opacity: 1;
-    transform: translateY(0);
-    overflow: visible;
-    pointer-events: auto;
-    visibility: visible;
-    padding-top: 0.5rem;
-    padding-bottom: 0.15rem;
-    transition:
-        opacity 0.22s ease,
-        transform 0.22s ease,
-        max-height 0.22s ease,
-        visibility 0s linear 0s;
-}
-
-.dockOrbs--visible .dockOrb {
-    animation: orbIn 0.38s cubic-bezier(0.34, 1.4, 0.64, 1) both;
-    animation-delay: calc(var(--orb-index) * 45ms);
-}
-
-.dockBar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.dockLauncher {
+.classToolbar {
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    border: 1px solid rgba(var(--ink-rgb), 0.18);
-    background: rgba(var(--ink-rgb), 0.14);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    color: var(--white);
-    box-shadow: 0 8px 32px rgba(var(--shadow-rgb), 0.32);
-    cursor: pointer;
-    transition: transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1), background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.dockLauncher:hover {
-    transform: scale(1.06);
-    background: rgba(var(--ink-rgb), 0.22);
-    box-shadow: 0 12px 36px rgba(var(--shadow-rgb), 0.38);
-}
-
-.dockLauncher--open {
-    transform: rotate(90deg);
-    background: rgba(var(--seaGreen-rgb), 0.28);
-    border-color: rgba(var(--seaGreen-rgb), 0.45);
-}
-
-.dockTimerChip {
-    position: relative;
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: stretch;
-    gap: 0.28rem;
-    height: 44px;
-    min-width: 5.6rem;
-    padding: 0.4rem 0.7rem 0.38rem;
-    border-radius: 999px;
-    border: 1px solid rgba(var(--seaGreen-rgb), 0.28);
-    background:
-        linear-gradient(180deg, rgba(var(--seaGreen-rgb), 0.16), rgba(var(--seaGreen-rgb), 0.06)),
-        rgba(var(--ink-rgb), 0.14);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    color: var(--white);
-    box-shadow: 0 8px 32px rgba(var(--shadow-rgb), 0.3);
-    cursor: pointer;
-    transition:
-        transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1),
-        background 0.2s ease,
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-.dockTimerChip:hover {
-    transform: translateY(-1px) scale(1.03);
-    border-color: rgba(var(--seaGreen-rgb), 0.48);
-    background:
-        linear-gradient(180deg, rgba(var(--seaGreen-rgb), 0.24), rgba(var(--seaGreen-rgb), 0.1)),
-        rgba(var(--ink-rgb), 0.16);
-    box-shadow: 0 12px 36px rgba(var(--shadow-rgb), 0.36);
-}
-
-.dockTimerChip:active {
-    transform: scale(0.98);
-}
-
-.dockTimerChipBody {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.28rem;
-    line-height: 1;
-}
-
-.dockTimerChipIcon {
-    color: var(--seaGreen);
-    flex-shrink: 0;
-    opacity: 0.95;
-}
-
-.dockTimerChipTime {
-    font-family: var(--font);
-    font-size: 0.82rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
-    line-height: 1;
-}
-
-.dockTimerChipTrack {
-    display: block;
     width: 100%;
-    height: 3px;
-    border-radius: 999px;
-    overflow: hidden;
-    background: rgba(var(--shadow-rgb), 0.28);
-}
-
-.dockTimerChipFill {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, rgba(var(--seaGreen-rgb), 0.75), var(--seaGreen));
-    transition: width 1s linear;
-}
-
-.dockOrb {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.35rem;
-    background: transparent;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    overflow: visible;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    margin-bottom: 1rem;
 }
 
-.dockOrbIconWrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: 1px solid rgba(var(--ink-rgb), 0.16);
-    background: rgba(var(--ink-rgb), 0.14);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 10px 36px rgba(var(--shadow-rgb), 0.34);
-    color: var(--white);
-    transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-}
-
-.dockOrb:hover .dockOrbIconWrap {
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 16px 40px rgba(var(--shadow-rgb), 0.42);
-}
-
-.dockOrb--active .dockOrbIconWrap {
-    border-color: rgba(var(--seaGreen-rgb), 0.55);
-    background: rgba(var(--seaGreen-rgb), 0.22);
-}
-
-.dockOrb--highlight .dockOrbIconWrap {
-    animation: orbGlow 2s ease-in-out infinite;
-}
-
-.dockOrb--shop .dockOrbIconWrap { color: var(--freshSky); }
-.dockOrb--timer .dockOrbIconWrap { color: var(--seaGreen); }
-.dockOrb--groups .dockOrbIconWrap { color: orange; }
-.dockOrb--points .dockOrbIconWrap { color: var(--gold, gold); }
-.dockOrb--create .dockOrbIconWrap { color: var(--seaGreen); }
-.dockOrb--receipts .dockOrbIconWrap { color: var(--freshSky); }
-.dockOrb--view .dockOrbIconWrap { color: var(--white); }
-
-.dockOrbLabel {
-    font-family: var(--font);
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: var(--white);
-    opacity: 0.85;
-    letter-spacing: 0.02em;
-    text-shadow: 0 1px 6px rgba(var(--shadow-rgb), 0.6);
-    max-width: 56px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.dockOrbDot {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--seaGreen);
-    box-shadow: 0 0 6px rgba(var(--seaGreen-rgb), 0.9);
-}
-
-.dockTimerHost {
-    position: absolute;
-    bottom: calc(100% + 3.5rem);
-    left: 50%;
-    transform: translateX(-50%);
-    pointer-events: none;
-    width: 0;
-    height: 0;
-}
-
-.dockTimerHost--active {
-    pointer-events: auto;
-    width: auto;
-    height: auto;
-}
-
-.dockTimer {
-    pointer-events: none;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 0;
-}
-
-.dockTimerHost--active .dockTimer {
-    pointer-events: auto;
-}
-
-.dockTimer--hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    opacity: 0;
-    pointer-events: none;
-}
-
-.dockCheckout {
+.toolbarCheckout {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    max-width: min(92vw, 420px);
-    padding: 0.45rem 0.65rem;
-    border-radius: 999px;
-    border: 1px solid rgba(var(--ink-rgb), 0.16);
-    background: rgba(var(--ink-rgb), 0.12);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 8px 32px rgba(var(--shadow-rgb), 0.3);
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 14px;
+    border: 1px solid rgba(var(--ink-rgb), 0.15);
+    background: rgba(var(--ink-rgb), 0.05);
 }
 
-.dockCheckoutChip,
-.dockCheckoutBtn {
+.checkoutChip,
+.checkoutBtn {
     font-family: var(--font);
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--white);
-    border-radius: 999px;
+    border-radius: 10px;
     border: 1px solid rgba(var(--ink-rgb), 0.18);
-    background: rgba(var(--ink-rgb), 0.1);
-    padding: 0.35rem 0.65rem;
+    background: rgba(var(--ink-rgb), 0.08);
+    padding: 0.4rem 0.75rem;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    transition: background 0.15s ease;
+    gap: 0.3rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.dockCheckoutChip:hover,
-.dockCheckoutBtn:hover:not(:disabled) {
-    background: rgba(var(--seaGreen-rgb), 0.25);
+.checkoutChip:hover,
+.checkoutBtn:hover:not(:disabled) {
+    background: rgba(var(--seaGreen-rgb), 0.15);
+    border-color: rgba(var(--seaGreen-rgb), 0.3);
 }
 
-.dockCheckoutBtn {
-    background: rgba(var(--seaGreen-rgb), 0.35);
-    border-color: rgba(var(--seaGreen-rgb), 0.45);
+.checkoutBtn {
+    background: rgba(var(--seaGreen-rgb), 0.2);
+    border-color: rgba(var(--seaGreen-rgb), 0.35);
 }
 
-.dockCheckoutBtn:disabled {
-    opacity: 0.45;
+.checkoutBtn:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
-.dockCheckoutMeta {
+.checkoutMeta {
     font-family: var(--font);
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     font-weight: 500;
-    color: var(--white);
-    opacity: 0.85;
+    color: rgba(var(--ink-rgb), 0.75);
 }
 
 .checkoutShortfall {
     color: var(--intenseCherry);
 }
 
-@keyframes orbIn {
-    from {
-        opacity: 0;
-        transform: translateY(16px) scale(0.7);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+.toolbarTimerHost {
+    position: relative;
+    width: 100%;
 }
 
-@keyframes orbGlow {
+.toolbarTimer {
+    width: 100%;
+}
+
+.toolbarMain {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.toolbarMain :deep(.floatingSearchBar) {
+    flex: 1;
+    min-width: 180px;
+    max-width: 300px;
+}
+
+.toolbarActions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.toolbarBtn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.85rem;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(var(--ink-rgb), 0.7);
+    background: rgba(var(--ink-rgb), 0.04);
+    border: 1px solid rgba(var(--ink-rgb), 0.12);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toolbarBtn:hover {
+    background: rgba(var(--ink-rgb), 0.08);
+    border-color: rgba(var(--ink-rgb), 0.18);
+    color: rgba(var(--ink-rgb), 0.85);
+}
+
+.toolbarBtn--active {
+    background: rgba(26, 147, 111, 0.12);
+    border-color: rgba(26, 147, 111, 0.3);
+    color: var(--seaGreen);
+}
+
+.toolbarBtn--highlight {
+    animation: btnPulse 2s ease-in-out infinite;
+}
+
+.toolbarBtnLabel {
+    line-height: 1;
+}
+
+.toolbarBtnDot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--seaGreen);
+    box-shadow: 0 0 4px rgba(var(--seaGreen-rgb), 0.8);
+}
+
+.toolbarTimerChip {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: 0.3rem;
+    min-width: 100px;
+    padding: 0.45rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(var(--seaGreen-rgb), 0.3);
+    background: rgba(var(--seaGreen-rgb), 0.08);
+    color: rgba(var(--ink-rgb), 0.85);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toolbarTimerChip:hover {
+    border-color: rgba(var(--seaGreen-rgb), 0.4);
+    background: rgba(var(--seaGreen-rgb), 0.12);
+    transform: translateY(-1px);
+}
+
+.timerChipIcon {
+    color: var(--seaGreen);
+    flex-shrink: 0;
+    opacity: 0.95;
+}
+
+.timerChipTime {
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    text-align: center;
+}
+
+.timerChipTrack {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(var(--shadow-rgb), 0.2);
+}
+
+.timerChipFill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(var(--seaGreen-rgb), 0.7), var(--seaGreen));
+    transition: width 1s linear;
+}
+
+@keyframes btnPulse {
     0%, 100% {
-        box-shadow: 0 10px 36px rgba(var(--shadow-rgb), 0.34), 0 0 0 0 rgba(var(--seaGreen-rgb), 0.3);
+        box-shadow: 0 0 0 0 rgba(var(--seaGreen-rgb), 0.4);
     }
     50% {
-        box-shadow: 0 10px 36px rgba(var(--shadow-rgb), 0.34), 0 0 0 6px rgba(var(--seaGreen-rgb), 0.15);
+        box-shadow: 0 0 0 4px rgba(var(--seaGreen-rgb), 0);
     }
 }
 
-.dock-panel-enter-active,
-.dock-panel-leave-active {
-    transition: opacity 0.2s ease, transform 0.22s ease;
+.toolbar-panel-enter-active,
+.toolbar-panel-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.dock-panel-enter-from,
-.dock-panel-leave-to {
+.toolbar-panel-enter-from,
+.toolbar-panel-leave-to {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(-8px);
 }
 
-.dock-timer-chip-enter-active {
-    transition: opacity 0.28s ease, transform 0.34s cubic-bezier(0.34, 1.4, 0.64, 1);
+.toolbar-timer-enter-active {
+    transition: opacity 0.25s ease, transform 0.3s ease;
 }
 
-.dock-timer-chip-leave-active {
-    transition: opacity 0.18s ease, transform 0.18s ease;
+.toolbar-timer-leave-active {
+    transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.dock-timer-chip-enter-from,
-.dock-timer-chip-leave-to {
+.toolbar-timer-enter-from,
+.toolbar-timer-leave-to {
     opacity: 0;
-    transform: scale(0.82);
+    transform: scale(0.9);
 }
 
-:root[data-theme='light'] .dockLauncher,
-:root[data-theme='light'] .dockOrbIconWrap,
-:root[data-theme='light'] .dockCheckout {
-    background: rgba(255, 255, 255, 0.72);
+@media (max-width: 640px) {
+    .toolbarMain {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .toolbarMain :deep(.floatingSearchBar) {
+        max-width: none;
+    }
+
+    .toolbarActions {
+        justify-content: center;
+    }
+}
+
+:root[data-theme='light'] .toolbarCheckout {
+    background: rgba(255, 255, 255, 0.5);
     border-color: rgba(13, 37, 48, 0.12);
-    box-shadow: 0 10px 32px rgba(13, 37, 48, 0.14);
-    color: rgba(13, 37, 48, 0.88);
 }
 
-:root[data-theme='light'] .dockTimerChip {
-    color: rgba(13, 37, 48, 0.88);
-    border-color: rgba(var(--seaGreen-rgb), 0.32);
-    background:
-        linear-gradient(180deg, rgba(var(--seaGreen-rgb), 0.14), rgba(255, 255, 255, 0.55)),
-        rgba(255, 255, 255, 0.72);
-    box-shadow: 0 10px 32px rgba(13, 37, 48, 0.12);
+:root[data-theme='light'] .checkoutChip,
+:root[data-theme='light'] .checkoutBtn {
+    color: rgba(13, 37, 48, 0.85);
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(13, 37, 48, 0.15);
 }
 
-:root[data-theme='light'] .dockTimerChip:hover {
-    border-color: rgba(var(--seaGreen-rgb), 0.48);
-    background:
-        linear-gradient(180deg, rgba(var(--seaGreen-rgb), 0.2), rgba(255, 255, 255, 0.65)),
-        rgba(255, 255, 255, 0.8);
+:root[data-theme='light'] .checkoutMeta {
+    color: rgba(13, 37, 48, 0.7);
 }
 
-:root[data-theme='light'] .dockTimerChipTrack {
-    background: rgba(13, 37, 48, 0.1);
+:root[data-theme='light'] .toolbarBtn {
+    color: rgba(13, 37, 48, 0.7);
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(13, 37, 48, 0.12);
 }
 
-:root[data-theme='light'] .dockOrbLabel,
-:root[data-theme='light'] .dockCheckoutMeta {
-    color: rgba(13, 37, 48, 0.75);
-    text-shadow: none;
+:root[data-theme='light'] .toolbarBtn:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(13, 37, 48, 0.2);
+    color: rgba(13, 37, 48, 0.9);
 }
 
-:root[data-theme='light'] .dockCheckoutChip,
-:root[data-theme='light'] .dockCheckoutBtn {
-    color: rgba(13, 37, 48, 0.88);
-    background: rgba(13, 37, 48, 0.06);
+:root[data-theme='light'] .toolbarBtn--active {
+    background: rgba(26, 147, 111, 0.1);
+    border-color: rgba(26, 147, 111, 0.25);
+    color: rgba(26, 147, 111, 0.9);
+}
+
+:root[data-theme='light'] .toolbarTimerChip {
+    color: rgba(13, 37, 48, 0.85);
+    background: rgba(26, 147, 111, 0.06);
+    border-color: rgba(26, 147, 111, 0.25);
 }
 </style>

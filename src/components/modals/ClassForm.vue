@@ -2,7 +2,8 @@
     <div :class="['classFormWrapper', { 'inDialog': isEdit }]">
         <h1 class="pageTitle">{{ isEdit ? 'Edit class' : 'Add a Class' }}</h1>
 
-        <div class="addClassForm">
+        <div class="addClassForm addClassForm--flex">
+            <div class="formContent formContent--scrollable">
             <div v-if="!isEdit && schoolAdminSchools.length" class="formGroup">
                 <label class="formLabel">Create as</label>
                 <v-radio-group v-model="schoolAdminCreateMode" inline density="compact" hide-details class="radioRow">
@@ -42,7 +43,8 @@
             <p v-if="duplicateStudentNames.length" class="formWarning">Duplicate name(s): {{
                 duplicateStudentNames.join(', ') }}. Resolve duplicates to continue.</p>
             <p v-if="submitError" class="formError">{{ submitError }}</p>
-            <div class="formActions">
+            </div>
+            <div class="formActions formActions--sticky">
                 <v-btn class="cancelButton" @click="onCancel">
                     Cancel
                 </v-btn>
@@ -278,6 +280,20 @@ async function submit() {
     margin-bottom: 1rem;
 }
 
+.addClassForm--flex {
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+.formContent {
+    flex: 1 1 auto;
+}
+
+.formContent--scrollable {
+    overflow-y: auto;
+}
+
 @media (min-width: 768px) {
     .addClassForm {
         padding: 2rem;
@@ -355,6 +371,20 @@ async function submit() {
     gap: 1rem;
     justify-content: flex-end;
     margin-top: 1.5rem;
+}
+
+.formActions--sticky {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(135deg,
+            var(--color-surface-elevated) 0%,
+            var(--color-surface) 50%,
+            var(--color-surface-elevated) 100%);
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+    margin-top: 0;
+    z-index: 10;
+    flex-shrink: 0;
 }
 
 .cancelButton,
