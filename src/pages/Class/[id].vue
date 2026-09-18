@@ -8,7 +8,7 @@
                     <span class="dataLoadingText">Loading class...</span>
                 </div>
             </div>
-            <div v-else class="classPageContent classPageContent--withFooter">
+            <div v-else class="classPageContent">
         <!-- ROYAL RANK HEADER -->
         <div
             ref="rankAnchorRef"
@@ -50,6 +50,30 @@
             </div>
         </div>
         <div class="classContent">
+            <ClassFloatingBar
+                v-if="!dataLoading && classData"
+                v-model:search-query="searchQuery"
+                v-model:view-mode="viewMode"
+                :view-shop-modal="viewShopModal"
+                :has-groups="hasGroups"
+                :has-existing-groups="hasExistingGroups"
+                :has-students="hasStudents"
+                :shop-empty="shopItems.length === 0"
+                :is-all-selected="isAllSelected"
+                :selected-count="shopSelectedStudents.length"
+                :total-students="totalStudentCount"
+                :total-selected-points="totalSelectedPoints"
+                :points-remaining="pointsRemaining"
+                :can-afford-shop="canAffordShop"
+                :can-checkout="canCheckout"
+                @view-shop="viewShop()"
+                @create-shop-item="openCreateShopItemModal"
+                @view-receipts="openPurchaseHistory"
+                @award-class-points="handleAwardClassPoints"
+                @create-groups="handleCreateGroups"
+                @select-all="handleSelectAll"
+                @checkout="handleCheckout"
+            />
             <!-- SHOP -->
             <div v-show="viewShopModal" class="shopModal">
                 <Shop :shopItems="filteredShopItems" @cost-updated="onCostUpdated" @selection-updated="onShopSelectionUpdated"
@@ -73,33 +97,6 @@
                 @purchase-completed="onPurchaseCompleted" />
         </div>
             </div>
-
-            <Teleport to="body">
-                <ClassFloatingBar
-                    v-if="!dataLoading && classData"
-                    v-model:search-query="searchQuery"
-                    v-model:view-mode="viewMode"
-                    :view-shop-modal="viewShopModal"
-                    :has-groups="hasGroups"
-                    :has-existing-groups="hasExistingGroups"
-                    :has-students="hasStudents"
-                    :shop-empty="shopItems.length === 0"
-                    :is-all-selected="isAllSelected"
-                    :selected-count="shopSelectedStudents.length"
-                    :total-students="totalStudentCount"
-                    :total-selected-points="totalSelectedPoints"
-                    :points-remaining="pointsRemaining"
-                    :can-afford-shop="canAffordShop"
-                    :can-checkout="canCheckout"
-                    @view-shop="viewShop()"
-                    @create-shop-item="openCreateShopItemModal"
-                    @view-receipts="openPurchaseHistory"
-                    @award-class-points="handleAwardClassPoints"
-                    @create-groups="handleCreateGroups"
-                    @select-all="handleSelectAll"
-                    @checkout="handleCheckout"
-                />
-            </Teleport>
 
             <award-points-modal v-model:pointsDialogOpen="awardClassPointsModal" v-model:selectedStudents="selectedStudents"
                 :all-students="classData?.students || []" :class-id="id" scope="class" @studentsUpdated="onStudentsUpdated" />
@@ -579,10 +576,6 @@ function handleCreateGroups() {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-}
-
-.classPageContent--withFooter {
-    padding-bottom: calc(var(--class-floating-bar-height, 100px) + 1.5rem);
 }
 
 .searchResultHint {

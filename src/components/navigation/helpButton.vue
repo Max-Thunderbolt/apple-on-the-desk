@@ -6,7 +6,7 @@
     >
         <div v-if="showTutorialTip" class="tutorialTip">
             <p class="tutorialTipText">
-                Open this menu for tutorials and theme settings.
+                Open this menu for theme settings.
             </p>
             <button type="button" class="tutorialTipGotIt" @click="dismissTutorialTip">Got it</button>
         </div>
@@ -32,39 +32,6 @@
 
             <div class="helpMenu" role="menu">
                 <template v-if="panel === 'main'">
-                    <button type="button" class="helpMenuItem" role="menuitem" @click="onTutorialsClick">
-                        <v-icon size="18">mdi-school-outline</v-icon>
-                        <span>Tutorials</span>
-                    </button>
-                    <button type="button" class="helpMenuItem" role="menuitem" @click="panel = 'theme'">
-                        <v-icon size="18">{{ themeIcon }}</v-icon>
-                        <span>Theme</span>
-                        <v-icon size="16" class="helpMenuChevron">mdi-chevron-right</v-icon>
-                    </button>
-                </template>
-
-                <template v-else-if="panel === 'tutorials'">
-                    <button type="button" class="helpMenuItem helpMenuBack" @click="panel = 'main'">
-                        <v-icon size="18">mdi-chevron-left</v-icon>
-                        <span>Tutorials</span>
-                    </button>
-                    <button
-                        v-for="cat in incompleteCategories"
-                        :key="cat.key"
-                        type="button"
-                        class="helpMenuItem"
-                        role="menuitem"
-                        @click="openTutorial(cat.key)"
-                    >
-                        <span>{{ cat.name }}</span>
-                    </button>
-                </template>
-
-                <template v-else-if="panel === 'theme'">
-                    <button type="button" class="helpMenuItem helpMenuBack" @click="panel = 'main'">
-                        <v-icon size="18">mdi-chevron-left</v-icon>
-                        <span>Theme</span>
-                    </button>
                     <button
                         v-for="mode in themeOptions"
                         :key="mode.value"
@@ -86,8 +53,6 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { useOnboarding } from '@/composables/useOnboarding';
 import { useTheme } from '@/composables/useTheme';
 
 const TUTORIAL_TIP_STORAGE_KEY = 'apple-on-the-desk-tutorial-tip-dismissed';
@@ -99,8 +64,6 @@ const props = defineProps({
     alignWithDock: { type: Boolean, default: false },
 });
 
-const router = useRouter();
-const { config, progress, loadOnboarding } = useOnboarding();
 const { themeMode, setThemeMode } = useTheme();
 
 const menuOpen = ref(false);
@@ -112,38 +75,6 @@ const themeOptions = [
     { value: 'light', label: 'Light', icon: 'mdi-white-balance-sunny' },
     { value: 'dark', label: 'Dark', icon: 'mdi-weather-night' },
 ];
-
-const themeIcon = computed(() => {
-    const option = themeOptions.find((item) => item.value === themeMode.value);
-    return option?.icon ?? 'mdi-monitor';
-});
-
-const incompleteCategories = computed(() => {
-    if (!config.value || !progress.value) return [];
-    const completed = progress.value.completedFieldKeys || [];
-    return config.value.categories.filter((cat) =>
-        cat.fields.some((f) => !completed.includes(f.key)),
-    );
-});
-
-const allComplete = computed(() =>
-    Boolean(config.value && progress.value && incompleteCategories.value.length === 0),
-);
-
-function openTutorial(section) {
-    const query = { section, className: props.className };
-    if (props.classId) query.classId = props.classId;
-    menuOpen.value = false;
-    router.push({ path: '/Onboarding', query });
-}
-
-function onTutorialsClick() {
-    if (allComplete.value) {
-        openTutorial('search');
-        return;
-    }
-    panel.value = 'tutorials';
-}
 
 function selectTheme(mode) {
     setThemeMode(mode);
@@ -162,7 +93,6 @@ watch(menuOpen, (open) => {
 });
 
 onMounted(() => {
-    loadOnboarding();
     try {
         showTutorialTip.value = localStorage.getItem(TUTORIAL_TIP_STORAGE_KEY) !== 'true';
     } catch (_) {
