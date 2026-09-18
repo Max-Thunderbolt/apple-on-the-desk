@@ -33,9 +33,14 @@
                 You must belong to a school before creating classes.
             </p>
             <div class="formGroup">
+                <label class="formLabel">Class name</label>
+                <input v-model="className" type="text" class="formInput" placeholder="e.g. 4T" maxlength="120" />
+            </div>
+            <div class="formGroup">
                 <label class="formLabel">Students (one per line)</label>
                 <textarea v-model="studentsText" class="formTextarea" :placeholder="placeholder" rows="10" />
             </div>
+            <p v-if="duplicateStudentNames.length" class="formWarning">Duplicate name(s): {{
                 duplicateStudentNames.join(', ') }}. Resolve duplicates to continue.</p>
             <p v-if="submitError" class="formError">{{ submitError }}</p>
             </div>
