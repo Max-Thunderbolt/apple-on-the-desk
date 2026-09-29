@@ -153,7 +153,7 @@
           </div>
 
           <div class="invoiceActions">
-            <v-btn variant="outlined" prepend-icon="mdi-download" class="invoiceBtn" @click="downloadInvoice(currentInvoice.id)">
+            <v-btn variant="outlined" prepend-icon="mdi-download" class="invoiceBtn" @click="downloadInvoice(currentInvoice.invoiceNumber)">
               Download PDF
             </v-btn>
           </div>
@@ -526,7 +526,7 @@ async function loadBillingData() {
 
     billingStatus.value = billingData.billing || {}
     schoolName.value = billingData.school?.name || 'School'
-    invoiceHistory.value = billingData.invoices || []
+    invoiceHistory.value = (billingData.invoices || []).map(toInvoiceView)
     onboardingPack.value = onboardingData
 
     // If we have a latest export job ID, fetch its status
@@ -548,6 +548,16 @@ async function loadBillingData() {
     error.value = e.response?.data?.message || e.message || 'Failed to load billing data'
   } finally {
     loading.value = false
+  }
+}
+
+function toInvoiceView(inv) {
+  return {
+    ...inv,
+    invoiceNumber: inv.invoiceNo,
+    amountDue: inv.total,
+    paid: inv.status === 'paid',
+    paymentReference: inv.eftReference,
   }
 }
 

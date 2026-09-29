@@ -319,15 +319,12 @@ const isOverdue = computed(() => {
 })
 
 const learnerCount = computed(() => {
-  // Try billing snapshot first (most accurate for invoiced schools)
-  if (billingStatus.value?.learnerCount) {
-    return billingStatus.value.learnerCount
+  if (typeof billingStatus.value?.currentLearnerCount === 'number') {
+    return billingStatus.value.currentLearnerCount
   }
-  // Fall back to school's current student count if available
-  if (school.value?.studentCount !== undefined) {
+  if (typeof school.value?.studentCount === 'number') {
     return school.value.studentCount
   }
-  // Return 0 as last resort
   return 0
 })
 
@@ -415,12 +412,22 @@ async function loadData() {
 
     school.value = (schoolsData.schools || []).find(s => s.id === schoolId.value)
     billingStatus.value = billingData.billing || {}
-    invoices.value = billingData.invoices || []
+    invoices.value = (billingData.invoices || []).map(toInvoiceView)
     auditLog.value = billingData.billing?.auditLog || []
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to load billing data'
   } finally {
     loading.value = false
+  }
+}
+
+function toInvoiceView(inv) {
+  return {
+    ...inv,
+    invoiceNumber: inv.invoiceNo,
+    amountDue: inv.total,
+    paid: inv.status === 'paid',
+    paymentReference: inv.eftReference,
   }
 }
 
