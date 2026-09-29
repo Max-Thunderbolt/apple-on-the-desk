@@ -51,8 +51,8 @@
 
           <div class="statusDetails">
             <div class="statusDetailRow">
-              <span class="statusDetailLabel">Learner count (snapshot)</span>
-              <span class="statusDetailValue">{{ billingStatus.learnerCount || 0 }}</span>
+              <span class="statusDetailLabel">Learner count{{ billingStatus.learnerCount ? ' (snapshot)' : ' (current)' }}</span>
+              <span class="statusDetailValue">{{ learnerCount }}</span>
             </div>
             <div v-if="billingStatus.dueDate" class="statusDetailRow">
               <span class="statusDetailLabel">Due date</span>
@@ -193,6 +193,9 @@
           <v-card-title class="dialogTitle">Generate invoice</v-card-title>
           <v-card-text class="dialogText">
             <p class="dialogDesc">Create a new term invoice for {{ school?.name }}.</p>
+            <v-alert v-if="!billingStatus?.learnerCount" type="info" variant="tonal" density="compact" class="dialogAlert">
+              Using current student count. Adjust learner count below if needed.
+            </v-alert>
             <div class="dialogFields">
               <v-select v-model="generateForm.term" :items="termItems" label="Term" density="compact" variant="outlined"
                 class="glassField" hide-details />
@@ -315,6 +318,19 @@ const isOverdue = computed(() => {
   return new Date(currentInvoice.value.dueDate) < new Date()
 })
 
+const learnerCount = computed(() => {
+  // Try billing snapshot first (most accurate for invoiced schools)
+  if (billingStatus.value?.learnerCount) {
+    return billingStatus.value.learnerCount
+  }
+  // Fall back to school's current student count if available
+  if (school.value?.studentCount !== undefined) {
+    return school.value.studentCount
+  }
+  // Return 0 as last resort
+  return 0
+})
+
 const generateTotal = computed(() => {
   return (generateForm.value.learnerCount || 0) * (generateForm.value.ratePerLearner || 0)
 })
@@ -413,7 +429,7 @@ function goBack() {
 }
 
 function openGenerateInvoiceDialog() {
-  generateForm.value.learnerCount = billingStatus.value?.learnerCount || 0
+  generateForm.value.learnerCount = learnerCount.value
   generateDialogOpen.value = true
 }
 
@@ -930,6 +946,11 @@ onMounted(loadData)
 .dialogDesc {
   margin: 0 0 1rem;
   color: rgba(var(--ink-rgb), 0.7);
+}
+
+.dialogAlert {
+  margin-bottom: 1rem;
+  font-family: var(--font);
 }
 
 .dialogFields {

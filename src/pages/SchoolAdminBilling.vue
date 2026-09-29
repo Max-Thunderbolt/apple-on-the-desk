@@ -424,14 +424,28 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import Server from '@/services/server'
+import { useUserProfile } from '@/composables/useUserProfile'
 import SchoolAdminNav from '@/components/admin/SchoolAdminNav.vue'
 import BillingStatusChip from '@/components/common/BillingStatusChip.vue'
 
 const route = useRoute()
-const schoolId = computed(() => route.query.schoolId)
+const router = useRouter()
+const { schoolAdminSchools } = useUserProfile()
+
+const schoolId = computed(() => {
+  // Try query param first, then fall back to first school admin school
+  const querySchoolId = route.query.schoolId
+  if (querySchoolId) return querySchoolId
+  
+  if (schoolAdminSchools.value.length > 0) {
+    return schoolAdminSchools.value[0].schoolId
+  }
+  
+  return null
+})
 
 const loading = ref(false)
 const error = ref('')
@@ -488,8 +502,17 @@ function formatZAR(amount) {
 
 async function loadBillingData() {
   if (!schoolId.value) {
-    error.value = 'No school selected'
+    if (schoolAdminSchools.value.length === 0) {
+      error.value = 'You do not have school admin access. Contact your platform administrator.'
+    } else {
+      error.value = 'No school selected. Please contact support.'
+    }
     return
+  }
+
+  // Add schoolId to URL if not already present (for bookmarking/refreshing)
+  if (!route.query.schoolId && schoolId.value) {
+    router.replace({ query: { schoolId: schoolId.value } })
   }
 
   error.value = ''
