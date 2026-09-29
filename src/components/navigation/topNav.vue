@@ -121,6 +121,12 @@
                 </template>
                 <v-list-item-title>Profile</v-list-item-title>
               </v-list-item>
+              <v-list-item @click="navigate('/Onboarding')">
+                <template #prepend>
+                  <v-icon size="18">mdi-school-outline</v-icon>
+                </template>
+                <v-list-item-title>Tutorials</v-list-item-title>
+              </v-list-item>
               <v-list-item @click="handleSignOut">
                 <template #prepend>
                   <v-icon size="18">mdi-logout</v-icon>
@@ -260,13 +266,6 @@ const leftNavItems = computed(() => {
       label: 'My School',
       icon: 'mdi-domain',
       match: (p) => p === '/MySchool' || p === '/Teacher',
-    })
-    items.push({
-      key: 'tutorials',
-      path: '/Onboarding',
-      label: 'Tutorials',
-      icon: 'mdi-school-outline',
-      match: (p) => p === '/Onboarding',
     })
   }
   
