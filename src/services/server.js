@@ -732,6 +732,130 @@ class Server {
             throw error
         }
     }
+
+    async getSchoolBillingStatus(schoolId) {
+        try {
+            const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/billing`)
+            return response.data
+        } catch (error) {
+            console.error('Error getting school billing status:', error)
+            throw error
+        }
+    }
+
+    async generateInvoice(schoolId, data) {
+        try {
+            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/invoices`, data)
+            return response.data
+        } catch (error) {
+            console.error('Error generating invoice:', error)
+            throw error
+        }
+    }
+
+    async getSchoolInvoices(schoolId) {
+        try {
+            const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/invoices`)
+            return response.data
+        } catch (error) {
+            console.error('Error getting invoices:', error)
+            throw error
+        }
+    }
+
+    async markInvoicePaid(invoiceId, data) {
+        try {
+            const response = await this.http.post(`/admin/invoices/${encodeURIComponent(invoiceId)}/mark-paid`, data)
+            return response.data
+        } catch (error) {
+            console.error('Error marking invoice paid:', error)
+            throw error
+        }
+    }
+
+    async downloadInvoicePDF(invoiceId) {
+        try {
+            const response = await this.http.get(`/invoices/${encodeURIComponent(invoiceId)}/pdf`, {
+                responseType: 'blob',
+            })
+            return response.data
+        } catch (error) {
+            console.error('Error downloading invoice PDF:', error)
+            throw error
+        }
+    }
+
+    async resendInvoiceEmail(invoiceId) {
+        try {
+            const response = await this.http.post(`/admin/invoices/${encodeURIComponent(invoiceId)}/resend`)
+            return response.data
+        } catch (error) {
+            console.error('Error resending invoice:', error)
+            throw error
+        }
+    }
+
+    async updateSchoolBillingStatus(schoolId, data) {
+        try {
+            const response = await this.http.put(`/admin/schools/${encodeURIComponent(schoolId)}/billing-status`, data)
+            return response.data
+        } catch (error) {
+            console.error('Error updating billing status:', error)
+            throw error
+        }
+    }
+
+    async acceptOnboardingPack(schoolId, data) {
+        try {
+            const response = await this.http.post(`/schools/${encodeURIComponent(schoolId)}/onboarding-pack`, data)
+            return response.data
+        } catch (error) {
+            console.error('Error accepting onboarding pack:', error)
+            throw error
+        }
+    }
+
+    async getOnboardingPackStatus(schoolId) {
+        try {
+            const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/onboarding-pack`)
+            return response.data
+        } catch (error) {
+            console.error('Error getting onboarding pack status:', error)
+            throw error
+        }
+    }
+
+    async requestSchoolExport(schoolId) {
+        try {
+            const response = await this.http.post(`/schools/${encodeURIComponent(schoolId)}/export`)
+            return response.data
+        } catch (error) {
+            console.error('Error requesting school export:', error)
+            throw error
+        }
+    }
+
+    async getSchoolExportStatus(schoolId) {
+        try {
+            const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/export`)
+            return response.data
+        } catch (error) {
+            console.error('Error getting export status:', error)
+            throw error
+        }
+    }
+
+    async downloadSchoolExport(exportId) {
+        try {
+            const response = await this.http.get(`/exports/${encodeURIComponent(exportId)}/download`, {
+                responseType: 'blob',
+            })
+            return response.data
+        } catch (error) {
+            console.error('Error downloading export:', error)
+            throw error
+        }
+    }
 }
 
 const serverInstance = new Server()

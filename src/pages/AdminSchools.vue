@@ -62,6 +62,8 @@
             <button v-for="s in filteredSchools" :key="s.id" type="button" class="schoolListItem"
               :class="{ 'schoolListItem--active': selectedSchoolId === s.id }" @click="selectSchool(s.id)">
               <span class="schoolListName">{{ s.name }}</span>
+              <BillingStatusChip v-if="s.billingStatus" :status="s.billingStatus" :pilot="s.pilot" :show-icon="false" 
+                class="schoolListStatus" />
               <span class="schoolListMeta">{{ s.id.slice(0, 8) }}…</span>
             </button>
           </div>
@@ -162,6 +164,21 @@
             </div>
           </section>
 
+          <!-- Billing -->
+          <section class="actionCard">
+            <div class="actionHeader">
+              <v-icon size="22" color="rgba(247,183,7,0.9)">mdi-receipt-text-outline</v-icon>
+              <h3 class="actionTitle">Billing</h3>
+            </div>
+            <p class="actionDesc">Manage invoices, payment status, and billing lock ladder for this school.</p>
+            <div class="actionFields">
+              <v-btn variant="outlined" prepend-icon="mdi-receipt-text" class="actionBtn actionBtn--billing"
+                @click="goToBilling">
+                Manage billing
+              </v-btn>
+            </div>
+          </section>
+
           <!-- Members -->
           <section class="membersPanel">
             <div class="panelHead">
@@ -224,8 +241,12 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Server from '@/services/server'
 import AdminNav from '@/components/admin/AdminNav.vue'
+import BillingStatusChip from '@/components/common/BillingStatusChip.vue'
+
+const router = useRouter()
 
 const schools = ref([])
 const schoolsLoading = ref(false)
@@ -324,6 +345,11 @@ function selectSchool(schoolId) {
   memberSearchQuery.value = ''
   memberSearchResults.value = []
   loadMembers(schoolId)
+}
+
+function goToBilling() {
+  if (!selectedSchoolId.value) return
+  router.push({ path: '/AdminSchoolBilling', query: { schoolId: selectedSchoolId.value } })
 }
 
 async function createSchool() {
@@ -717,6 +743,11 @@ onMounted(loadSchools)
   color: var(--white);
 }
 
+.schoolListStatus {
+  font-size: 0.62rem !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
 .schoolListMeta {
   font-size: 0.65rem;
   font-family: ui-monospace, monospace;
@@ -860,6 +891,12 @@ onMounted(loadSchools)
 .actionBtn--invite {
   background: linear-gradient(135deg, rgba(168, 51, 185, 0.35) 0%, rgba(168, 51, 185, 0.15) 100%) !important;
   border: 1px solid rgba(168, 51, 185, 0.3) !important;
+  color: var(--white) !important;
+}
+
+.actionBtn--billing {
+  background: linear-gradient(135deg, rgba(247, 183, 7, 0.35) 0%, rgba(247, 183, 7, 0.15) 100%) !important;
+  border: 1px solid rgba(247, 183, 7, 0.3) !important;
   color: var(--white) !important;
 }
 
