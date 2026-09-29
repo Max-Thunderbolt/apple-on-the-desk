@@ -1,7 +1,7 @@
 <template>
   <div class="container adminPage">
     <div class="adminShell">
-      <AdminNav />
+      
 
       <header class="adminHeader">
         <div class="adminHeaderLeft">
@@ -122,7 +122,6 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import AdminNav from '@/components/admin/AdminNav.vue';
 import Server from '@/services/server';
 
 const groups = ref([]);

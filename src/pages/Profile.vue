@@ -38,10 +38,6 @@
       </template>
     </div>
 
-    <v-btn v-if="!embedded" variant="text" class="backLink" @click="navigateTo('/Teacher')">
-      ← Back
-    </v-btn>
-
     <v-dialog v-model="confirmDeleteOpen" max-width="400" persistent>
       <v-card class="confirmCard">
         <v-card-title class="confirmTitle">Delete account?</v-card-title>
@@ -328,16 +324,5 @@ function navigateTo(path) {
       rgba(0, 168, 232, 0.45) 100%) !important;
   color: var(--white) !important;
   border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
-}
-
-.backLink {
-  margin-top: 1rem;
-  color: rgba(var(--ink-rgb), 0.7) !important;
-  font-family: var(--font) !important;
-  text-transform: none !important;
-}
-
-.backLink:hover {
-  color: var(--white) !important;
 }
 </style>

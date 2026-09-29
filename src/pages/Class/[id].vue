@@ -1,7 +1,7 @@
 <template>
     <div class="container classPage">
         <div class="classPageShell">
-            <TeacherNav />
+            
             <div v-if="dataLoading" class="dataLoadingPage">
                 <div class="dataLoading">
                     <v-progress-circular indeterminate color="primary" size="64" width="6" />
@@ -159,7 +159,6 @@ import grouperModal from '../../components/modals/GrouperModal.vue';
 import CreateItemModal from '../../components/modals/CreateItemModal.vue';
 import PurchaseReceiptModal from '../../components/modals/PurchaseReceiptModal.vue';
 import PurchaseHistoryModal from '../../components/modals/PurchaseHistoryModal.vue';
-import TeacherNav from '@/components/navigation/TeacherNav.vue';
 
 const router = useRouter();
 const route = useRoute();
