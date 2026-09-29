@@ -214,48 +214,83 @@ The **apple-on-the-desk-api** repo on `Phase_A` branch should implement:
 
 ### Endpoints
 
+**Billing:**
 ```
-GET    /schools/:schoolId/billing                 — billing status object
-GET    /schools/:schoolId/invoices                — invoice history
-POST   /admin/schools/:schoolId/invoices          — generate + send invoice
-POST   /admin/invoices/:invoiceId/mark-paid       — mark paid (platform only)
-GET    /invoices/:invoiceId/pdf                   — download PDF blob
-POST   /admin/invoices/:invoiceId/resend          — resend email
-PUT    /admin/schools/:schoolId/billing-status    — update status (lock ladder)
-
-POST   /schools/:schoolId/onboarding-pack         — accept pack
-GET    /schools/:schoolId/onboarding-pack         — pack status
-
-POST   /schools/:schoolId/export                  — request export job
-GET    /schools/:schoolId/export                  — export status (ready/preparing)
-GET    /exports/:exportId/download                — download ZIP blob
+GET    /schools/:schoolId/billing                              — billing status + invoices combined
+POST   /admin/schools/:schoolId/invoices                       — generate invoice (body: { year, term })
+POST   /admin/schools/:schoolId/invoices/:invoiceNo/mark-paid  — mark paid (body: { paidDate })
+GET    /schools/:schoolId/invoices/:invoiceNo/pdf              — download PDF blob
+POST   /admin/schools/:schoolId/invoices/:invoiceNo/send-email — resend invoice email
+POST   /admin/schools/:schoolId/billing/notice                 — start payment notice
+POST   /admin/schools/:schoolId/billing/soft-lock              — apply soft lock
+POST   /admin/schools/:schoolId/billing/hard-lock              — apply hard lock
+POST   /admin/schools/:schoolId/billing/pilot                  — set pilot status (body: { pilot: boolean })
 ```
 
-### Billing Status Object
+**Onboarding:**
+```
+GET    /schools/:schoolId/onboarding                           — onboarding status
+POST   /schools/:schoolId/onboarding/accept                    — accept onboarding pack
+PUT    /schools/:schoolId/onboarding/privacy-defaults          — update privacy defaults
+GET    /onboarding/documents                                   — get onboarding documents
+```
+
+**Export:**
+```
+POST   /schools/:schoolId/export                               — request export job
+GET    /schools/:schoolId/export/:jobId                        — get export status
+GET    /schools/:schoolId/export/:jobId/download               — download export ZIP
+GET    /schools/:schoolId/exports                              — list all exports for school
+```
+
+### Billing Response (Combined)
 
 ```json
 {
-  "status": "trial | invoiced | paid | notice | soft_locked | locked",
-  "pilot": false,
-  "schoolName": "Riverside Primary",
-  "termLabel": "Term 3 2026",
-  "learnerCount": 120,
-  "costPerLearnerZAR": 60,
-  "dueDate": "2026-10-15T00:00:00Z",
-  "lastPaidAt": "2026-07-10T12:34:56Z",
-  "noticeStartedAt": null,
-  "softLockedAt": null,
-  "lockedAt": null,
-  "softLockDate": "2026-10-30T00:00:00Z",
-  "hardLockDate": "2026-11-06T00:00:00Z",
-  "auditLog": [
+  "success": true,
+  "school": {
+    "id": "school_123",
+    "name": "Riverside Primary"
+  },
+  "billing": {
+    "status": "trial | invoiced | paid | notice | soft_locked | locked",
+    "pilot": false,
+    "termLabel": "Term 3 2026",
+    "learnerCount": 120,
+    "costPerLearnerZAR": 60,
+    "dueDate": "2026-10-15T00:00:00Z",
+    "lastPaidAt": "2026-07-10T12:34:56Z",
+    "noticeStartedAt": null,
+    "softLockedAt": null,
+    "lockedAt": null,
+    "softLockDate": "2026-10-30T00:00:00Z",
+    "hardLockDate": "2026-11-06T00:00:00Z",
+    "latestExportJobId": "exp_def456",
+    "auditLog": [
+      {
+        "id": "audit_abc123",
+        "action": "Status changed: paid → notice",
+        "note": "14-day notice started after overdue",
+        "adminName": "Jane Doe",
+        "adminEmail": "jane@thunderbolt.co.za",
+        "timestamp": "2026-10-16T09:00:00Z"
+      }
+    ]
+  },
+  "invoices": [
     {
-      "id": "audit_abc123",
-      "action": "Status changed: paid → notice",
-      "note": "14-day notice started after overdue",
-      "adminName": "Jane Doe",
-      "adminEmail": "jane@thunderbolt.co.za",
-      "timestamp": "2026-10-16T09:00:00Z"
+      "invoiceNumber": "AOTD-2026-0123",
+      "termLabel": "Term 3 2026",
+      "issueDate": "2026-09-01T00:00:00Z",
+      "dueDate": "2026-10-15T00:00:00Z",
+      "learnerCount": 120,
+      "ratePerLearner": 60,
+      "amountDue": 7200,
+      "currency": "ZAR",
+      "paymentReference": "AOTD-RIVERSIDE-0123",
+      "paid": false,
+      "paidAt": null,
+      "emailSent": true
     }
   ]
 }
@@ -263,9 +298,10 @@ GET    /exports/:exportId/download                — download ZIP blob
 
 ### Invoice Object
 
+**Note:** Invoices are identified by `invoiceNumber` (string like "AOTD-2026-0123"), not a separate ID field.
+
 ```json
 {
-  "id": "inv_xyz789",
   "invoiceNumber": "AOTD-2026-0123",
   "termLabel": "Term 3 2026",
   "issueDate": "2026-09-01T00:00:00Z",
@@ -297,11 +333,13 @@ GET    /exports/:exportId/download                — download ZIP blob
 
 ### Export Object
 
+**Note:** Exports are identified by `jobId` (string like "exp_def456").
+
 ```json
 {
   "ready": true,
   "preparing": false,
-  "exportId": "exp_def456",
+  "jobId": "exp_def456",
   "requestedAt": "2026-09-25T10:00:00Z",
   "readyAt": "2026-09-25T10:05:32Z",
   "expiresAt": "2026-10-02T10:05:32Z"

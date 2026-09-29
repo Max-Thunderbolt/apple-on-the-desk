@@ -135,7 +135,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="inv in invoices" :key="inv.id" class="invoiceRow">
+                <tr v-for="inv in invoices" :key="inv.invoiceNumber" class="invoiceRow">
                   <td><code class="invoiceCode">{{ inv.invoiceNumber }}</code></td>
                   <td>{{ inv.termLabel }}</td>
                   <td>{{ formatDate(inv.issueDate) }}</td>
@@ -148,11 +148,12 @@
                     </span>
                   </td>
                   <td class="actionsCell">
-                    <v-btn size="x-small" variant="text" icon="mdi-download" @click="downloadInvoice(inv.id)" />
+                    <v-btn size="x-small" variant="text" icon="mdi-download" 
+                      @click="downloadInvoice(inv.invoiceNumber)" />
                     <v-btn v-if="!inv.paid && inv.emailSent" size="x-small" variant="text" icon="mdi-email-sync-outline"
-                      @click="resendInvoice(inv.id)" />
+                      @click="resendInvoice(inv.invoiceNumber)" />
                     <v-btn v-if="!inv.paid" size="x-small" variant="text" icon="mdi-check-circle-outline"
-                      @click="markInvoicePaid(inv)" />
+                      @click="openMarkPaidDialog(inv)" />
                   </td>
                 </tr>
               </tbody>
@@ -391,16 +392,15 @@ async function loadData() {
   loading.value = true
 
   try {
-    const [schoolsData, billing, invoicesData] = await Promise.all([
+    const [schoolsData, billingData] = await Promise.all([
       Server.listAdminSchools(),
       Server.getSchoolBillingStatus(schoolId.value),
-      Server.getSchoolInvoices(schoolId.value),
     ])
 
     school.value = (schoolsData.schools || []).find(s => s.id === schoolId.value)
-    billingStatus.value = billing
-    invoices.value = invoicesData.invoices || []
-    auditLog.value = billing.auditLog || []
+    billingStatus.value = billingData.billing || {}
+    invoices.value = billingData.invoices || []
+    auditLog.value = billingData.billing?.auditLog || []
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to load billing data'
   } finally {
@@ -443,7 +443,7 @@ async function confirmGenerateInvoice() {
   }
 }
 
-function markInvoicePaid(invoice) {
+function openMarkPaidDialog(invoice) {
   selectedInvoice.value = invoice
   markPaidDialogOpen.value = true
 }
@@ -455,14 +455,16 @@ function closeMarkPaidDialog() {
 }
 
 async function confirmMarkPaid() {
-  if (!selectedInvoice.value) return
+  if (!selectedInvoice.value || !schoolId.value) return
   markingPaid.value = true
   error.value = ''
 
   try {
-    await Server.markInvoicePaid(selectedInvoice.value.id, {
-      note: markPaidNote.value.trim() || 'Marked paid by platform admin',
-    })
+    await Server.markInvoicePaid(
+      schoolId.value,
+      selectedInvoice.value.invoiceNumber,
+      { paidDate: new Date().toISOString() }
+    )
     successMsg.value = 'Invoice marked as paid'
     closeMarkPaidDialog()
     await loadData()
@@ -473,13 +475,14 @@ async function confirmMarkPaid() {
   }
 }
 
-async function downloadInvoice(invoiceId) {
+async function downloadInvoice(invoiceNo) {
+  if (!schoolId.value) return
   try {
-    const blob = await Server.downloadInvoicePDF(invoiceId)
+    const blob = await Server.downloadInvoicePDF(schoolId.value, invoiceNo)
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `invoice-${invoiceId}.pdf`
+    a.download = `invoice-${invoiceNo}.pdf`
     a.click()
     window.URL.revokeObjectURL(url)
     toast.success('Invoice downloaded')
@@ -488,9 +491,10 @@ async function downloadInvoice(invoiceId) {
   }
 }
 
-async function resendInvoice(invoiceId) {
+async function resendInvoice(invoiceNo) {
+  if (!schoolId.value) return
   try {
-    await Server.resendInvoiceEmail(invoiceId)
+    await Server.resendInvoiceEmail(schoolId.value, invoiceNo)
     toast.success('Invoice email sent')
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to resend invoice'
@@ -529,24 +533,29 @@ function closeStatusDialog() {
 }
 
 async function confirmStatusChange() {
-  if (!statusChangeNote.value.trim()) return
+  if (!statusChangeNote.value.trim() || !schoolId.value) return
   changingStatus.value = true
   error.value = ''
 
-  const statusMap = {
-    convert: 'invoiced',
-    notice: 'notice',
-    soft_lock: 'soft_locked',
-    hard_lock: 'locked',
-    resume: 'paid',
-  }
-
   try {
-    await Server.updateSchoolBillingStatus(schoolId.value, {
-      status: statusMap[statusDialogType.value],
-      pilot: statusDialogType.value === 'convert' ? false : undefined,
-      note: statusChangeNote.value.trim(),
-    })
+    if (statusDialogType.value === 'convert') {
+      await Server.setPilotStatus(schoolId.value, false)
+    } else if (statusDialogType.value === 'notice') {
+      await Server.startBillingNotice(schoolId.value)
+    } else if (statusDialogType.value === 'soft_lock') {
+      await Server.applySoftLock(schoolId.value)
+    } else if (statusDialogType.value === 'hard_lock') {
+      await Server.applyHardLock(schoolId.value)
+    } else if (statusDialogType.value === 'resume') {
+      // Resume is done by marking the latest invoice as paid
+      if (currentInvoice.value) {
+        await Server.markInvoicePaid(
+          schoolId.value,
+          currentInvoice.value.invoiceNumber,
+          { paidDate: new Date().toISOString() }
+        )
+      }
+    }
     successMsg.value = `Status updated: ${statusDialogAction.value}`
     closeStatusDialog()
     await loadData()

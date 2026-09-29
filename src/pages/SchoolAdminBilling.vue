@@ -221,7 +221,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="inv in invoiceHistory.slice(1)" :key="inv.id" class="historyRow">
+                <tr v-for="inv in invoiceHistory.slice(1)" :key="inv.invoiceNumber" class="historyRow">
                   <td><code class="historyCode">{{ inv.invoiceNumber }}</code></td>
                   <td>{{ inv.termLabel }}</td>
                   <td>{{ formatDate(inv.issueDate) }}</td>
@@ -232,7 +232,8 @@
                     </span>
                   </td>
                   <td>
-                    <v-btn size="x-small" variant="text" icon="mdi-download" @click="downloadInvoice(inv.id)" />
+                    <v-btn size="x-small" variant="text" icon="mdi-download" 
+                      @click="downloadInvoice(inv.invoiceNumber)" />
                   </td>
                 </tr>
               </tbody>
@@ -495,18 +496,31 @@ async function loadBillingData() {
   loading.value = true
 
   try {
-    const [billing, invoices, pack, exportData] = await Promise.all([
+    const [billingData, onboardingData] = await Promise.all([
       Server.getSchoolBillingStatus(schoolId.value),
-      Server.getSchoolInvoices(schoolId.value),
-      Server.getOnboardingPackStatus(schoolId.value),
-      Server.getSchoolExportStatus(schoolId.value),
+      Server.getOnboardingStatus(schoolId.value),
     ])
 
-    billingStatus.value = billing
-    schoolName.value = billing.schoolName || 'School'
-    invoiceHistory.value = invoices.invoices || []
-    onboardingPack.value = pack
-    exportStatus.value = exportData
+    billingStatus.value = billingData.billing || {}
+    schoolName.value = billingData.school?.name || 'School'
+    invoiceHistory.value = billingData.invoices || []
+    onboardingPack.value = onboardingData
+
+    // If we have a latest export job ID, fetch its status
+    if (billingData.billing?.latestExportJobId) {
+      try {
+        const exportData = await Server.getSchoolExportStatus(
+          schoolId.value,
+          billingData.billing.latestExportJobId
+        )
+        exportStatus.value = exportData
+      } catch {
+        // Export status not critical for page load
+        exportStatus.value = { ready: false, preparing: false }
+      }
+    } else {
+      exportStatus.value = { ready: false, preparing: false }
+    }
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to load billing data'
   } finally {
@@ -514,13 +528,14 @@ async function loadBillingData() {
   }
 }
 
-async function downloadInvoice(invoiceId) {
+async function downloadInvoice(invoiceNo) {
+  if (!schoolId.value) return
   try {
-    const blob = await Server.downloadInvoicePDF(invoiceId)
+    const blob = await Server.downloadInvoicePDF(schoolId.value, invoiceNo)
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `invoice-${invoiceId}.pdf`
+    a.download = `invoice-${invoiceNo}.pdf`
     a.click()
     window.URL.revokeObjectURL(url)
     toast.success('Invoice downloaded')
@@ -554,7 +569,7 @@ async function acceptPack() {
   error.value = ''
 
   try {
-    await Server.acceptOnboardingPack(schoolId.value, {
+    await Server.acceptOnboarding(schoolId.value, {
       acceptedBy: acceptorName.value.trim(),
     })
     successMsg.value = 'Onboarding pack accepted'
@@ -584,10 +599,10 @@ async function requestExport() {
 }
 
 async function downloadExport() {
-  if (!exportStatus.value.exportId) return
+  if (!schoolId.value || !exportStatus.value.jobId) return
 
   try {
-    const blob = await Server.downloadSchoolExport(exportStatus.value.exportId)
+    const blob = await Server.downloadSchoolExport(schoolId.value, exportStatus.value.jobId)
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
