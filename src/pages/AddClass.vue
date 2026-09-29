@@ -1,7 +1,7 @@
 <template>
     <div class="container addClassPage">
         <div class="addClassShell">
-            <TeacherNav />
+            
             <ClassForm @saved="onSaved" @cancel="onCancel" />
         </div>
     </div>
@@ -10,7 +10,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import ClassForm from '../components/modals/ClassForm.vue';
-import TeacherNav from '@/components/navigation/TeacherNav.vue';
 
 const router = useRouter();
 

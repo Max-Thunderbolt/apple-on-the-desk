@@ -21,6 +21,7 @@ declare module 'vue-router/auto-routes' {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/AddClass': RouteRecordInfo<'/AddClass', '/AddClass', Record<never, never>, Record<never, never>>,
     '/AdminDashboard': RouteRecordInfo<'/AdminDashboard', '/AdminDashboard', Record<never, never>, Record<never, never>>,
+    '/AdminSchoolBilling': RouteRecordInfo<'/AdminSchoolBilling', '/AdminSchoolBilling', Record<never, never>, Record<never, never>>,
     '/AdminSchoolGroups': RouteRecordInfo<'/AdminSchoolGroups', '/AdminSchoolGroups', Record<never, never>, Record<never, never>>,
     '/AdminSchools': RouteRecordInfo<'/AdminSchools', '/AdminSchools', Record<never, never>, Record<never, never>>,
     '/Class/[id]': RouteRecordInfo<'/Class/[id]', '/Class/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
@@ -30,6 +31,7 @@ declare module 'vue-router/auto-routes' {
     '/Login': RouteRecordInfo<'/Login', '/Login', Record<never, never>, Record<never, never>>,
     '/Onboarding': RouteRecordInfo<'/Onboarding', '/Onboarding', Record<never, never>, Record<never, never>>,
     '/Profile': RouteRecordInfo<'/Profile', '/Profile', Record<never, never>, Record<never, never>>,
+    '/SchoolAdminBilling': RouteRecordInfo<'/SchoolAdminBilling', '/SchoolAdminBilling', Record<never, never>, Record<never, never>>,
     '/SchoolAdminDashboard': RouteRecordInfo<'/SchoolAdminDashboard', '/SchoolAdminDashboard', Record<never, never>, Record<never, never>>,
     '/SchoolAdminOnboarding': RouteRecordInfo<'/SchoolAdminOnboarding', '/SchoolAdminOnboarding', Record<never, never>, Record<never, never>>,
     '/SchoolAdminOverview': RouteRecordInfo<'/SchoolAdminOverview', '/SchoolAdminOverview', Record<never, never>, Record<never, never>>,
@@ -58,6 +60,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/AdminDashboard.vue': {
       routes: '/AdminDashboard'
+      views: never
+    }
+    'src/pages/AdminSchoolBilling.vue': {
+      routes: '/AdminSchoolBilling'
       views: never
     }
     'src/pages/AdminSchoolGroups.vue': {
@@ -94,6 +100,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/Profile.vue': {
       routes: '/Profile'
+      views: never
+    }
+    'src/pages/SchoolAdminBilling.vue': {
+      routes: '/SchoolAdminBilling'
       views: never
     }
     'src/pages/SchoolAdminDashboard.vue': {

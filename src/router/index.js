@@ -40,10 +40,11 @@ const SCHOOL_ADMIN_PATHS = new Set([
   '/SchoolAdminDashboard',
   '/SchoolAdminOnboarding',
   '/SchoolAdminStudents',
+  '/SchoolAdminBilling',
 ])
 
 function isTeacherRoute(path) {
-  return path === '/Classes' || path === '/AddClass' || path.startsWith('/Class/')
+  return path === '/Classes' || path === '/AddClass' || path.startsWith('/Class/') || path === '/MySchool'
 }
 
 async function getResolverDestination(excludeRedirect = false) {
@@ -53,6 +54,14 @@ async function getResolverDestination(excludeRedirect = false) {
 router.beforeEach(async (to) => {
   const { authReady, isSignedIn } = useAuth()
   if (!authReady.value) return true
+
+  // Handle /Teacher redirect to /MySchool
+  if (to.path === '/Teacher') {
+    if (to.query.tab === 'profile') {
+      return '/Profile'
+    }
+    return { path: '/MySchool', query: to.query.tab === 'insights' ? {} : to.query }
+  }
 
   // Anonymous app root → marketing site
   if (to.path === '/' && !isSignedIn.value) {

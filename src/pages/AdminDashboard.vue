@@ -1,7 +1,7 @@
 <template>
   <div class="container adminPage">
     <div class="adminShell">
-      <AdminNav />
+      
 
       <header class="adminHeader">
         <div class="adminHeaderLeft">
@@ -385,7 +385,6 @@ import {
 } from 'chart.js'
 import Server from '@/services/server'
 import { useTheme } from '@/composables/useTheme'
-import AdminNav from '@/components/admin/AdminNav.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, PointElement, LineElement, Tooltip, Legend, Filler)
 

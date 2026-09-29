@@ -1,8 +1,6 @@
 <template>
   <div class="container saPage">
     <div class="saShell">
-      <SchoolAdminNav />
-
       <header class="saHeader">
         <div class="saHeaderLeft">
           <p class="saEyebrow">School administration</p>
@@ -134,7 +132,6 @@ import Server from '@/services/server'
 import { useTheme } from '@/composables/useTheme'
 import { useUserProfile } from '@/composables/useUserProfile'
 import { isAdminSetupComplete } from '@/composables/useSchoolSetupStatus'
-import SchoolAdminNav from '@/components/admin/SchoolAdminNav.vue'
 
 const router = useRouter()
 const { schoolAdminSchools } = useUserProfile()

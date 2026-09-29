@@ -70,7 +70,6 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOnboarding } from '@/composables/useOnboarding'
-import TeacherNav from '@/components/navigation/TeacherNav.vue'
 // import CategoryRenderer from '@/components/tutorials/CategoryRenderer.vue'
 // import FloatingSearchBar from '@/components/common/FloatingSearchBar.vue'
 
