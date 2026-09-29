@@ -1,7 +1,7 @@
 <template>
     <div class="container classesPage">
         <div class="classesShell">
-            <TeacherNav />
+            
 
             <header class="classesHeader">
                 <div class="classesHeaderLeft">
@@ -36,7 +36,7 @@
 
             <p v-if="!canCreateClass" class="classCreateHint">
                 Join a school as a teacher to create classes.
-                <router-link to="/Teacher" class="classCreateHintLink">Go to Teacher settings</router-link>
+                <router-link to="/MySchool" class="classCreateHintLink">Go to My School</router-link>
             </p>
 
             <div v-if="classesLoading" class="skeletonGrid">
@@ -170,7 +170,6 @@ import RankBadge from './common/RankBadge.vue';
 import TopStudentChips from './common/TopStudentChips.vue';
 import AppContextMenu from './common/AppContextMenu.vue';
 import ClassesFloatingBar from './classes/ClassesFloatingBar.vue';
-import TeacherNav from './navigation/TeacherNav.vue';
 import { useUserProfile } from '@/composables/useUserProfile';
 import { useContextMenu } from '@/composables/useContextMenu';
 import ClassForm from './modals/ClassForm.vue';

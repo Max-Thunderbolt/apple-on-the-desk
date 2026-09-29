@@ -1,7 +1,7 @@
 <template>
   <div class="container adminPage">
     <div class="adminShell">
-      <AdminNav />
+      
 
       <header class="adminHeader">
         <div class="adminHeaderLeft">
@@ -243,7 +243,6 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Server from '@/services/server'
-import AdminNav from '@/components/admin/AdminNav.vue'
 import BillingStatusChip from '@/components/common/BillingStatusChip.vue'
 
 const router = useRouter()
