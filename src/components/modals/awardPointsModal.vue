@@ -8,7 +8,7 @@
             <v-card-subtitle class="pointsDialogSubtitle">
                 {{ scope === 'class' ? 'Choose a class category' : 'Choose a category' }}
             </v-card-subtitle>
-            <v-card-text class="pointsDialogList pointsDialogList--scrollable">
+            <v-card-text class="pointsDialogList">
                 <div v-for="category in pointsCategories" :key="category._id || category.id || category.name"
                     class="pointsCategoryItem" @click="awardPoints(category)"
                     @contextmenu.prevent="openCategoryContextMenu($event, category)">
@@ -24,7 +24,7 @@
                     Loading…
                 </div>
             </v-card-text>
-            <v-card-actions class="pointsDialogActions pointsDialogActions--sticky">
+            <v-card-actions>
                 <v-spacer />
                 <div class="pointsDialogButtons">
                     <v-btn class="pointsDialogCancelButton" variant="text" @click="closePointsDialog">Cancel</v-btn>
@@ -283,9 +283,6 @@ function onCategorySaved() {
     border-radius: 25px;
     border: 1px solid var(--white);
     padding: 0 0 0.5rem;
-    display: flex;
-    flex-direction: column;
-    max-height: 90vh;
 }
 
 .pointsDialog {
@@ -305,7 +302,6 @@ function onCategorySaved() {
     color: var(--white);
     text-align: center;
     padding: 0.5rem 0;
-    flex-shrink: 0;
 }
 
 .pointsDialogSubtitle {
@@ -318,7 +314,6 @@ function onCategorySaved() {
     text-align: center;
     padding: 0.5rem 0;
     border-bottom: 1px solid var(--white);
-    flex-shrink: 0;
 }
 
 .pointsDialogList {
@@ -326,24 +321,6 @@ function onCategorySaved() {
     flex-direction: column;
     gap: 0.5rem;
     padding-top: 0.5rem;
-}
-
-.pointsDialogList--scrollable {
-    overflow-y: auto;
-    flex: 1 1 auto;
-}
-
-.pointsDialogActions {
-    padding: 0.75rem 1rem 0.5rem !important;
-}
-
-.pointsDialogActions--sticky {
-    position: sticky;
-    bottom: 0;
-    background: var(--inkBlack);
-    border-top: 1px solid rgba(var(--ink-rgb), 0.15);
-    z-index: 10;
-    flex-shrink: 0;
 }
 
 .pointsCategoryItem {
