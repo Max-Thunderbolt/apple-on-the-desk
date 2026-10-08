@@ -152,6 +152,7 @@ const canSubmit = computed(() => {
     const noDuplicates = duplicateStudentNames.value.length === 0;
     const base = !!name && name.length > 0 && noDuplicates;
     if (!base) return false;
+    if (isEdit.value) return true;
     if (isSchoolAdminCreate.value) {
         return !!(schoolAdminSchoolId.value && assignTeacherUserId.value);
     }

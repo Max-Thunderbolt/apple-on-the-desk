@@ -52,7 +52,7 @@
             </div>
             <div class="kpiBody">
               <span class="kpiLabel">{{ kpi.label }}</span>
-              <span class="kpiValue" :class="{ 'kpiValue--money': kpi.isMoney }">{{ kpi.value }}</span>
+              <span class="kpiValue">{{ kpi.value }}</span>
               <span v-if="kpi.meta" class="kpiMeta">{{ kpi.meta }}</span>
             </div>
           </article>
@@ -208,22 +208,6 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
-
-        <!-- Cost summary -->
-        <section class="costBar">
-          <div class="costItem">
-            <span class="costLabel">Term cost</span>
-            <span class="costValue">{{ formatZAR(dash.costZAR) }}</span>
-          </div>
-          <div class="costItem">
-            <span class="costLabel">Rate</span>
-            <span class="costValue costValue--small">R{{ dash.costPerStudentZAR ?? 60 }} × student × term</span>
-          </div>
-          <div class="costItem">
-            <span class="costLabel">Period</span>
-            <span class="costValue costValue--small">{{ dash.termKey }}</span>
-          </div>
-        </section>
       </template>
     </div>
   </div>
@@ -298,8 +282,6 @@ const kpiCards = computed(() => {
       green: 'rgba(26,147,111,0.9)',
       purpleBg: 'rgba(168,51,185,0.15)',
       purple: 'rgba(168,51,185,0.9)',
-      goldBg: 'rgba(247,183,7,0.15)',
-      gold: 'rgba(247,183,7,0.9)',
     }
     : {
       skyBg: 'rgba(0,120,166,0.14)',
@@ -308,14 +290,11 @@ const kpiCards = computed(() => {
       green: 'rgba(26,147,111,0.92)',
       purpleBg: 'rgba(138,30,160,0.14)',
       purple: 'rgba(138,30,160,0.92)',
-      goldBg: 'rgba(197,142,5,0.14)',
-      gold: 'rgba(197,142,5,0.92)',
     }
   return [
     { label: 'Teachers', value: d.teachers?.length ?? d.teacherCount ?? 0, icon: 'mdi-account-school-outline', iconBg: tone.skyBg, iconColor: tone.sky, cls: 'kpiCard--teachers' },
     { label: 'Classes', value: d.classCount ?? d.classes?.length ?? 0, icon: 'mdi-google-classroom', iconBg: tone.greenBg, iconColor: tone.green, cls: 'kpiCard--classes' },
     { label: 'Students', value: d.studentCount ?? 0, icon: 'mdi-account-group-outline', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--students' },
-    { label: 'Term cost', value: formatZAR(d.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: d.termKey },
   ]
 })
 
@@ -344,11 +323,6 @@ const classesByTeacher = computed(() => {
   }
   return groups
 })
-
-function formatZAR(n) {
-  if (typeof n !== 'number') return 'R 0'
-  return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR', maximumFractionDigits: 0 }).format(n)
-}
 
 async function loadDashboard() {
   if (!selectedSchoolId.value) return
@@ -643,7 +617,7 @@ watch(selectedSchoolId, () => {
 
 @media (min-width: 640px) {
   .kpiGrid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -675,7 +649,6 @@ watch(selectedSchoolId, () => {
 .kpiCard--teachers::before { background: rgba(0, 168, 232, 0.85); }
 .kpiCard--classes::before { background: rgba(26, 147, 111, 0.85); }
 .kpiCard--students::before { background: rgba(168, 51, 185, 0.85); }
-.kpiCard--cost::before { background: rgba(247, 183, 7, 0.85); }
 
 @media (hover: hover) {
   .kpiCard:hover {
@@ -718,10 +691,6 @@ watch(selectedSchoolId, () => {
   line-height: 1.1;
   color: var(--white);
   font-variant-numeric: tabular-nums;
-}
-
-.kpiValue--money {
-  font-size: 1.15rem;
 }
 
 .kpiMeta {
@@ -1324,48 +1293,6 @@ watch(selectedSchoolId, () => {
   background: linear-gradient(135deg, rgba(26, 147, 111, 0.35) 0%, rgba(26, 147, 111, 0.15) 100%) !important;
   border: 1px solid rgba(26, 147, 111, 0.3) !important;
   color: var(--white) !important;
-}
-
-/* Cost bar */
-.costBar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  padding: 1.1rem 1.25rem;
-  border-radius: 18px;
-  border: 1px solid rgba(247, 183, 7, 0.2);
-  background: linear-gradient(145deg, rgba(247, 183, 7, 0.08) 0%, rgba(247, 183, 7, 0.02) 100%);
-  box-shadow: 0 4px 20px rgba(var(--shadow-rgb), 0.14), inset 0 1px 0 rgba(247, 183, 7, 0.08);
-  margin-bottom: 1.25rem;
-}
-
-.costItem {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.costLabel {
-  font-family: var(--font);
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(var(--ink-rgb), 0.4);
-}
-
-.costValue {
-  font-family: var(--font);
-  font-weight: 700;
-  font-size: 1.15rem;
-  color: rgba(247, 183, 7, 0.9);
-  font-variant-numeric: tabular-nums;
-}
-
-.costValue--small {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: rgba(var(--ink-rgb), 0.65);
 }
 
 .emptyNote {
