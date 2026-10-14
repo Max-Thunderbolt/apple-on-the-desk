@@ -51,8 +51,8 @@
 
           <div class="statusDetails">
             <div class="statusDetailRow">
-              <span class="statusDetailLabel">Learner count{{ billingStatus.learnerCount ? ' (snapshot)' : ' (current)' }}</span>
-              <span class="statusDetailValue">{{ learnerCount }}</span>
+              <span class="statusDetailLabel">Teacher count{{ billingStatus.teacherCount ? ' (snapshot)' : ' (current)' }}</span>
+              <span class="statusDetailValue">{{ teacherCount }}</span>
             </div>
             <div v-if="billingStatus.dueDate" class="statusDetailRow">
               <span class="statusDetailLabel">Due date</span>
@@ -128,7 +128,7 @@
                   <th>Term</th>
                   <th>Issue date</th>
                   <th>Due date</th>
-                  <th>Learners</th>
+                  <th>Teachers</th>
                   <th class="num">Amount</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -140,7 +140,7 @@
                   <td>{{ inv.termLabel }}</td>
                   <td>{{ formatDate(inv.issueDate) }}</td>
                   <td>{{ formatDate(inv.dueDate) }}</td>
-                  <td class="num">{{ inv.learnerCount }}</td>
+                  <td class="num">{{ inv.teacherCount || inv.learnerCount || 0 }}</td>
                   <td class="num amountCell">{{ formatZAR(inv.amountDue) }}</td>
                   <td>
                     <span class="invoiceStatus" :class="inv.paid ? 'invoiceStatus--paid' : 'invoiceStatus--unpaid'">
@@ -193,22 +193,35 @@
           <v-card-title class="dialogTitle">Generate invoice</v-card-title>
           <v-card-text class="dialogText">
             <p class="dialogDesc">Create a new term invoice for {{ school?.name }}.</p>
-            <v-alert v-if="!billingStatus?.learnerCount" type="info" variant="tonal" density="compact" class="dialogAlert">
-              Using current student count. Adjust learner count below if needed.
+            <v-alert v-if="!billingStatus?.teacherCount" type="info" variant="tonal" density="compact" class="dialogAlert">
+              Using current teacher count. Adjust below if needed.
             </v-alert>
             <div class="dialogFields">
               <v-select v-model="generateForm.term" :items="termItems" label="Term" density="compact" variant="outlined"
                 class="glassField" hide-details />
               <v-text-field v-model.number="generateForm.year" label="Year" type="number" density="compact"
                 variant="outlined" class="glassField" hide-details />
-              <v-text-field v-model.number="generateForm.learnerCount" label="Learner count" type="number"
+              <v-text-field v-model.number="generateForm.teacherCount" label="Teacher count" type="number"
                 density="compact" variant="outlined" class="glassField" hide-details />
-              <v-text-field v-model.number="generateForm.ratePerLearner" label="Rate per learner (ZAR)" type="number"
+              <v-text-field v-model.number="generateForm.ratePerTeacher" label="Rate per teacher per year (ZAR)" type="number"
                 density="compact" variant="outlined" class="glassField" hide-details />
+              <v-checkbox v-model="generateForm.includePlatformFee" 
+                label="Include R7,500 platform fee (schools with 16+ teachers)" 
+                density="compact" hide-details class="glassField" />
             </div>
             <div class="dialogSummary">
-              <span>Total amount:</span>
-              <strong>{{ formatZAR(generateTotal) }}</strong>
+              <div class="summaryLine">
+                <span>{{ generateForm.teacherCount }} teachers × {{ formatZAR(generateForm.ratePerTeacher) }}:</span>
+                <strong>{{ formatZAR((generateForm.teacherCount || 0) * (generateForm.ratePerTeacher || 0)) }}</strong>
+              </div>
+              <div v-if="generateForm.includePlatformFee" class="summaryLine">
+                <span>Platform fee (onboarding):</span>
+                <strong>{{ formatZAR(7500) }}</strong>
+              </div>
+              <div class="summaryLine summaryLine--total">
+                <span>Total amount:</span>
+                <strong>{{ formatZAR(generateTotal) }}</strong>
+              </div>
             </div>
           </v-card-text>
           <v-card-actions class="dialogActions">
@@ -289,8 +302,9 @@ const generateDialogOpen = ref(false)
 const generateForm = ref({
   term: 1,
   year: new Date().getFullYear(),
-  learnerCount: 0,
-  ratePerLearner: 60,
+  teacherCount: 0,
+  ratePerTeacher: 1500,
+  includePlatformFee: false,
 })
 const generatingInvoice = ref(false)
 
@@ -317,19 +331,26 @@ const isOverdue = computed(() => {
   return new Date(currentInvoice.value.dueDate) < new Date()
 })
 
-const learnerCount = computed(() => {
-  if (typeof billingStatus.value?.currentLearnerCount === 'number') {
-    return billingStatus.value.currentLearnerCount
+const teacherCount = computed(() => {
+  if (typeof billingStatus.value?.currentTeacherCount === 'number') {
+    return billingStatus.value.currentTeacherCount
   }
-  if (typeof school.value?.studentCount === 'number') {
-    return school.value.studentCount
+  if (typeof billingStatus.value?.teacherCount === 'number') {
+    return billingStatus.value.teacherCount
+  }
+  if (typeof school.value?.teacherCount === 'number') {
+    return school.value.teacherCount
   }
   return 0
 })
 
 const generateTotal = computed(() => {
-  return (generateForm.value.learnerCount || 0) * (generateForm.value.ratePerLearner || 0)
+  const teacherCost = (generateForm.value.teacherCount || 0) * (generateForm.value.ratePerTeacher || 0)
+  const platformFee = generateForm.value.includePlatformFee ? 7500 : 0
+  return teacherCost + platformFee
 })
+
+const platformFeeThreshold = 15
 
 const statusDialogTitle = computed(() => {
   const titles = {
@@ -435,7 +456,9 @@ function goBack() {
 }
 
 function openGenerateInvoiceDialog() {
-  generateForm.value.learnerCount = learnerCount.value
+  const teachers = teacherCount.value
+  generateForm.value.teacherCount = teachers
+  generateForm.value.includePlatformFee = teachers > platformFeeThreshold
   generateDialogOpen.value = true
 }
 
@@ -444,8 +467,9 @@ function closeGenerateDialog() {
   generateForm.value = {
     term: 1,
     year: new Date().getFullYear(),
-    learnerCount: 0,
-    ratePerLearner: 60,
+    teacherCount: 0,
+    ratePerTeacher: 1500,
+    includePlatformFee: false,
   }
 }
 
@@ -968,17 +992,35 @@ onMounted(loadData)
 
 .dialogSummary {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.75rem;
   background: rgba(var(--ink-rgb), 0.04);
   border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+.summaryLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summaryLine--total {
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid rgba(var(--ink-rgb), 0.1);
   font-size: 0.95rem;
 }
 
-.dialogSummary strong {
-  font-size: 1.1rem;
+.summaryLine strong {
+  font-size: 1.05rem;
   color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryLine--total strong {
+  font-size: 1.15rem;
 }
 
 .dialogActions {

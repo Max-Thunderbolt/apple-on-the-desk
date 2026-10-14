@@ -67,7 +67,7 @@
             </div>
             <div class="billingChip">
               <v-icon size="16" class="chipIcon">mdi-information-outline</v-icon>
-              <span>R{{ overview.costPerStudentZAR }} × student × term</span>
+              <span>R{{ overview.costPerTeacherZAR || 1500 }} × teacher × year</span>
             </div>
           </div>
 

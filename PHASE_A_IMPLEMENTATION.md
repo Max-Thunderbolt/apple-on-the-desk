@@ -256,8 +256,9 @@ GET    /schools/:schoolId/exports                              — list all expo
     "status": "trial | invoiced | paid | notice | soft_locked | locked",
     "pilot": false,
     "termLabel": "Term 3 2026",
-    "learnerCount": 120,
-    "costPerLearnerZAR": 60,
+    "teacherCount": 12,
+    "currentTeacherCount": 12,
+    "costPerTeacherZAR": 1500,
     "dueDate": "2026-10-15T00:00:00Z",
     "lastPaidAt": "2026-07-10T12:34:56Z",
     "noticeStartedAt": null,
@@ -283,9 +284,10 @@ GET    /schools/:schoolId/exports                              — list all expo
       "termLabel": "Term 3 2026",
       "issueDate": "2026-09-01T00:00:00Z",
       "dueDate": "2026-10-15T00:00:00Z",
-      "learnerCount": 120,
-      "ratePerLearner": 60,
-      "amountDue": 7200,
+      "teacherCount": 12,
+      "ratePerTeacher": 1500,
+      "platformFee": 0,
+      "amountDue": 18000,
       "currency": "ZAR",
       "paymentReference": "AOTD-RIVERSIDE-0123",
       "paid": false,
@@ -300,15 +302,20 @@ GET    /schools/:schoolId/exports                              — list all expo
 
 **Note:** Invoices are identified by `invoiceNumber` (string like "AOTD-2026-0123"), not a separate ID field.
 
+**Pricing Model (Updated 14 Oct 2026):**
+- R1,500 per teacher per year
+- Schools with 16+ teachers pay additional R7,500 platform fee (shown as onboarding fee on first invoice)
+
 ```json
 {
   "invoiceNumber": "AOTD-2026-0123",
   "termLabel": "Term 3 2026",
   "issueDate": "2026-09-01T00:00:00Z",
   "dueDate": "2026-10-15T00:00:00Z",
-  "learnerCount": 120,
-  "ratePerLearner": 60,
-  "amountDue": 7200,
+  "teacherCount": 12,
+  "ratePerTeacher": 1500,
+  "platformFee": 0,
+  "amountDue": 18000,
   "currency": "ZAR",
   "paymentReference": "AOTD-RIVERSIDE-0123",
   "paid": false,

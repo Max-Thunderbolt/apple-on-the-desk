@@ -129,7 +129,7 @@
             </div>
             <div>
               <h3 class="cardTitle">Current invoice</h3>
-              <p class="cardDesc">{{ currentInvoice.termLabel }} — {{ currentInvoice.learnerCount }} learners</p>
+              <p class="cardDesc">{{ currentInvoice.termLabel }} — {{ currentInvoice.teacherCount || currentInvoice.learnerCount || 0 }} teachers</p>
             </div>
           </div>
 
@@ -350,7 +350,7 @@
                 </p>
                 <ul>
                   <li>Pay invoiced amounts by the stated due date</li>
-                  <li>Provide accurate learner counts for billing</li>
+                  <li>Provide accurate teacher counts for billing</li>
                   <li>Comply with data protection regulations (POPIA)</li>
                   <li>Handle parent/guardian consent as required by law</li>
                 </ul>
