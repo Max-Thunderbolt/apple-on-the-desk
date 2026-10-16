@@ -10,13 +10,13 @@
             Operations <span class="titleAccent">overview</span>
           </h1>
           <p class="adminSubtitle">
-            Monitor schools, enrollment, and term-based billing across the entire platform.
+            Monitor schools, enrollment, and annual per-teacher billing across the entire platform.
           </p>
         </div>
         <div class="headerActions">
           <div class="billingChip">
             <v-icon size="16" class="chipIcon">mdi-information-outline</v-icon>
-            <span>R60 × student × school × term</span>
+            <span>R1,500 × teacher × year (R750 each + R7,500 once over 15 teachers)</span>
           </div>
           <div class="termSelector">
             <v-select v-model="term" :items="termItems" density="compact" hide-details variant="outlined"
@@ -125,7 +125,7 @@
                   <th>Last class</th>
                   <th>Last login</th>
                   <th class="num">30d events</th>
-                  <th class="num">Term cost</th>
+                  <th class="num">Annual licence</th>
                 </tr>
               </thead>
               <tbody>
@@ -157,7 +157,7 @@
                   <td class="activityCell">{{ formatDate(row.lastClassActivityAt) }}</td>
                   <td class="activityCell">{{ formatDate(row.lastTeacherLoginAt) }}</td>
                   <td class="num">{{ row.eventsLast30Days ?? 0 }}</td>
-                  <td class="num costCell">{{ formatZAR(row.costZAR) }}</td>
+                  <td class="num costCell" :title="`${row.billableTeacherCount ?? 0} billable teachers × ${formatZAR(row.perTeacherRate)}`">{{ formatZAR(row.costZAR) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -179,7 +179,7 @@
                 Grouped billing
               </h2>
               <p class="sectionDesc">
-                Term costs rolled up for named school groups. Manage groups on the School groups page.
+                Annual licence values rolled up for named school groups. Manage groups on the School groups page.
               </p>
             </div>
             <v-btn size="small" variant="tonal" class="manageSchoolsBtn" prepend-icon="mdi-folder-multiple-outline"
@@ -196,7 +196,7 @@
                   <th class="num">Teachers</th>
                   <th class="num">Classes</th>
                   <th class="num">Students</th>
-                  <th class="num">Term cost</th>
+                  <th class="num">Annual licence</th>
                 </tr>
               </thead>
               <tbody>
@@ -501,7 +501,7 @@ const kpiCards = computed(() => {
     { label: 'Teachers (7d login)', value: t.teachersActiveLast7Days ?? 0, icon: 'mdi-account-check', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--teachers7', meta: 'Logged in this week' },
     { label: 'Schools', value: t.schools, icon: 'mdi-domain', iconBg: tone.skyBg, iconColor: tone.sky, cls: 'kpiCard--schools', meta: `${u.active ?? 0} with students` },
     { label: 'Students', value: formatInt(t.students), icon: 'mdi-account-group-outline', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--students', meta: `${t.schoolsWithStudents ?? 0} schools with students` },
-    { label: 'Term revenue', value: formatZAR(t.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: overview.value.termKey },
+    { label: 'Annual licence value', value: formatZAR(t.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: `${t.billableTeachers ?? 0} billable teachers${t.platformFeeDue ? ` · ${formatZAR(t.platformFeeDue)} platform fees due` : ''}` },
     { label: '30d events', value: t.eventsLast30Days ?? 0, icon: 'mdi-pulse', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--events', meta: `${t.pointsEventsLast30Days ?? 0} points · ${t.purchasesLast30Days ?? 0} purchases` },
   ]
 })

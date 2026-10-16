@@ -212,16 +212,19 @@
         <!-- Cost summary -->
         <section class="costBar">
           <div class="costItem">
-            <span class="costLabel">Term cost</span>
+            <span class="costLabel">Annual licence (estimate)</span>
             <span class="costValue">{{ formatZAR(dash.costZAR) }}</span>
           </div>
           <div class="costItem">
             <span class="costLabel">Rate</span>
-            <span class="costValue costValue--small">R{{ dash.costPerStudentZAR ?? 60 }} × student × term</span>
+            <span class="costValue costValue--small">{{ formatZAR(dash.perTeacherRate) }} × billable teacher × year</span>
           </div>
           <div class="costItem">
-            <span class="costLabel">Period</span>
-            <span class="costValue costValue--small">{{ dash.termKey }}</span>
+            <span class="costLabel">Billable teachers</span>
+            <span class="costValue costValue--small">
+              {{ dash.billableTeacherCount ?? 0 }}
+              <template v-if="dash.platformFeeDue"> · + {{ formatZAR(dash.platformFeeDue) }} once-off platform fee</template>
+            </span>
           </div>
         </section>
       </template>
@@ -314,7 +317,7 @@ const kpiCards = computed(() => {
     { label: 'Teachers', value: d.teachers?.length ?? d.teacherCount ?? 0, icon: 'mdi-account-school-outline', iconBg: tone.skyBg, iconColor: tone.sky, cls: 'kpiCard--teachers' },
     { label: 'Classes', value: d.classCount ?? d.classes?.length ?? 0, icon: 'mdi-google-classroom', iconBg: tone.greenBg, iconColor: tone.green, cls: 'kpiCard--classes' },
     { label: 'Students', value: d.studentCount ?? 0, icon: 'mdi-account-group-outline', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--students' },
-    { label: 'Term cost', value: formatZAR(d.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: d.termKey },
+    { label: 'Annual licence', value: formatZAR(d.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: `${d.billableTeacherCount ?? 0} billable teachers` },
   ]
 })
 

@@ -42,7 +42,7 @@
             <BillingStatusChip :status="billingStatus.status" :pilot="billingStatus.pilot" />
           </div>
 
-          <div v-if="billingStatus.status === 'trial' || billingStatus.pilot" class="statusBody statusBody--trial">
+          <div v-if="billingStatus.pilot" class="statusBody statusBody--trial">
             <v-icon size="32" color="rgba(168,51,185,0.7)">mdi-flask-outline</v-icon>
             <div>
               <p class="statusMessage">
@@ -50,6 +50,20 @@
               </p>
               <p class="statusDetail">
                 You are part of our pilot program. Billing will begin when your school formally converts to paid.
+              </p>
+            </div>
+          </div>
+
+          <div v-else-if="billingStatus.status === 'trial'" class="statusBody statusBody--trial">
+            <v-icon size="32" color="rgba(168,51,185,0.7)">mdi-flask-outline</v-icon>
+            <div>
+              <p class="statusMessage">
+                <strong>Trial — no invoice yet.</strong>
+              </p>
+              <p class="statusDetail">
+                Your school is invoiced once a year. Your next annual invoice is estimated at
+                {{ formatZAR(billingStatus.estimatedNextInvoice?.total) }} for
+                {{ billingStatus.currentBillableTeacherCount ?? 0 }} billable teachers.
               </p>
             </div>
           </div>
@@ -70,7 +84,7 @@
             <v-icon size="32" color="rgba(26,147,111,0.9)">mdi-check-circle</v-icon>
             <div>
               <p class="statusMessage">
-                <strong>Up to date for {{ billingStatus.termLabel }}</strong>
+                <strong>Up to date for {{ billingStatus.termSnapshot?.termLabel || 'this year' }}</strong>
               </p>
               <p class="statusDetail">
                 Last payment received {{ formatDate(billingStatus.lastPaidAt) }}.
@@ -85,9 +99,9 @@
                 <strong>Payment notice — {{ daysRemaining }} days remaining</strong>
               </p>
               <p class="statusDetail">
-                After {{ formatDate(billingStatus.softLockDate) }}, teachers will have read-only access. 
-                After {{ formatDate(billingStatus.hardLockDate) }}, classroom access will be paused. 
-                <strong>Your data is safe and never deleted.</strong>
+                From {{ formatDate(billingStatus.softLockAt) }}, teachers will have read-only access.
+                If the invoice is still unpaid after that, classroom access may be paused.
+                <strong>Your school's data is kept.</strong>
               </p>
             </div>
           </div>
@@ -101,7 +115,7 @@
               <p class="statusDetail">
                 Teachers can view classes but cannot award points or make changes. 
                 Pay the invoice below to restore full access. 
-                <strong>Your school's data is kept safe.</strong>
+                <strong>Your school's data is kept.</strong>
               </p>
             </div>
           </div>
@@ -115,7 +129,7 @@
               <p class="statusDetail">
                 Classroom access is paused. You can still access billing, onboarding, and data export. 
                 Pay the invoice to restore access. 
-                <strong>Your school's data is kept safe and will never be deleted.</strong>
+                <strong>Your school's data is kept.</strong>
               </p>
             </div>
           </div>
@@ -129,7 +143,12 @@
             </div>
             <div>
               <h3 class="cardTitle">Current invoice</h3>
-              <p class="cardDesc">{{ currentInvoice.termLabel }} — {{ currentInvoice.teacherCount || currentInvoice.learnerCount || 0 }} teachers</p>
+              <p class="cardDesc">
+                {{ currentInvoice.termLabel }}
+                <template v-if="currentInvoice.pricingModel === 'teacher'">
+                  — {{ currentInvoice.billableTeacherCount }} billable of {{ currentInvoice.teacherCount }} teachers
+                </template>
+              </p>
             </div>
           </div>
 
@@ -146,8 +165,16 @@
               <span class="invoiceLabel">Due date</span>
               <span class="invoiceValue invoiceValue--due">{{ formatDate(currentInvoice.dueDate) }}</span>
             </div>
+            <div v-if="currentInvoice.pricingModel === 'teacher'" class="invoiceRow">
+              <span class="invoiceLabel">Rate</span>
+              <span class="invoiceValue">{{ formatZAR(currentInvoice.perTeacherRate) }} per teacher per year</span>
+            </div>
+            <div v-if="currentInvoice.platformFee > 0" class="invoiceRow">
+              <span class="invoiceLabel">Platform onboarding fee (once-off)</span>
+              <span class="invoiceValue">{{ formatZAR(currentInvoice.platformFee) }}</span>
+            </div>
             <div class="invoiceRow invoiceRow--total">
-              <span class="invoiceLabel"><strong>Amount due</strong></span>
+              <span class="invoiceLabel"><strong>{{ currentInvoice.paid ? 'Amount paid' : 'Amount due' }}</strong></span>
               <span class="invoiceValue invoiceValue--amount"><strong>{{ formatZAR(currentInvoice.amountDue) }}</strong></span>
             </div>
           </div>
@@ -160,7 +187,7 @@
         </section>
 
         <!-- Payment details -->
-        <section v-if="currentInvoice && billingStatus.status !== 'paid'" class="paymentCard">
+        <section v-if="currentInvoice && !currentInvoice.paid" class="paymentCard">
           <div class="cardHeader">
             <div class="cardHeaderIcon cardHeaderIcon--payment">
               <v-icon size="22" color="var(--white)">mdi-bank-transfer</v-icon>
@@ -178,7 +205,7 @@
             </div>
             <div class="paymentRow">
               <span class="paymentLabel">Bank</span>
-              <span class="paymentValue">{{ eftDetails.bank }}</span>
+              <span class="paymentValue">{{ eftDetails.bankName }}</span>
             </div>
             <div class="paymentRow">
               <span class="paymentLabel">Account number</span>
@@ -200,7 +227,7 @@
         </section>
 
         <!-- Invoice history -->
-        <section v-if="invoiceHistory.length > 1" class="historyCard">
+        <section v-if="olderInvoices.length" class="historyCard">
           <div class="cardHeader">
             <div class="cardHeaderIcon">
               <v-icon size="22" color="var(--white)">mdi-history</v-icon>
@@ -213,7 +240,7 @@
               <thead>
                 <tr>
                   <th>Invoice</th>
-                  <th>Term</th>
+                  <th>Period</th>
                   <th>Issue date</th>
                   <th>Amount</th>
                   <th>Status</th>
@@ -221,7 +248,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="inv in invoiceHistory.slice(1)" :key="inv.invoiceNumber" class="historyRow">
+                <tr v-for="inv in olderInvoices" :key="inv.invoiceNumber" class="historyRow">
                   <td><code class="historyCode">{{ inv.invoiceNumber }}</code></td>
                   <td>{{ inv.termLabel }}</td>
                   <td>{{ formatDate(inv.issueDate) }}</td>
@@ -246,7 +273,7 @@
           <v-icon size="48" class="emptyIcon">mdi-receipt-text-outline</v-icon>
           <p class="emptyTitle">No invoice yet</p>
           <p class="emptyText">
-            Platform administrators generate invoices at the start of each term. You will be notified by email when your first invoice is ready.
+            Schools are invoiced once a year. You will be notified by email when your invoice is ready.
           </p>
         </section>
 
@@ -272,7 +299,15 @@
             </div>
           </div>
 
-          <div v-else class="onboardingPending">
+          <div v-if="documentLinks.length" class="documentLinks">
+            <a v-for="doc in documentLinks" :key="doc.key" :href="doc.url" target="_blank" rel="noopener"
+              class="documentLink">
+              <v-icon size="16">mdi-file-pdf-box</v-icon>
+              {{ doc.title }} (v{{ doc.version }})
+            </a>
+          </div>
+
+          <div v-if="!onboardingPack.accepted" class="onboardingPending">
             <div class="onboardingChecklist">
               <div class="checklistItem">
                 <v-icon size="18">mdi-circle-outline</v-icon>
@@ -290,6 +325,26 @@
             <v-btn variant="outlined" prepend-icon="mdi-file-document" class="onboardingBtn" @click="openOnboardingDialog">
               Review &amp; accept pack
             </v-btn>
+          </div>
+        </section>
+
+        <!-- Privacy -->
+        <section class="exportCard">
+          <div class="cardHeader">
+            <div class="cardHeaderIcon cardHeaderIcon--onboarding">
+              <v-icon size="22" color="var(--white)">mdi-shield-account-outline</v-icon>
+            </div>
+            <div>
+              <h3 class="cardTitle">Privacy</h3>
+              <p class="cardDesc">Learner privacy settings for your school</p>
+            </div>
+          </div>
+          <div class="exportBody">
+            <v-switch v-model="publicLeaderboards" :loading="savingPrivacy" :disabled="savingPrivacy"
+              color="primary" inset hide-details density="compact"
+              label="Public leaderboards (show learner rankings outside the classroom)"
+              @update:model-value="savePrivacy" />
+            <p class="exportExpiry">Off by default. Changes are recorded in your school's activity log.</p>
           </div>
         </section>
 
@@ -314,10 +369,17 @@
               <v-icon size="18" color="rgba(26,147,111,0.9)">mdi-check-circle</v-icon>
               Export ready — requested {{ formatDate(exportStatus.requestedAt) }}
             </p>
+            <p v-else-if="exportStatus.failed" class="exportExpiry">
+              The last export failed. Please request a new one.
+            </p>
             <div class="exportActions">
               <v-btn v-if="exportStatus.ready" variant="outlined" prepend-icon="mdi-download" class="exportBtn"
                 @click="downloadExport">
                 Download export
+              </v-btn>
+              <v-btn v-if="exportStatus.ready" variant="text" class="exportBtn" :loading="requestingExport"
+                @click="requestExport">
+                Request a fresh export
               </v-btn>
               <v-btn v-else-if="exportStatus.preparing" variant="outlined" prepend-icon="mdi-loading" class="exportBtn" disabled>
                 Preparing export…
@@ -390,16 +452,12 @@
             <div class="onboardingStep">
               <h4 class="onboardingStepTitle">3. Privacy defaults</h4>
               <p class="onboardingStepDesc">
-                These settings protect learner privacy and can be changed later under school settings.
+                These settings protect learner privacy and can be changed later in the Privacy section below.
               </p>
               <div class="privacyDefaults">
                 <div class="privacyDefault">
                   <v-icon size="20" color="rgba(26,147,111,0.9)">mdi-check</v-icon>
                   <span>Public leaderboards: <strong>OFF by default</strong></span>
-                </div>
-                <div class="privacyDefault">
-                  <v-icon size="20" color="rgba(26,147,111,0.9)">mdi-check</v-icon>
-                  <span>Cross-school displays: <strong>OFF by default</strong></span>
                 </div>
               </div>
               <v-checkbox v-model="onboardingChecks.privacy" label="I understand these privacy defaults"
@@ -423,10 +481,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-import Server from '@/services/server'
+import Server, { apiUrl } from '@/services/server'
 import { useUserProfile } from '@/composables/useUserProfile'
 import BillingStatusChip from '@/components/common/BillingStatusChip.vue'
 
@@ -452,7 +510,11 @@ const successMsg = ref('')
 const billingStatus = ref(null)
 const invoiceHistory = ref([])
 const onboardingPack = ref({ accepted: false })
-const exportStatus = ref({ ready: false, preparing: false })
+const exportStatus = ref({ ready: false, preparing: false, failed: false, jobId: null })
+const documents = ref({})
+const publicLeaderboards = ref(false)
+const savingPrivacy = ref(false)
+let exportPollTimer = null
 const requestingExport = ref(false)
 const schoolName = ref('')
 
@@ -461,25 +523,31 @@ const onboardingChecks = ref({ agreement: false, consent: false, privacy: false 
 const acceptorName = ref('')
 const acceptingPack = ref(false)
 
-const eftDetails = {
-  accountName: 'Thunderbolt Consulting (Pty) Ltd',
-  bank: 'Standard Bank',
-  accountNumber: '123456789',
-  branchCode: '051001',
-}
+// Bank details come from the API (same source as the PDF and the invoice email)
+const eftDetails = computed(() => billingStatus.value?.payee?.bank || {})
 
+// The invoice to pay: oldest unpaid first, otherwise the latest
 const currentInvoice = computed(() => {
   if (!invoiceHistory.value.length) return null
-  return invoiceHistory.value[0]
+  const unpaid = invoiceHistory.value.filter((inv) => !inv.paid)
+  return unpaid.length ? unpaid[unpaid.length - 1] : invoiceHistory.value[0]
 })
 
+const olderInvoices = computed(() =>
+  invoiceHistory.value.filter((inv) => inv.invoiceNumber !== currentInvoice.value?.invoiceNumber),
+)
+
 const daysRemaining = computed(() => {
-  if (!billingStatus.value?.softLockDate) return 0
-  const now = new Date()
-  const lockDate = new Date(billingStatus.value.softLockDate)
-  const diff = lockDate - now
+  if (!billingStatus.value?.softLockAt) return 0
+  const diff = new Date(billingStatus.value.softLockAt) - new Date()
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 })
+
+const documentLinks = computed(() =>
+  Object.values(documents.value || {})
+    .filter((d) => d?.available && d.downloadUrl)
+    .map((d) => ({ key: d.key, title: d.title, version: d.version, url: apiUrl(d.downloadUrl) })),
+)
 
 const canAcceptPack = computed(() => {
   return onboardingChecks.value.agreement &&
@@ -518,35 +586,67 @@ async function loadBillingData() {
   loading.value = true
 
   try {
-    const [billingData, onboardingData] = await Promise.all([
+    const [billingData, onboardingData, documentsData] = await Promise.all([
       Server.getSchoolBillingStatus(schoolId.value),
       Server.getOnboardingStatus(schoolId.value),
+      Server.getOnboardingDocuments().catch(() => ({ documents: {} })),
     ])
 
     billingStatus.value = billingData.billing || {}
     schoolName.value = billingData.school?.name || 'School'
     invoiceHistory.value = (billingData.invoices || []).map(toInvoiceView)
-    onboardingPack.value = onboardingData
-
-    // If we have a latest export job ID, fetch its status
-    if (billingData.billing?.latestExportJobId) {
-      try {
-        const exportData = await Server.getSchoolExportStatus(
-          schoolId.value,
-          billingData.billing.latestExportJobId
-        )
-        exportStatus.value = exportData
-      } catch {
-        // Export status not critical for page load
-        exportStatus.value = { ready: false, preparing: false }
-      }
-    } else {
-      exportStatus.value = { ready: false, preparing: false }
+    onboardingPack.value = {
+      accepted: Boolean(onboardingData.completed),
+      acceptedBy: onboardingData.onboarding?.slaAcknowledgedByName || onboardingData.acceptedBy || null,
+      acceptedAt: onboardingData.onboarding?.completedAt || onboardingData.acceptedAt || null,
     }
+    publicLeaderboards.value = onboardingData.onboarding?.privacyDefaults?.publicLeaderboards === true
+    documents.value = documentsData.documents || {}
+
+    await loadExportStatus()
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to load billing data'
   } finally {
     loading.value = false
+  }
+}
+
+/** Latest export job → { ready, preparing, failed, jobId, requestedAt, expiresAt }; polls while preparing */
+async function loadExportStatus() {
+  clearTimeout(exportPollTimer)
+  try {
+    const data = await Server.listSchoolExports(schoolId.value)
+    const job = data.jobs?.[0]
+    const expired = job?.expiresAt && Date.now() > job.expiresAt
+    exportStatus.value = job
+      ? {
+          ready: job.status === 'ready' && !expired,
+          preparing: ['pending', 'processing'].includes(job.status),
+          failed: job.status === 'failed',
+          jobId: job.jobId,
+          requestedAt: job.createdAt,
+          expiresAt: job.expiresAt,
+        }
+      : { ready: false, preparing: false, failed: false, jobId: null }
+    if (exportStatus.value.preparing) {
+      exportPollTimer = setTimeout(loadExportStatus, 3000)
+    }
+  } catch {
+    // Export status isn't critical for page load
+    exportStatus.value = { ready: false, preparing: false, failed: false, jobId: null }
+  }
+}
+
+async function savePrivacy(value) {
+  savingPrivacy.value = true
+  try {
+    await Server.updatePrivacyDefaults(schoolId.value, { publicLeaderboards: Boolean(value) })
+    toast.success(`Public leaderboards ${value ? 'on' : 'off'}`)
+  } catch (e) {
+    publicLeaderboards.value = !value
+    error.value = e.response?.data?.message || e.message || 'Failed to update privacy settings'
+  } finally {
+    savingPrivacy.value = false
   }
 }
 
@@ -567,7 +667,7 @@ async function downloadInvoice(invoiceNo) {
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `invoice-${invoiceNo}.pdf`
+    a.download = `AOTD-Invoice-${String(invoiceNo).padStart(5, '0')}.pdf`
     a.click()
     window.URL.revokeObjectURL(url)
     toast.success('Invoice downloaded')
@@ -602,7 +702,10 @@ async function acceptPack() {
 
   try {
     await Server.acceptOnboarding(schoolId.value, {
-      acceptedBy: acceptorName.value.trim(),
+      slaAcknowledged: onboardingChecks.value.agreement,
+      popiaConsentAcknowledged: onboardingChecks.value.consent,
+      acceptorName: acceptorName.value.trim(),
+      privacyDefaults: { publicLeaderboards: false },
     })
     successMsg.value = 'Onboarding pack accepted'
     closeOnboardingDialog()
@@ -622,7 +725,7 @@ async function requestExport() {
   try {
     await Server.requestSchoolExport(schoolId.value)
     successMsg.value = 'Export requested — preparing your data'
-    await loadBillingData()
+    await loadExportStatus()
   } catch (e) {
     error.value = e.response?.data?.message || e.message || 'Failed to request export'
   } finally {
@@ -648,6 +751,7 @@ async function downloadExport() {
 }
 
 onMounted(loadBillingData)
+onUnmounted(() => clearTimeout(exportPollTimer))
 </script>
 
 <style scoped>
@@ -1292,5 +1396,26 @@ onMounted(loadBillingData)
 
 .onboardingDialogActions {
   padding: 0 1rem 1rem;
+}
+
+.documentLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.documentLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: var(--seaGreen);
+  text-decoration: none;
+}
+
+.documentLink:hover {
+  text-decoration: underline;
 }
 </style>

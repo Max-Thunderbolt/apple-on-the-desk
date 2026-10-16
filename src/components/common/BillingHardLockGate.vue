@@ -17,7 +17,7 @@
       <div class="lockGateDetails">
         <div class="lockGateDetail">
           <v-icon size="20" color="rgba(var(--ink-rgb), 0.5)">mdi-shield-check-outline</v-icon>
-          <span>Your school's data is kept safe</span>
+          <span>Your school's data is kept.</span>
         </div>
         <div class="lockGateDetail">
           <v-icon size="20" color="rgba(var(--ink-rgb), 0.5)">mdi-account-tie-outline</v-icon>
@@ -26,6 +26,7 @@
       </div>
 
       <v-btn
+        v-if="schoolAdminEmail"
         variant="outlined"
         size="large"
         prepend-icon="mdi-email-outline"
@@ -43,9 +44,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-
-const props = defineProps({
+defineProps({
   schoolName: {
     type: String,
     default: '',
@@ -62,13 +61,9 @@ const props = defineProps({
 </script>
 
 <style scoped>
+/* Replaces the page content (not a fixed overlay) so the top nav and Profile stay reachable */
 .lockGate {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 9999;
+  min-height: calc(100vh - 140px);
   display: flex;
   align-items: center;
   justify-content: center;

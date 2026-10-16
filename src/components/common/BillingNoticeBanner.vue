@@ -64,7 +64,9 @@ const iconColor = computed(() => {
 
 const message = computed(() => {
   if (props.status === 'notice') {
-    return `School billing notice — access may limit after ${props.daysRemaining} days. Ask your school admin.`
+    return props.daysRemaining > 0
+      ? `School billing notice: access may be limited in ${props.daysRemaining} day${props.daysRemaining === 1 ? '' : 's'}. Ask your school admin.`
+      : 'School billing notice: access may be limited soon. Ask your school admin.'
   }
   if (props.status === 'soft_locked') {
     return 'School billing — soft lock. You can browse but cannot award points or make changes.'
@@ -74,15 +76,19 @@ const message = computed(() => {
 
 const detail = computed(() => {
   if (props.status === 'soft_locked') {
-    return 'Contact your school admin to resolve billing and restore full access.'
+    return "Contact your school admin to resolve billing and restore full access. Your school's data is kept."
   }
-  return ''
+  return "Your school's data is kept."
 })
 
 function dismiss() {
   if (props.dismissible) {
     dismissed.value = true
-    sessionStorage.setItem(`billing-banner-dismissed-${props.status}`, 'true')
+    try {
+      sessionStorage.setItem(`billing-banner-dismissed-${props.status}`, 'true')
+    } catch {
+      /* storage unavailable */
+    }
   }
 }
 
@@ -92,7 +98,11 @@ watch(() => props.status, () => {
 
 onMounted(() => {
   if (props.dismissible) {
-    dismissed.value = sessionStorage.getItem(`billing-banner-dismissed-${props.status}`) === 'true'
+    try {
+      dismissed.value = sessionStorage.getItem(`billing-banner-dismissed-${props.status}`) === 'true'
+    } catch {
+      dismissed.value = false
+    }
   }
 })
 </script>

@@ -1,125 +1,132 @@
-import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useBillingStatus } from './useBillingStatus'
-import { useUserProfile } from './useUserProfile'
+import { ref, computed, watch } from 'vue'
+import Server from '@/services/server'
+import { memberships, isPlatformAdmin } from './useUserProfile'
 
 /**
- * Composable for teacher views to check billing lock status
- * and prevent write operations when soft/hard locked.
+ * Teacher-side billing lock state, shared app-wide (mounted once in layouts/default.vue).
+ *
+ * Reads GET /schools/:id/billing-status (teachers allowed) for every school the user teaches at.
+ * Mirrors the API's rule for user-wide classroom routes: classroom access is only paused when
+ * every one of the teacher's schools is locked; the banner shows the most severe status.
  */
-export function useBillingLockCheck() {
-  const route = useRoute()
-  const { teacherSchools } = useUserProfile()
-  const { fetchBillingStatus, canWriteData, shouldShowBanner, shouldBlockAccess } = useBillingStatus()
 
-  const billingStatus = ref(null)
-  const loading = ref(false)
-  const showModal = ref(false)
-  const modalDismissed = ref(false)
+const DAY_MS = 24 * 60 * 60 * 1000
+const MODAL_KEY = 'aotd:soft-lock-modal-shown'
+const SEVERITY = { trial: 0, invoiced: 0, paid: 0, notice: 1, soft_locked: 2, locked: 3 }
 
-  const schoolId = computed(() => {
-    if (teacherSchools.value.length === 0) return null
-    return teacherSchools.value[0].schoolId
-  })
+const statuses = ref([]) // [{ schoolId, schoolName, status, pilot, noticeStartedAt, softLockAt, lockedAt }]
+const loading = ref(false)
+const showModal = ref(false)
+let inFlight = null
 
-  const isLocked = computed(() => {
-    if (!billingStatus.value) return false
-    return billingStatus.value.status === 'soft_locked' || billingStatus.value.status === 'locked'
-  })
+const teacherSchoolIds = computed(() =>
+  [...new Set(memberships.value.filter((m) => m.role === 'teacher').map((m) => m.schoolId))].filter(Boolean),
+)
 
-  const isSoftLocked = computed(() => {
-    return billingStatus.value?.status === 'soft_locked'
-  })
+const applies = computed(() => !isPlatformAdmin.value && teacherSchoolIds.value.length > 0)
 
-  const isHardLocked = computed(() => {
-    return billingStatus.value?.status === 'locked'
-  })
+/** The most severe school status (drives the banner) */
+const primary = computed(() => {
+  if (!applies.value || !statuses.value.length) return null
+  return [...statuses.value].sort((a, b) => (SEVERITY[b.status] ?? 0) - (SEVERITY[a.status] ?? 0))[0]
+})
 
-  const showBanner = computed(() => {
-    if (!billingStatus.value) return false
-    return shouldShowBanner(billingStatus.value.status)
-  })
+const isSoftLocked = computed(() => primary.value?.status === 'soft_locked')
 
-  const blockAccess = computed(() => {
-    if (!billingStatus.value) return false
-    return shouldBlockAccess(billingStatus.value.status)
-  })
+/** Hard-lock gate: only when every teacher school is locked */
+const blockAccess = computed(
+  () => applies.value && statuses.value.length > 0 && statuses.value.every((s) => s.status === 'locked'),
+)
 
-  const canWrite = computed(() => {
-    if (!billingStatus.value) return true
-    return canWriteData(billingStatus.value.status)
-  })
+const showBanner = computed(() => ['notice', 'soft_locked'].includes(primary.value?.status))
 
-  const daysRemaining = computed(() => {
-    if (!billingStatus.value?.softLockDate) return 0
-    const now = new Date()
-    const lockDate = new Date(billingStatus.value.softLockDate)
-    const diff = lockDate - now
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
-  })
+const canWrite = computed(() => !['soft_locked', 'locked'].includes(primary.value?.status))
 
-  async function checkBillingStatus() {
-    if (!schoolId.value) return
+const daysRemaining = computed(() => {
+  const at = primary.value?.softLockAt
+  if (!at) return 0
+  return Math.max(0, Math.ceil((at - Date.now()) / DAY_MS))
+})
 
-    loading.value = true
-    try {
-      billingStatus.value = await fetchBillingStatus(schoolId.value)
-
-      if (isSoftLocked.value && !modalDismissed.value) {
-        const lastShown = sessionStorage.getItem('soft-lock-modal-shown')
-        const now = Date.now()
-        if (!lastShown || now - parseInt(lastShown) > 86400000) {
-          showModal.value = true
-          sessionStorage.setItem('soft-lock-modal-shown', now.toString())
-        }
-      }
-    } finally {
-      loading.value = false
-    }
+function readModalShownAt() {
+  try {
+    return Number(localStorage.getItem(MODAL_KEY)) || 0
+  } catch {
+    return 0
   }
+}
 
+function writeModalShownAt(ts) {
+  try {
+    localStorage.setItem(MODAL_KEY, String(ts))
+  } catch {
+    /* storage unavailable: the modal may show again, which is harmless */
+  }
+}
+
+function maybeShowSoftLockModal() {
+  if (!isSoftLocked.value) return
+  const now = Date.now()
+  if (now - readModalShownAt() > DAY_MS) {
+    showModal.value = true
+    writeModalShownAt(now)
+  }
+}
+
+async function refresh() {
+  if (!applies.value) {
+    statuses.value = []
+    return
+  }
+  if (inFlight) return inFlight
+  loading.value = true
+  inFlight = Promise.all(
+    teacherSchoolIds.value.map((id) => Server.getSchoolBillingLockStatus(id).catch(() => null)),
+  )
+    .then((results) => {
+      statuses.value = results.filter(Boolean)
+      maybeShowSoftLockModal()
+    })
+    .finally(() => {
+      loading.value = false
+      inFlight = null
+    })
+  return inFlight
+}
+
+watch(teacherSchoolIds, (ids, prev) => {
+  if (ids.join() !== (prev || []).join()) refresh()
+})
+
+export function useBillingLockCheck() {
   function dismissModal() {
     showModal.value = false
-    modalDismissed.value = true
   }
 
-  function checkWriteAction(actionName = 'this action') {
-    if (!canWrite.value) {
-      return {
-        allowed: false,
-        reason: isSoftLocked.value
-          ? `School billing — soft lock. Contact your school admin to restore access.`
-          : `School billing — access paused. Contact your school admin.`,
-      }
+  function checkWriteAction() {
+    if (canWrite.value) return { allowed: true }
+    return {
+      allowed: false,
+      reason: isSoftLocked.value
+        ? 'School billing: soft lock. Contact your school admin to restore access.'
+        : 'School billing: access paused. Contact your school admin.',
     }
-    return { allowed: true }
   }
-
-  watch(schoolId, () => {
-    if (schoolId.value) {
-      checkBillingStatus()
-    }
-  })
-
-  onMounted(() => {
-    if (schoolId.value) {
-      checkBillingStatus()
-    }
-  })
 
   return {
-    billingStatus,
+    billingStatus: primary,
+    statuses,
     loading,
-    isLocked,
     isSoftLocked,
-    isHardLocked,
+    isHardLocked: blockAccess,
     showBanner,
     blockAccess,
     canWrite,
     daysRemaining,
     showModal,
     dismissModal,
-    checkBillingStatus,
+    checkBillingStatus: refresh,
+    refresh,
     checkWriteAction,
   }
 }

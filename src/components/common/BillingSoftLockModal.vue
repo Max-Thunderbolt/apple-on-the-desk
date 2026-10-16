@@ -22,7 +22,7 @@
         <div class="modalInfoBox">
           <v-icon size="20" color="rgba(var(--ink-rgb), 0.6)">mdi-information-outline</v-icon>
           <p>
-            <strong>Your data is safe.</strong> Contact your school admin to resolve billing and restore full access.
+            <strong>Your school's data is kept.</strong> Contact your school admin to resolve billing and restore full access.
           </p>
         </div>
       </v-card-text>

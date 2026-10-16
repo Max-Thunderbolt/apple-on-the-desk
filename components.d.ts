@@ -13,7 +13,6 @@ declare module 'vue' {
   export interface GlobalComponents {
     AdminNav: typeof import('./src/components/admin/AdminNav.vue')['default']
     AppContextMenu: typeof import('./src/components/common/AppContextMenu.vue')['default']
-    AppFooter: typeof import('./src/components/AppFooter.vue')['default']
     AwardPointsModal: typeof import('./src/components/modals/awardPointsModal.vue')['default']
     BillingHardLockGate: typeof import('./src/components/common/BillingHardLockGate.vue')['default']
     BillingNoticeBanner: typeof import('./src/components/common/BillingNoticeBanner.vue')['default']

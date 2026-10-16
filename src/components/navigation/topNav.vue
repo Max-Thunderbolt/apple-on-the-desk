@@ -45,17 +45,17 @@
               <span class="contextLabel">{{ contextInfo.label }}</span>
               <div v-if="contextInfo.showShortcuts" class="classShortcuts">
                 <v-btn size="x-small" variant="text" class="shortcutBtn"
-                  @click="navigate(`/Class/${contextInfo.classId}?tab=shop`)">
+                  @click="navigate(`/Class/${contextInfo.classId}?view=shop`)">
                   Shop
                 </v-btn>
                 <span class="shortcutSep">·</span>
                 <v-btn size="x-small" variant="text" class="shortcutBtn"
-                  @click="navigate(`/Class/${contextInfo.classId}?tab=timer`)">
+                  @click="navigate(`/Class/${contextInfo.classId}?view=timer`)">
                   Timer
                 </v-btn>
                 <span class="shortcutSep">·</span>
                 <v-btn size="x-small" variant="text" class="shortcutBtn"
-                  @click="navigate(`/Class/${contextInfo.classId}?tab=groups`)">
+                  @click="navigate(`/Class/${contextInfo.classId}?view=groups`)">
                   Groups
                 </v-btn>
               </div>
@@ -103,7 +103,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useUserProfile } from '@/composables/useUserProfile'

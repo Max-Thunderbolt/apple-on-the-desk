@@ -52,6 +52,7 @@
         <div class="classContent">
             <ClassFloatingBar
                 v-if="!dataLoading && classData"
+                ref="floatingBarRef"
                 v-model:search-query="searchQuery"
                 v-model:view-mode="viewMode"
                 :view-shop-modal="viewShopModal"
@@ -140,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, defineEmits, watch, provide } from 'vue';
+import { ref, onMounted, onUnmounted, computed, defineEmits, watch, provide, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useActiveClass } from '../../composables/useActiveClass';
 import { useContextMenu } from '../../composables/useContextMenu';
@@ -408,15 +409,38 @@ onMounted(async () => {
         if (classData.value) {
             setActiveClass(id, classData.value.name);
         }
-        const viewParam = route.query.view;
-        if (viewParam === 'shop') {
-            viewShopModal.value = true;
-        } else if (viewParam === 'groups') {
-            viewMode.value = 'groups';
-        }
     } finally {
         dataLoading.value = false;
     }
+    await applyViewQuery();
+});
+
+const floatingBarRef = ref(null);
+
+/**
+ * Top-nav class shortcuts: /Class/:id?view=shop|timer|groups (?tab= also accepted).
+ * Handled on load and when the query changes on the same page; the param is then cleared
+ * so the same shortcut works again.
+ */
+async function applyViewQuery() {
+    const view = route.query.view || route.query.tab;
+    if (!view || !classData.value) return;
+    await nextTick();
+    if (view === 'shop') {
+        if (!viewShopModal.value) viewShop();
+    } else if (view === 'groups') {
+        if (viewShopModal.value) viewShop();
+        if (hasGroups.value) viewMode.value = 'groups';
+        else handleCreateGroups();
+    } else if (view === 'timer') {
+        floatingBarRef.value?.openTimer?.();
+    }
+    const { view: _view, tab: _tab, ...rest } = route.query;
+    router.replace({ query: rest });
+}
+
+watch(() => [route.query.view, route.query.tab], ([view, tab]) => {
+    if ((view || tab) && !dataLoading.value) applyViewQuery();
 });
 
 onUnmounted(() => {

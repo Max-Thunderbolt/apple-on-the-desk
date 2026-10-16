@@ -1,7 +1,6 @@
 <template>
   <div class="container onboardingPage" :class="{ 'onboardingPage--child': isChild }">
     <div class="onboardingShell" :class="{ 'onboardingShell--child': isChild }">
-      <TeacherNav v-if="!isChild" />
 
       <div v-if="loading && !loaded" class="loadingState">
         <v-progress-circular indeterminate color="primary" size="64" width="6" />
