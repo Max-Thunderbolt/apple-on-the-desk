@@ -12,7 +12,14 @@ const http = axios.create({
     },
 })
 
-console.log('apiBase', apiBase)
+/** Absolute URL for an API path the API returns (e.g. '/api/onboarding/documents/sla'). */
+export function apiUrl(path) {
+    if (!path) return null
+    if (/^https?:\/\//.test(path)) return path
+    const root = new URL(apiBase.endsWith('/') ? apiBase : `${apiBase}/`, window.location.origin)
+    // apiBase ends in /api/; API-returned paths start with /api/
+    return new URL(path.replace(/^\/api\//, ''), root).toString()
+}
 
 /** Set a function that returns the current Firebase ID token (for API auth). */
 export function setAuthGetter(getToken) {
@@ -31,6 +38,32 @@ http.interceptors.request.use(async config => {
     }
     return config
 })
+
+/**
+ * Global response handlers, registered by the app (keeps router/auth out of this module):
+ * - onUnauthorized(error): 401 from the API (expired session)
+ * - onBillingLock(data): 403 carrying { billingStatus, lockReason }
+ */
+const responseHandlers = { onUnauthorized: null, onBillingLock: null }
+export function setResponseHandlers(handlers) {
+    Object.assign(responseHandlers, handlers)
+}
+
+http.interceptors.response.use(
+    response => response,
+    error => {
+        const status = error.response?.status
+        const data = error.response?.data
+        if (status === 401 && responseHandlers.onUnauthorized) {
+            responseHandlers.onUnauthorized(error)
+        } else if (status === 403 && data?.billingStatus && responseHandlers.onBillingLock) {
+            // Inline reason for callers that surface error.message
+            error.message = data.message || 'School billing: access limited'
+            responseHandlers.onBillingLock(data)
+        }
+        return Promise.reject(error)
+    },
+)
 
 class Server {
     constructor() {
@@ -733,6 +766,13 @@ class Server {
         }
     }
 
+    /** Status only ({ status, pilot, noticeStartedAt, softLockAt, lockedAt, termLabel }); teachers allowed */
+    async getSchoolBillingLockStatus(schoolId) {
+        const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/billing-status`)
+        return response.data
+    }
+
+    /** Full billing detail (school admin / platform admin) */
     async getSchoolBillingStatus(schoolId) {
         try {
             const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/billing`)
@@ -791,9 +831,9 @@ class Server {
         }
     }
 
-    async startBillingNotice(schoolId) {
+    async startBillingNotice(schoolId, note) {
         try {
-            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/billing/notice`)
+            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/billing/notice`, { note })
             return response.data
         } catch (error) {
             console.error('Error starting billing notice:', error)
@@ -801,9 +841,9 @@ class Server {
         }
     }
 
-    async applySoftLock(schoolId) {
+    async applySoftLock(schoolId, note) {
         try {
-            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/billing/soft-lock`)
+            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/billing/soft-lock`, { note })
             return response.data
         } catch (error) {
             console.error('Error applying soft lock:', error)
@@ -811,9 +851,9 @@ class Server {
         }
     }
 
-    async applyHardLock(schoolId) {
+    async applyHardLock(schoolId, note) {
         try {
-            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/billing/hard-lock`)
+            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/billing/hard-lock`, { note })
             return response.data
         } catch (error) {
             console.error('Error applying hard lock:', error)
@@ -821,15 +861,29 @@ class Server {
         }
     }
 
-    async setPilotStatus(schoolId, pilot) {
+    async setPilotStatus(schoolId, pilot, note) {
         try {
             const response = await this.http.post(
                 `/admin/schools/${encodeURIComponent(schoolId)}/billing/pilot`,
-                { pilot }
+                { pilot, note }
             )
             return response.data
         } catch (error) {
             console.error('Error setting pilot status:', error)
+            throw error
+        }
+    }
+
+    /** { agreementRef, agreementDate, startYear, note } */
+    async convertPilotToPaid(schoolId, data) {
+        try {
+            const response = await this.http.post(
+                `/admin/schools/${encodeURIComponent(schoolId)}/billing/convert`,
+                data
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error converting pilot:', error)
             throw error
         }
     }
@@ -880,9 +934,12 @@ class Server {
         }
     }
 
-    async requestSchoolExport(schoolId) {
+    async requestSchoolExport(schoolId, reason) {
         try {
-            const response = await this.http.post(`/schools/${encodeURIComponent(schoolId)}/export`)
+            const response = await this.http.post(
+                `/schools/${encodeURIComponent(schoolId)}/export`,
+                reason ? { reason } : {}
+            )
             return response.data
         } catch (error) {
             console.error('Error requesting school export:', error)
