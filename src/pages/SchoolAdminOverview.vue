@@ -80,7 +80,7 @@
                   <th class="num">Classes</th>
                   <th class="num">Students</th>
                   <th>Last activity</th>
-                  <th class="num">Term cost</th>
+                  <!-- <th class="num">Term cost</th> -->
                   <th></th>
                 </tr>
               </thead>
@@ -93,14 +93,12 @@
                   <td class="num">{{ row.classCount ?? 0 }}</td>
                   <td class="num">{{ formatInt(row.studentCount) }}</td>
                   <td class="activityCell">{{ formatDate(row.lastActivityAt) }}</td>
-                  <td class="num costCell">{{ formatZAR(row.costZAR) }}</td>
+                  <!-- <td class="num costCell">{{ formatZAR(row.costZAR) }}</td> -->
                   <td class="actionsCell">
-                    <v-btn size="x-small" variant="tonal" class="rowActionBtn"
-                      @click="goToDashboard(row.schoolId)">
+                    <v-btn size="x-small" variant="tonal" class="rowActionBtn" @click="goToDashboard(row.schoolId)">
                       Dashboard
                     </v-btn>
-                    <v-btn size="x-small" variant="text" class="rowActionBtn"
-                      @click="goToOnboarding(row.schoolId)">
+                    <v-btn size="x-small" variant="text" class="rowActionBtn" @click="goToOnboarding(row.schoolId)">
                       Teachers
                     </v-btn>
                   </td>
@@ -170,7 +168,7 @@ const kpiCards = computed(() => {
     { label: 'Schools', value: t.schools, icon: 'mdi-domain', iconBg: tone.skyBg, iconColor: tone.sky, cls: 'kpiCard--schools' },
     { label: 'Teachers', value: t.teachers, icon: 'mdi-account-school-outline', iconBg: tone.greenBg, iconColor: tone.green, cls: 'kpiCard--teachers' },
     { label: 'Students', value: formatInt(t.students), icon: 'mdi-account-group-outline', iconBg: tone.purpleBg, iconColor: tone.purple, cls: 'kpiCard--students' },
-    { label: 'Term cost', value: formatZAR(t.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: overview.value.termKey },
+    // { label: 'Term cost', value: formatZAR(t.costZAR), icon: 'mdi-cash-multiple', iconBg: tone.goldBg, iconColor: tone.gold, cls: 'kpiCard--cost', isMoney: true, meta: overview.value.termKey },
   ]
 })
 
@@ -245,7 +243,9 @@ onMounted(async () => {
 }
 
 @media (min-width: 768px) {
-  .saShell { padding: 0 1.5rem 3rem; }
+  .saShell {
+    padding: 0 1.5rem 3rem;
+  }
 }
 
 .saHeader {
@@ -286,10 +286,27 @@ onMounted(async () => {
   max-width: 36rem;
 }
 
-.headerControls { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; }
-.termRow { display: flex; gap: 0.5rem; align-items: center; }
-.termField { max-width: 150px; }
-.yearField { max-width: 85px; }
+.headerControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.termRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.termField {
+  max-width: 150px;
+}
+
+.yearField {
+  max-width: 85px;
+}
+
 .refreshBtn {
   background: rgba(0, 168, 232, 0.18) !important;
   border: 1px solid rgba(0, 168, 232, 0.32) !important;
@@ -297,8 +314,16 @@ onMounted(async () => {
   border-radius: 10px !important;
 }
 
-.saAlert { margin-bottom: 1rem; font-family: var(--font); }
-.loadingWrap { display: flex; justify-content: center; padding: 3rem; }
+.saAlert {
+  margin-bottom: 1rem;
+  font-family: var(--font);
+}
+
+.loadingWrap {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
 
 .kpiGrid {
   display: grid;
@@ -308,7 +333,9 @@ onMounted(async () => {
 }
 
 @media (min-width: 640px) {
-  .kpiGrid { grid-template-columns: repeat(4, 1fr); }
+  .kpiGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .kpiCard {
@@ -336,10 +363,21 @@ onMounted(async () => {
   background: rgba(var(--ink-rgb), 0.2);
 }
 
-.kpiCard--schools::before { background: rgba(0, 168, 232, 0.85); }
-.kpiCard--teachers::before { background: rgba(26, 147, 111, 0.85); }
-.kpiCard--students::before { background: rgba(168, 51, 185, 0.85); }
-.kpiCard--cost::before { background: rgba(247, 183, 7, 0.85); }
+.kpiCard--schools::before {
+  background: rgba(0, 168, 232, 0.85);
+}
+
+.kpiCard--teachers::before {
+  background: rgba(26, 147, 111, 0.85);
+}
+
+.kpiCard--students::before {
+  background: rgba(168, 51, 185, 0.85);
+}
+
+.kpiCard--cost::before {
+  background: rgba(247, 183, 7, 0.85);
+}
 
 @media (hover: hover) {
   .kpiCard:hover {
@@ -359,7 +397,13 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.kpiBody { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.kpiBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
 .kpiLabel {
   font-family: var(--font);
   font-size: 0.7rem;
@@ -378,8 +422,15 @@ onMounted(async () => {
   font-variant-numeric: tabular-nums;
 }
 
-.kpiValue--money { font-size: 1.25rem; }
-.kpiMeta { font-family: var(--font); font-size: 0.7rem; color: rgba(var(--ink-rgb), 0.35); }
+.kpiValue--money {
+  font-size: 1.25rem;
+}
+
+.kpiMeta {
+  font-family: var(--font);
+  font-size: 0.7rem;
+  color: rgba(var(--ink-rgb), 0.35);
+}
 
 .tablePanel {
   padding: 1.25rem;
@@ -410,7 +461,9 @@ onMounted(async () => {
   margin: 0;
 }
 
-.sectionTitleIcon { opacity: 0.5; }
+.sectionTitleIcon {
+  opacity: 0.5;
+}
 
 .sectionDesc {
   font-family: var(--font);
@@ -433,7 +486,9 @@ onMounted(async () => {
   border: 1px solid rgba(247, 183, 7, 0.2);
 }
 
-.tableWrap { overflow-x: auto; }
+.tableWrap {
+  overflow-x: auto;
+}
 
 .dataTable {
   width: 100%;
@@ -450,7 +505,10 @@ onMounted(async () => {
 }
 
 .dataTable th.num,
-.dataTable td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.dataTable td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 
 .dataTable th {
   font-size: 0.7rem;
@@ -468,10 +526,25 @@ onMounted(async () => {
   background: rgba(var(--ink-rgb), 0.04);
 }
 
-.schoolName { font-weight: 600; color: var(--white); }
-.activityCell { font-size: 0.82rem; color: rgba(var(--ink-rgb), 0.5); white-space: nowrap; }
-.costCell { color: rgba(247, 183, 7, 0.95); font-weight: 600; }
-.actionsCell { white-space: nowrap; }
+.schoolName {
+  font-weight: 600;
+  color: var(--white);
+}
+
+.activityCell {
+  font-size: 0.82rem;
+  color: rgba(var(--ink-rgb), 0.5);
+  white-space: nowrap;
+}
+
+.costCell {
+  color: rgba(247, 183, 7, 0.95);
+  font-weight: 600;
+}
+
+.actionsCell {
+  white-space: nowrap;
+}
 
 .rowActionBtn {
   text-transform: none !important;

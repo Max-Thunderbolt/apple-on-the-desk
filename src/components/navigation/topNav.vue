@@ -11,23 +11,13 @@
             <template v-if="showDashboardsMenu">
               <v-menu offset-y>
                 <template #activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    size="small"
-                    variant="text"
-                    class="navBtn"
-                    :class="{ 'navBtn--active': isDashboardsActive }"
-                    append-icon="mdi-chevron-down"
-                  >
+                  <v-btn v-bind="props" size="small" variant="text" class="navBtn"
+                    :class="{ 'navBtn--active': isDashboardsActive }" append-icon="mdi-chevron-down">
                     Dashboards
                   </v-btn>
                 </template>
                 <v-list class="dashboardMenu">
-                  <v-list-item
-                    v-for="item in dashboardItems"
-                    :key="item.path"
-                    @click="navigate(item.path, item.query)"
-                  >
+                  <v-list-item v-for="item in dashboardItems" :key="item.path" @click="navigate(item.path, item.query)">
                     <template #prepend>
                       <v-icon size="18">{{ item.icon }}</v-icon>
                     </template>
@@ -37,16 +27,9 @@
               </v-menu>
             </template>
 
-            <v-btn
-              v-for="item in leftNavItems"
-              :key="item.key"
-              size="small"
-              variant="text"
-              class="navBtn"
-              :class="{ 'navBtn--active': isActive(item) }"
-              :prepend-icon="item.icon"
-              @click="navigate(item.path, item.query)"
-            >
+            <v-btn v-for="item in leftNavItems" :key="item.key" size="small" variant="text" class="navBtn"
+              :class="{ 'navBtn--active': isActive(item) }" :prepend-icon="item.icon"
+              @click="navigate(item.path, item.query)">
               {{ item.label }}
             </v-btn>
           </nav>
@@ -54,42 +37,25 @@
 
         <div class="middleColumn">
           <template v-if="contextInfo">
-            <v-chip
-              v-if="contextInfo.type === 'school'"
-              size="small"
-              variant="tonal"
-              class="contextChip"
-              :prepend-icon="contextInfo.icon"
-            >
+            <v-chip v-if="contextInfo.type === 'school'" size="small" variant="tonal" class="contextChip"
+              :prepend-icon="contextInfo.icon">
               {{ contextInfo.label }}
             </v-chip>
             <div v-else-if="contextInfo.type === 'class'" class="classContext">
               <span class="contextLabel">{{ contextInfo.label }}</span>
               <div v-if="contextInfo.showShortcuts" class="classShortcuts">
-                <v-btn
-                  size="x-small"
-                  variant="text"
-                  class="shortcutBtn"
-                  @click="navigate(`/Class/${contextInfo.classId}?tab=shop`)"
-                >
+                <v-btn size="x-small" variant="text" class="shortcutBtn"
+                  @click="navigate(`/Class/${contextInfo.classId}?tab=shop`)">
                   Shop
                 </v-btn>
                 <span class="shortcutSep">·</span>
-                <v-btn
-                  size="x-small"
-                  variant="text"
-                  class="shortcutBtn"
-                  @click="navigate(`/Class/${contextInfo.classId}?tab=timer`)"
-                >
+                <v-btn size="x-small" variant="text" class="shortcutBtn"
+                  @click="navigate(`/Class/${contextInfo.classId}?tab=timer`)">
                   Timer
                 </v-btn>
                 <span class="shortcutSep">·</span>
-                <v-btn
-                  size="x-small"
-                  variant="text"
-                  class="shortcutBtn"
-                  @click="navigate(`/Class/${contextInfo.classId}?tab=groups`)"
-                >
+                <v-btn size="x-small" variant="text" class="shortcutBtn"
+                  @click="navigate(`/Class/${contextInfo.classId}?tab=groups`)">
                   Groups
                 </v-btn>
               </div>
@@ -100,16 +66,11 @@
         <div class="rightColumn">
           <v-menu offset-y location="bottom end">
             <template #activator="{ props }">
-              <v-btn
-                v-bind="props"
-                size="small"
-                variant="text"
-                class="profileBtn"
-                :class="{ 'profileBtn--active': isProfileActive }"
-              >
-                <v-avatar size="28" color="rgba(0, 168, 232, 0.4)" class="profileAvatar">
+              <v-btn v-bind="props" size="small" variant="text" class="profileBtn"
+                :class="{ 'profileBtn--active': isProfileActive }">
+                <!-- <v-avatar size="20" color="rgba(0, 168, 232, 0.4)" class="profileAvatar">
                   <span class="avatarText">{{ avatarLetter }}</span>
-                </v-avatar>
+                </v-avatar> -->
                 <span class="profileName">{{ displayName }}</span>
                 <v-icon size="18">mdi-chevron-down</v-icon>
               </v-btn>
@@ -183,7 +144,7 @@ const showDashboardsMenu = computed(() => {
 
 const dashboardItems = computed(() => {
   const items = []
-  
+
   if (isPlatformAdmin.value) {
     items.push({
       path: '/AdminDashboard',
@@ -191,7 +152,7 @@ const dashboardItems = computed(() => {
       icon: 'mdi-view-dashboard-outline',
     })
   }
-  
+
   if (hasSchoolAdminRole.value) {
     items.push({
       path: '/SchoolAdminOverview',
@@ -204,13 +165,13 @@ const dashboardItems = computed(() => {
       icon: 'mdi-google-classroom',
     })
   }
-  
+
   return items
 })
 
 const leftNavItems = computed(() => {
   const items = []
-  
+
   if (hasSchoolAdminRole.value) {
     items.push({
       key: 'teachers',
@@ -234,7 +195,7 @@ const leftNavItems = computed(() => {
       match: (p) => p === '/SchoolAdminBilling',
     })
   }
-  
+
   if (isPlatformAdmin.value) {
     items.push({
       key: 'schools',
@@ -251,7 +212,7 @@ const leftNavItems = computed(() => {
       match: (p) => p === '/AdminSchoolGroups',
     })
   }
-  
+
   if (hasTeacherRole.value) {
     items.push({
       key: 'my-classes',
@@ -268,7 +229,7 @@ const leftNavItems = computed(() => {
       match: (p) => p === '/MySchool' || p === '/Teacher',
     })
   }
-  
+
   return items
 })
 
@@ -290,7 +251,7 @@ const contextInfo = computed(() => {
       showShortcuts: true,
     }
   }
-  
+
   if (hasSchoolAdminRole.value && route.query.schoolId) {
     const school = schoolAdminSchools.value.find(s => s.schoolId === route.query.schoolId)
     if (school && route.path.startsWith('/SchoolAdmin')) {
@@ -301,7 +262,7 @@ const contextInfo = computed(() => {
       }
     }
   }
-  
+
   return null
 })
 
@@ -311,7 +272,7 @@ function isActive(item) {
 
 function navigate(path, query = null) {
   const schoolId = route.query.schoolId
-  
+
   if (path.startsWith('/SchoolAdmin') && schoolId && path !== '/SchoolAdminOverview') {
     router.push({ path, query: { schoolId, ...query } })
   } else if (query) {
@@ -519,24 +480,24 @@ async function handleSignOut() {
   .topNavContent {
     gap: 0.75rem;
   }
-  
+
   .leftColumn {
     gap: 0.5rem;
   }
-  
+
   .primaryNav {
     gap: 0.1rem;
   }
-  
+
   .navBtn {
     font-size: 0.8rem !important;
     padding: 0 0.5rem !important;
   }
-  
+
   .profileName {
     display: none;
   }
-  
+
   .classShortcuts {
     display: none;
   }
