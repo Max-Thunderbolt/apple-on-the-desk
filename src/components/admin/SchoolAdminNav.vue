@@ -30,6 +30,7 @@ const items = computed(() => {
     { path: '/SchoolAdminStudents', label: 'Students', icon: 'mdi-account-group-outline' },
     { path: '/SchoolAdminDashboard', label: 'Dashboard', icon: 'mdi-google-classroom' },
     { path: '/SchoolAdminOverview', label: 'Overview', icon: 'mdi-view-dashboard-outline' },
+    { path: '/SchoolAdminBilling', label: 'Billing', icon: 'mdi-receipt-text-outline' },
   ]
   if (teacherSchools.value.length > 0) {
     nav.push({ path: '/Classes', label: 'My classes', icon: 'mdi-book-open-variant' })

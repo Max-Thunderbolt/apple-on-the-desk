@@ -7,6 +7,7 @@ import {
   isAnyAdminSetupIncomplete,
   resolvePrimaryAdminSchoolId,
 } from '@/composables/useSchoolSetupStatus'
+import { safeRedirect } from '@/utils/safeRedirect'
 
 function getTeacherSchools() {
   return memberships.value.filter((m) => m.role === 'teacher')
@@ -20,9 +21,8 @@ function getSchoolAdminSchools() {
  * Sync resolver — use when admin setup status is unknown or already checked.
  */
 export function resolvePostAuthDestination({ redirectQuery, adminSetupIncomplete = null } = {}) {
-  if (typeof redirectQuery === 'string' && redirectQuery.startsWith('/')) {
-    return redirectQuery
-  }
+  const redirect = safeRedirect(redirectQuery)
+  if (redirect) return redirect
 
   const adminIds = schoolAdminSchoolIds.value
   const teachers = getTeacherSchools()
@@ -53,9 +53,8 @@ export function resolvePostAuthDestination({ redirectQuery, adminSetupIncomplete
 
 /** Async resolver — checks admin setup status before deciding destination. */
 export async function resolvePostAuthDestinationAsync({ redirectQuery } = {}) {
-  if (typeof redirectQuery === 'string' && redirectQuery.startsWith('/')) {
-    return redirectQuery
-  }
+  const redirect = safeRedirect(redirectQuery)
+  if (redirect) return redirect
 
   const adminSchools = getSchoolAdminSchools()
   const teachers = getTeacherSchools()

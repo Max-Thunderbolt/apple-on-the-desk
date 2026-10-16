@@ -35,14 +35,42 @@
 
 <script setup>
 import { watch } from 'vue'
-import { Toaster } from 'vue-sonner'
+import { useRouter } from 'vue-router'
+import { Toaster, toast } from 'vue-sonner'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
 import { fetchUserProfile, clearUserProfile } from '@/composables/useUserProfile'
+import { useBillingLockCheck } from '@/composables/useBillingLockCheck'
+import { setResponseHandlers } from '@/services/server'
 import PwaUpdatePrompt from '@/components/common/PwaUpdatePrompt.vue'
 
-const { authReady, isSignedIn } = useAuth()
+const router = useRouter()
+const { authReady, isSignedIn, signOut } = useAuth()
 const { effectiveTheme } = useTheme()
+const billingLock = useBillingLockCheck()
+
+let handlingUnauthorized = false
+setResponseHandlers({
+  // Expired or revoked session: sign out and come back here after logging in again
+  async onUnauthorized() {
+    if (!isSignedIn.value || handlingUnauthorized) return
+    handlingUnauthorized = true
+    try {
+      const redirect = router.currentRoute.value.fullPath
+      await signOut()
+      toast.info('Your session has expired. Please sign in again.', { id: 'session-expired' })
+      await router.replace({ path: '/Login', query: redirect && redirect !== '/Login' ? { redirect } : {} })
+    } finally {
+      handlingUnauthorized = false
+    }
+  },
+  // 403 { billingStatus, lockReason } from a classroom route
+  onBillingLock(data) {
+    const label = data.billingStatus === 'locked' ? 'locked' : 'soft lock'
+    toast.error(`School billing: ${label}`, { id: 'billing-lock', description: data.lockReason })
+    billingLock.refresh()
+  },
+})
 
 watch(
   [authReady, isSignedIn],

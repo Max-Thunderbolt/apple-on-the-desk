@@ -1,7 +1,7 @@
 <template>
   <div class="container saPage">
     <div class="saShell">
-      <SchoolAdminNav />
+      
 
       <header class="saHeader">
         <div class="saHeaderLeft">
@@ -170,7 +170,6 @@ import { useRoute, useRouter } from 'vue-router'
 import Server from '@/services/server'
 import { useUserProfile } from '@/composables/useUserProfile'
 import { useSchoolSetupStatus, clearSchoolSetupStatusCache } from '@/composables/useSchoolSetupStatus'
-import SchoolAdminNav from '@/components/admin/SchoolAdminNav.vue'
 
 const route = useRoute()
 const router = useRouter()
