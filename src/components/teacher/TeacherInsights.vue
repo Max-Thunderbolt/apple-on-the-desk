@@ -12,54 +12,53 @@
     </div>
 
     <div v-if="scope === 'mySchool' && hasTeacherSchools" class="controlRow">
-        <v-select
-          v-if="schoolOptions.length > 1"
-          v-model="selectedSchoolId"
-          :items="schoolOptions"
-          item-title="schoolName"
-          item-value="schoolId"
-          label="School"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="controlField glassField"
-          :menu-props="{ contentClass: 'classPerformanceMenu' }"
-          @update:model-value="onSchoolOrTermChange"
-        />
-        <v-select
-          v-model="year"
-          :items="yearItems"
-          label="Year"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="controlField yearField glassField"
-          :menu-props="{ contentClass: 'classPerformanceMenu' }"
-          @update:model-value="onSchoolOrTermChange"
-        />
-        <v-select
-          v-model="term"
-          :items="termItems"
-          item-title="title"
-          item-value="value"
-          label="Term"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="controlField termField glassField"
-          :menu-props="{ contentClass: 'classPerformanceMenu' }"
-          @update:model-value="onSchoolOrTermChange"
-        />
-        <v-btn
-          size="small"
-          icon="mdi-refresh"
-          variant="tonal"
-          class="refreshBtn"
-          :loading="loading"
-          aria-label="Refresh insights"
-          @click="loadInsights"
-        />
-      </div>
+      <v-select
+        v-if="schoolOptions.length > 1"
+        v-model="selectedSchoolId"
+        :items="schoolOptions"
+        item-title="schoolName"
+        item-value="schoolId"
+        label="School"
+        density="compact"
+        hide-details
+        variant="outlined"
+        class="controlField glassField"
+        :menu-props="{ contentClass: 'classPerformanceMenu' }"
+        @update:model-value="onSchoolOrTermChange"
+      />
+      <v-select
+        v-model="year"
+        :items="yearItems"
+        label="Year"
+        density="compact"
+        hide-details
+        variant="outlined"
+        class="controlField yearField glassField"
+        :menu-props="{ contentClass: 'classPerformanceMenu' }"
+        @update:model-value="onSchoolOrTermChange"
+      />
+      <v-select
+        v-model="term"
+        :items="termItems"
+        item-title="title"
+        item-value="value"
+        label="Term"
+        density="compact"
+        hide-details
+        variant="outlined"
+        class="controlField termField glassField"
+        :menu-props="{ contentClass: 'classPerformanceMenu' }"
+        @update:model-value="onSchoolOrTermChange"
+      />
+      <v-btn
+        size="small"
+        icon="mdi-refresh"
+        variant="tonal"
+        class="refreshBtn"
+        :loading="loading"
+        aria-label="Refresh insights"
+        @click="loadInsights"
+      />
     </div>
 
     <MyClassInsights

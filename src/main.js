@@ -4,13 +4,25 @@
  * Bootstraps Vuetify and other plugins then mounts the App`
  */
 
+// Composables
+import { createApp } from 'vue'
+import { getAnalytics } from 'firebase/analytics'
+
 // Plugins
 import { registerPlugins } from '@/plugins'
 import { app, auth } from '@/firebase'
-import { getAnalytics } from 'firebase/analytics'
 import { initAuth } from '@/composables/useAuth'
 import { initTheme } from '@/composables/useTheme'
+import { initPwaUpdate } from '@/composables/usePwaUpdate'
 import { setAuthGetter } from '@/services/server'
+
+// Components
+import App from './App.vue'
+
+// Styles
+import 'unfonts.css'
+import 'vue-sonner/style.css'
+import '@/styles/style.css'
 
 getAnalytics(app)
 initAuth()
@@ -21,18 +33,6 @@ setAuthGetter(async () => {
   return user ? await user.getIdToken() : null
 })
 
-// Components
-import App from './App.vue'
-
-// Composables
-import { createApp } from 'vue'
-
-// Styles
-import 'unfonts.css'
-import 'vue-sonner/style.css'
-import '@/styles/style.css'
-
-import { initPwaUpdate } from '@/composables/usePwaUpdate'
 initPwaUpdate()
 
 const vueApp = createApp(App)

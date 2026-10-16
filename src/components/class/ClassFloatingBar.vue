@@ -18,12 +18,13 @@
             </div>
         </Transition>
 
-        <!-- Timer modal (shown when opened) -->
-        <div v-if="timerPanelOpen" class="toolbarTimerHost">
+        <!-- Timer panel. Always mounted so a running timer survives closing the panel. -->
+        <div v-show="timerPanelOpen" class="toolbarTimerHost">
             <Timer
                 ref="timerRef"
                 variant="footer"
                 embedded
+                :open="timerPanelOpen"
                 class="toolbarTimer"
             />
         </div>
@@ -78,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed } from 'vue';
 import FloatingSearchBar from '@/components/common/FloatingSearchBar.vue';
 import Timer from '@/components/Timer.vue';
 import { useFormat } from '@/composables/useFormat';
@@ -122,9 +123,11 @@ const barRef = ref(null);
 const searchRef = ref(null);
 const timerRef = ref(null);
 const timerPanelOpen = ref(false);
-const timerIsRunning = ref(false);
-const timerDisplay = ref('');
-const timerProgress = ref(0);
+
+// Exposed refs on the Timer instance are unwrapped and stay reactive.
+const timerIsRunning = computed(() => timerRef.value?.isRunning ?? false);
+const timerDisplay = computed(() => timerRef.value?.formattedTime ?? '');
+const timerProgress = computed(() => timerRef.value?.progress ?? 0);
 
 const searchPlaceholder = computed(() =>
     props.viewShopModal ? 'Search shop' : 'Search',
@@ -209,9 +212,12 @@ const toolbarActions = computed(() => {
     return actions;
 });
 
-function openTimerFromCollapsed() {
+function openTimer() {
     timerPanelOpen.value = true;
-    timerRef.value?.openPanel?.();
+}
+
+function openTimerFromCollapsed() {
+    openTimer();
 }
 
 function onActionClick(action) {
@@ -221,11 +227,6 @@ function onActionClick(action) {
         break;
     case 'timer':
         timerPanelOpen.value = !timerPanelOpen.value;
-        if (timerPanelOpen.value) {
-            timerRef.value?.openPanel?.();
-        } else {
-            timerRef.value?.closePanel?.();
-        }
         break;
     case 'create':
         emit('createShopItem');
@@ -247,26 +248,7 @@ function onActionClick(action) {
     }
 }
 
-let timerSyncInterval = null;
-
-onMounted(() => {
-    const syncTimerRunning = () => {
-        const running = timerRef.value?.isRunning;
-        timerIsRunning.value = running?.value ?? running ?? false;
-        const time = timerRef.value?.formattedTime;
-        timerDisplay.value = time?.value ?? time ?? '';
-        const prog = timerRef.value?.progress;
-        timerProgress.value = prog?.value ?? prog ?? 0;
-    };
-    syncTimerRunning();
-    timerSyncInterval = setInterval(syncTimerRunning, 500);
-});
-
-onUnmounted(() => {
-    if (timerSyncInterval) clearInterval(timerSyncInterval);
-});
-
-defineExpose({ searchRef, timerRef });
+defineExpose({ searchRef, timerRef, openTimer });
 </script>
 
 <style scoped>

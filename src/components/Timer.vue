@@ -21,7 +21,7 @@
             <span class="stat">Total time: {{ formattedTotalTime }}</span>
         </div>
         <div class="controls">
-            <v-btn class="controlButtonStart" @click="startTimer" :disabled="!enteredDuration || enteredDuration < 1">
+            <v-btn class="controlButtonStart" @click="startTimer" :disabled="!canStart">
                 Start
             </v-btn>
             <v-btn class="controlButtonStop" @click="stopTimer" :disabled="!isRunning">
@@ -33,14 +33,14 @@
 
     <!-- Footer variant: compact trigger + expandable panel -->
     <div v-else class="timer timer--footer" :class="{ 'timer--embedded': embedded }">
-        <div v-if="expanded" class="timerFooterPanel">
+        <div v-if="panelVisible" class="timerFooterPanel">
             <div class="timerPresets">
                 <button
                     v-for="preset in presets"
                     :key="preset"
                     type="button"
                     class="presetChip"
-                    :class="{ 'presetChip--active': enteredDuration === preset }"
+                    :class="{ 'presetChip--active': Number(enteredDuration) === preset }"
                     @click="selectPreset(preset)"
                 >
                     {{ formatPresetLabel(preset) }}
@@ -64,7 +64,7 @@
                 <span class="stat">Total: {{ formattedTotalTime }}</span>
             </div>
             <div class="controls controls--footer">
-                <v-btn class="controlButtonStart" @click="startTimer" :disabled="!enteredDuration || enteredDuration < 1">
+                <v-btn class="controlButtonStart" @click="startTimer" :disabled="!canStart">
                     Start
                 </v-btn>
                 <v-btn class="controlButtonStop" @click="stopTimer" :disabled="!isRunning">
@@ -106,6 +106,11 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    // Embedded hosts control panel visibility through this prop.
+    open: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const presets = [30, 60, 120, 300];
@@ -121,6 +126,9 @@ const totalTimeSeconds = ref(0);
 let intervalId = null;
 const durationPerIteration = ref(0);
 
+const panelVisible = computed(() => (props.embedded ? props.open : expanded.value));
+const canStart = computed(() => !isRunning.value && Number(enteredDuration.value) >= 1);
+
 const swapSound = new Audio(swapSoundFile);
 
 const formattedTime = computed(() => {
@@ -131,12 +139,9 @@ const formattedTime = computed(() => {
 });
 
 watch(enteredDuration, (newVal) => {
-    if (newVal > 0) {
-        timeRemaining.value = newVal;
-    }
-    if (newVal < 1) {
-        timeRemaining.value = 0;
-    }
+    if (isRunning.value) return;
+    const seconds = Math.floor(Number(newVal));
+    timeRemaining.value = seconds > 0 ? seconds : 0;
 });
 
 const formattedTotalTime = computed(() => {
@@ -150,9 +155,7 @@ const formattedTotalTime = computed(() => {
 });
 
 function formatPresetLabel(seconds) {
-    if (seconds < 60) return `${seconds}s`;
-    const mins = seconds / 60;
-    return mins % 1 === 0 ? `${mins}m` : `${mins}m`;
+    return seconds < 60 ? `${seconds}s` : `${seconds / 60}m`;
 }
 
 function selectPreset(seconds) {
@@ -200,6 +203,7 @@ const playSwapSound = () => {
 };
 
 const startTimer = () => {
+    if (isRunning.value) return;
     const duration = Math.max(1, Math.floor(Number(enteredDuration.value) || 60));
     enteredDuration.value = duration;
     durationPerIteration.value = duration;
@@ -213,8 +217,9 @@ const startTimer = () => {
             : 0;
     }
     isRunning.value = true;
+    if (intervalId) clearInterval(intervalId);
     intervalId = setInterval(tick, 1000);
-    if (props.variant === 'footer') {
+    if (props.variant === 'footer' && !props.embedded) {
         expanded.value = false;
     }
 };
@@ -229,7 +234,7 @@ const stopTimer = () => {
 
 const resetTimer = () => {
     stopTimer();
-    timeRemaining.value = enteredDuration.value || 120;
+    timeRemaining.value = Math.floor(Number(enteredDuration.value)) || 120;
     progress.value = 0;
     durationPerIteration.value = 0;
     totalIterations.value = 0;
