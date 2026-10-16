@@ -1,7 +1,7 @@
 <template>
   <div class="container saPage">
     <div class="saShell">
-      <SchoolAdminNav />
+      
 
       <header class="saHeader">
         <div class="saHeaderLeft">
@@ -258,7 +258,6 @@ import { toast } from 'vue-sonner'
 import Server from '@/services/server'
 import { useUserProfile } from '@/composables/useUserProfile'
 import { useContextMenu } from '@/composables/useContextMenu'
-import SchoolAdminNav from '@/components/admin/SchoolAdminNav.vue'
 import ClassForm from '@/components/modals/ClassForm.vue'
 import AppContextMenu from '@/components/common/AppContextMenu.vue'
 

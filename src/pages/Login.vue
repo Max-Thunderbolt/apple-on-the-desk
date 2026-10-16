@@ -3,6 +3,7 @@
     <div class="title">
       Sign in or <span class="titleAccent">create account</span>
     </div>
+    <p class="audienceNote">For teachers and school staff. Learners don't sign in.</p>
 
     <div class="formCard">
       <v-form ref="formRef" @submit.prevent="handleSubmit" class="loginForm">
@@ -24,14 +25,29 @@
         <span>or</span>
       </div>
 
-      <v-btn class="googleButton" :loading="googleLoading" :disabled="loading || googleLoading"
-        @click="handleGoogleSignIn">
-        <v-icon start>mdi-google</v-icon>
-        Continue with Google
-      </v-btn>
+      <!-- Google branding guidelines: standard-colour G, white fill, #747775 stroke, #1F1F1F text -->
+      <button type="button" class="gsiButton" :disabled="loading || googleLoading" @click="handleGoogleSignIn">
+        <span class="gsiIcon" aria-hidden="true">
+          <v-progress-circular v-if="googleLoading" indeterminate size="18" width="2" color="#1F1F1F" />
+          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+          </svg>
+        </span>
+        <span class="gsiLabel">Continue with Google</span>
+      </button>
+
+      <p class="legalNote">
+        By continuing you agree to our
+        <a :href="TERMS_URL" target="_blank" rel="noopener">Terms</a>
+        and
+        <a :href="PRIVACY_URL" target="_blank" rel="noopener">Privacy Policy</a>.
+      </p>
     </div>
 
-    <a :href="INFO_SITE_URL" class="backLink">← Back to website</a>
+    <a :href="INFO_SITE_URL" class="backLink">New here? Learn about Apple On The Desk →</a>
   </div>
 </template>
 
@@ -43,7 +59,11 @@ import { toast } from 'vue-sonner'
 import server from '@/services/server'
 import { applyUserProfilePayload } from '@/composables/useUserProfile'
 import { resolvePostAuthDestinationAsync } from '@/composables/usePostAuthDestination'
-import { INFO_SITE_URL } from '@/config/siteUrls'
+import { INFO_SITE_URL, TERMS_URL, PRIVACY_URL } from '@/config/siteUrls'
+import { safeRedirect } from '@/utils/safeRedirect'
+
+// Firebase-managed OAuth web client. School Google admins can mark it Trusted.
+const GOOGLE_OAUTH_CLIENT_ID = '1777243046-e49j7djffttpnrsue7915r87m0fp1vhd.apps.googleusercontent.com'
 
 const router = useRouter()
 const route = useRoute()
@@ -53,17 +73,12 @@ async function postLoginRedirect() {
   try {
     const profile = await server.upsertUser()
     applyUserProfilePayload(profile)
-    const redirectTarget = typeof route.query.redirect === 'string' ? route.query.redirect : null
-    if (redirectTarget && redirectTarget.startsWith('/')) {
+    const redirectTarget = safeRedirect(route.query.redirect)
+    if (redirectTarget) {
       router.push(redirectTarget)
       return
     }
-    const dest = await resolvePostAuthDestinationAsync({})
-    if (typeof dest === 'string') {
-      router.push(dest)
-    } else {
-      router.push(dest)
-    }
+    router.push(await resolvePostAuthDestinationAsync({}))
   } catch {
     router.push('/GetStarted')
   }
@@ -126,10 +141,29 @@ async function handleGoogleSignIn() {
     toast.success('Signed in with Google')
     await postLoginRedirect()
   } catch (err) {
-    errorMessage.value = err?.message?.replace('Firebase: ', '') || 'Google sign in failed.'
+    const message = googleSignInErrorMessage(err)
+    if (message) errorMessage.value = message
   } finally {
     googleLoading.value = false
   }
+}
+
+/** Friendly copy for Google popup errors, including Workspace admin blocks. null = say nothing. */
+function googleSignInErrorMessage(err) {
+  const code = err?.code || ''
+  const text = `${code} ${err?.message || ''} ${err?.customData?._tokenResponse?.errorMessage || ''}`
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return null
+  if (code === 'auth/popup-blocked') {
+    return 'Your browser blocked the Google sign-in window. Allow pop-ups for this site and try again, or sign in with email.'
+  }
+  if (/admin_policy_enforced|access_not_configured/i.test(text)) {
+    return `Your school's Google admin hasn't approved Apple On The Desk yet. Use email sign-in, or ask IT to allow client ID ${GOOGLE_OAUTH_CLIENT_ID}.`
+  }
+  if (code === 'auth/account-exists-with-different-credential') {
+    return 'This email already has an account with a different sign-in method. Sign in with email and password.'
+  }
+  if (code === 'auth/network-request-failed') return 'Network error. Check your connection and try again.'
+  return err?.message?.replace('Firebase: ', '') || 'Google sign in failed.'
 }
 </script>
 
@@ -201,8 +235,7 @@ async function handleGoogleSignIn() {
   background: rgba(var(--ink-rgb), 0.2);
 }
 
-.submitButton,
-.googleButton {
+.submitButton {
   width: 100%;
   font-family: var(--font) !important;
   font-weight: 600 !important;
@@ -221,10 +254,61 @@ async function handleGoogleSignIn() {
   border: 1px solid rgba(var(--ink-rgb), 0.18) !important;
 }
 
-.googleButton {
-  background: rgba(var(--ink-rgb), 0.08) !important;
-  color: var(--white) !important;
-  border: 1px solid rgba(var(--ink-rgb), 0.25) !important;
+/* Google branding: light theme button (https://developers.google.com/identity/branding-guidelines) */
+.gsiButton {
+  width: 100%;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: #ffffff;
+  border: 1px solid #747775;
+  border-radius: 16px;
+  color: #1f1f1f;
+  font-family: 'Google Sans', 'Roboto', arial, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.25px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gsiButton:hover:not(:disabled) {
+  background: #f8f9fa;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+}
+
+.gsiButton:focus-visible {
+  outline: 2px solid #4285f4;
+  outline-offset: 2px;
+}
+
+.gsiButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.gsiIcon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.audienceNote,
+.legalNote {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: rgba(var(--ink-rgb), 0.65);
+  text-align: center;
+  margin: 0;
+}
+
+.legalNote a {
+  color: rgba(var(--ink-rgb), 0.9);
 }
 
 .backLink {

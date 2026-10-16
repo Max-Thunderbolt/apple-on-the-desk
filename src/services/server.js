@@ -12,7 +12,14 @@ const http = axios.create({
     },
 })
 
-console.log('apiBase', apiBase)
+/** Absolute URL for an API path the API returns (e.g. '/api/onboarding/documents/sla'). */
+export function apiUrl(path) {
+    if (!path) return null
+    if (/^https?:\/\//.test(path)) return path
+    const root = new URL(apiBase.endsWith('/') ? apiBase : `${apiBase}/`, window.location.origin)
+    // apiBase ends in /api/; API-returned paths start with /api/
+    return new URL(path.replace(/^\/api\//, ''), root).toString()
+}
 
 /** Set a function that returns the current Firebase ID token (for API auth). */
 export function setAuthGetter(getToken) {
@@ -31,6 +38,32 @@ http.interceptors.request.use(async config => {
     }
     return config
 })
+
+/**
+ * Global response handlers, registered by the app (keeps router/auth out of this module):
+ * - onUnauthorized(error): 401 from the API (expired session)
+ * - onBillingLock(data): 403 carrying { billingStatus, lockReason }
+ */
+const responseHandlers = { onUnauthorized: null, onBillingLock: null }
+export function setResponseHandlers(handlers) {
+    Object.assign(responseHandlers, handlers)
+}
+
+http.interceptors.response.use(
+    response => response,
+    error => {
+        const status = error.response?.status
+        const data = error.response?.data
+        if (status === 401 && responseHandlers.onUnauthorized) {
+            responseHandlers.onUnauthorized(error)
+        } else if (status === 403 && data?.billingStatus && responseHandlers.onBillingLock) {
+            // Inline reason for callers that surface error.message
+            error.message = data.message || 'School billing: access limited'
+            responseHandlers.onBillingLock(data)
+        }
+        return Promise.reject(error)
+    },
+)
 
 class Server {
     constructor() {
@@ -729,6 +762,222 @@ class Server {
             return response.data
         } catch (error) {
             console.error('Error updating onboarding progress:', error)
+            throw error
+        }
+    }
+
+    /** Status only ({ status, pilot, noticeStartedAt, softLockAt, lockedAt, termLabel }); teachers allowed */
+    async getSchoolBillingLockStatus(schoolId) {
+        const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/billing-status`)
+        return response.data
+    }
+
+    /** Full billing detail (school admin / platform admin) */
+    async getSchoolBillingStatus(schoolId) {
+        try {
+            const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/billing`)
+            return response.data
+        } catch (error) {
+            console.error('Error getting school billing status:', error)
+            throw error
+        }
+    }
+
+    async generateInvoice(schoolId, data) {
+        try {
+            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/invoices`, data)
+            return response.data
+        } catch (error) {
+            console.error('Error generating invoice:', error)
+            throw error
+        }
+    }
+
+    async markInvoicePaid(schoolId, invoiceNo, data) {
+        try {
+            const response = await this.http.post(
+                `/admin/schools/${encodeURIComponent(schoolId)}/invoices/${encodeURIComponent(invoiceNo)}/mark-paid`,
+                data
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error marking invoice paid:', error)
+            throw error
+        }
+    }
+
+    async downloadInvoicePDF(schoolId, invoiceNo) {
+        try {
+            const response = await this.http.get(
+                `/schools/${encodeURIComponent(schoolId)}/invoices/${encodeURIComponent(invoiceNo)}/pdf`,
+                { responseType: 'blob' }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error downloading invoice PDF:', error)
+            throw error
+        }
+    }
+
+    async resendInvoiceEmail(schoolId, invoiceNo) {
+        try {
+            const response = await this.http.post(
+                `/admin/schools/${encodeURIComponent(schoolId)}/invoices/${encodeURIComponent(invoiceNo)}/send-email`
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error resending invoice:', error)
+            throw error
+        }
+    }
+
+    async startBillingNotice(schoolId, note) {
+        try {
+            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/billing/notice`, { note })
+            return response.data
+        } catch (error) {
+            console.error('Error starting billing notice:', error)
+            throw error
+        }
+    }
+
+    async applySoftLock(schoolId, note) {
+        try {
+            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/billing/soft-lock`, { note })
+            return response.data
+        } catch (error) {
+            console.error('Error applying soft lock:', error)
+            throw error
+        }
+    }
+
+    async applyHardLock(schoolId, note) {
+        try {
+            const response = await this.http.post(`/admin/schools/${encodeURIComponent(schoolId)}/billing/hard-lock`, { note })
+            return response.data
+        } catch (error) {
+            console.error('Error applying hard lock:', error)
+            throw error
+        }
+    }
+
+    async setPilotStatus(schoolId, pilot, note) {
+        try {
+            const response = await this.http.post(
+                `/admin/schools/${encodeURIComponent(schoolId)}/billing/pilot`,
+                { pilot, note }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error setting pilot status:', error)
+            throw error
+        }
+    }
+
+    /** { agreementRef, agreementDate, startYear, note } */
+    async convertPilotToPaid(schoolId, data) {
+        try {
+            const response = await this.http.post(
+                `/admin/schools/${encodeURIComponent(schoolId)}/billing/convert`,
+                data
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error converting pilot:', error)
+            throw error
+        }
+    }
+
+    async getOnboardingStatus(schoolId) {
+        try {
+            const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/onboarding`)
+            return response.data
+        } catch (error) {
+            console.error('Error getting onboarding status:', error)
+            throw error
+        }
+    }
+
+    async acceptOnboarding(schoolId, data) {
+        try {
+            const response = await this.http.post(
+                `/schools/${encodeURIComponent(schoolId)}/onboarding/accept`,
+                data
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error accepting onboarding:', error)
+            throw error
+        }
+    }
+
+    async updatePrivacyDefaults(schoolId, data) {
+        try {
+            const response = await this.http.put(
+                `/schools/${encodeURIComponent(schoolId)}/onboarding/privacy-defaults`,
+                data
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error updating privacy defaults:', error)
+            throw error
+        }
+    }
+
+    async getOnboardingDocuments() {
+        try {
+            const response = await this.http.get('/onboarding/documents')
+            return response.data
+        } catch (error) {
+            console.error('Error getting onboarding documents:', error)
+            throw error
+        }
+    }
+
+    async requestSchoolExport(schoolId, reason) {
+        try {
+            const response = await this.http.post(
+                `/schools/${encodeURIComponent(schoolId)}/export`,
+                reason ? { reason } : {}
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error requesting school export:', error)
+            throw error
+        }
+    }
+
+    async getSchoolExportStatus(schoolId, jobId) {
+        try {
+            const response = await this.http.get(
+                `/schools/${encodeURIComponent(schoolId)}/export/${encodeURIComponent(jobId)}`
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error getting export status:', error)
+            throw error
+        }
+    }
+
+    async listSchoolExports(schoolId) {
+        try {
+            const response = await this.http.get(`/schools/${encodeURIComponent(schoolId)}/exports`)
+            return response.data
+        } catch (error) {
+            console.error('Error listing exports:', error)
+            throw error
+        }
+    }
+
+    async downloadSchoolExport(schoolId, jobId) {
+        try {
+            const response = await this.http.get(
+                `/schools/${encodeURIComponent(schoolId)}/export/${encodeURIComponent(jobId)}/download`,
+                { responseType: 'blob' }
+            )
+            return response.data
+        } catch (error) {
+            console.error('Error downloading export:', error)
             throw error
         }
     }

@@ -18,8 +18,8 @@
                             @click="navigateTo('/Classes')">
                             View Classes
                         </v-btn>
-                        <v-btn class="profileButton" @click="navigateTo('/Teacher')">
-                            Teacher
+                        <v-btn class="profileButton" @click="navigateTo('/MySchool')">
+                            My School
                         </v-btn>
                         <v-btn v-if="isPlatformAdmin" class="adminDashButton" @click="navigateTo('/AdminDashboard')">
                             Admin dashboard

@@ -8,7 +8,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { setupLayouts } from 'virtual:generated-layouts'
 import { routes } from 'vue-router/auto-routes'
-import { useAuth } from '@/composables/useAuth'
+import { useAuth, waitForAuthReady } from '@/composables/useAuth'
 import {
   profileLoaded,
   fetchUserProfile,
@@ -18,7 +18,7 @@ import {
 } from '@/composables/useUserProfile'
 import { resolvePostAuthDestinationAsync, hasSchoolMembership } from '@/composables/usePostAuthDestination'
 import { isAdminSetupComplete, resolvePrimaryAdminSchoolId } from '@/composables/useSchoolSetupStatus'
-import { INFO_SITE_URL } from '@/config/siteUrls'
+import { safeRedirect } from '@/utils/safeRedirect'
 
 function getTeacherSchools() {
   return memberships.value.filter((m) => m.role === 'teacher')
@@ -40,10 +40,11 @@ const SCHOOL_ADMIN_PATHS = new Set([
   '/SchoolAdminDashboard',
   '/SchoolAdminOnboarding',
   '/SchoolAdminStudents',
+  '/SchoolAdminBilling',
 ])
 
 function isTeacherRoute(path) {
-  return path === '/Classes' || path === '/AddClass' || path.startsWith('/Class/')
+  return path === '/Classes' || path === '/AddClass' || path.startsWith('/Class/') || path === '/MySchool'
 }
 
 async function getResolverDestination(excludeRedirect = false) {
@@ -51,22 +52,40 @@ async function getResolverDestination(excludeRedirect = false) {
 }
 
 router.beforeEach(async (to) => {
-  const { authReady, isSignedIn } = useAuth()
-  if (!authReady.value) return true
+  const { isSignedIn } = useAuth()
+  // The first navigation happens before Firebase reports the auth state: wait for it,
+  // otherwise protected pages render for signed-out visitors.
+  await waitForAuthReady()
 
-  // Anonymous app root → marketing site
+  // Handle /Teacher redirect to /MySchool
+  if (to.path === '/Teacher') {
+    if (to.query.tab === 'profile') {
+      return '/Profile'
+    }
+    return { path: '/MySchool', query: to.query.tab === 'insights' ? {} : to.query }
+  }
+
+  // Signed out: the app root and any unknown path show the login form (no bounce to the marketing site)
   if (to.path === '/' && !isSignedIn.value) {
-    window.location.replace(INFO_SITE_URL)
-    return false
+    return { path: '/Login' }
   }
 
   if (PUBLIC_PATHS.has(to.path) || to.path.startsWith('/Join/')) {
-    if (to.path === '/' && isSignedIn.value) {
-      const dest = await getResolverDestination(true)
-      return typeof dest === 'string' ? dest : dest
+    if ((to.path === '/' || to.path === '/Login') && isSignedIn.value) {
+      if (!profileLoaded.value) {
+        try {
+          await fetchUserProfile()
+        } catch {
+          return true
+        }
+      }
+      return safeRedirect(to.query.redirect) || (await getResolverDestination(true))
     }
     return true
   }
+
+  // Unknown routes render the 404 page for everyone
+  if (to.name === '/[...path]') return true
 
   if (!isSignedIn.value) {
     return { path: '/Login', query: { redirect: to.fullPath } }
@@ -97,17 +116,17 @@ router.beforeEach(async (to) => {
   // GetStarted only for users without school membership
   if (to.path === '/GetStarted' && hasSchoolMembership()) {
     const dest = await getResolverDestination(true)
-    return typeof dest === 'string' ? dest : dest
+    return dest
   }
 
   if ((to.path === '/AdminDashboard' || to.path === '/AdminSchools' || to.path === '/AdminSchoolGroups') && !isPlatformAdmin.value) {
     const dest = await getResolverDestination(true)
-    return typeof dest === 'string' ? dest : dest
+    return dest
   }
 
   if (SCHOOL_ADMIN_PATHS.has(to.path) && schoolAdminSchoolIds.value.length === 0) {
     const dest = await getResolverDestination(true)
-    return typeof dest === 'string' ? dest : dest
+    return dest
   }
 
   // Gate Overview when admin setup incomplete

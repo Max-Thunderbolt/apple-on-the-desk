@@ -1,7 +1,7 @@
 <template>
   <div class="container saPage">
     <div class="saShell">
-      <SchoolAdminNav />
+      
 
       <header class="saHeader">
         <div class="saHeaderLeft">
@@ -222,7 +222,6 @@ import { useTheme } from '@/composables/useTheme'
 import Server from '@/services/server'
 import ClassForm from '@/components/modals/ClassForm.vue'
 import AppContextMenu from '@/components/common/AppContextMenu.vue'
-import SchoolAdminNav from '@/components/admin/SchoolAdminNav.vue'
 import SchoolClassBarCharts from '@/components/charts/SchoolClassBarCharts.vue'
 
 const { schoolAdminSchools } = useUserProfile()

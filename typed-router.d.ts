@@ -19,8 +19,10 @@ declare module 'vue-router/auto-routes' {
    */
   export interface RouteNamedMap {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
+    '/[...path]': RouteRecordInfo<'/[...path]', '/:path(.*)', { path: ParamValue<true> }, { path: ParamValue<false> }>,
     '/AddClass': RouteRecordInfo<'/AddClass', '/AddClass', Record<never, never>, Record<never, never>>,
     '/AdminDashboard': RouteRecordInfo<'/AdminDashboard', '/AdminDashboard', Record<never, never>, Record<never, never>>,
+    '/AdminSchoolBilling': RouteRecordInfo<'/AdminSchoolBilling', '/AdminSchoolBilling', Record<never, never>, Record<never, never>>,
     '/AdminSchoolGroups': RouteRecordInfo<'/AdminSchoolGroups', '/AdminSchoolGroups', Record<never, never>, Record<never, never>>,
     '/AdminSchools': RouteRecordInfo<'/AdminSchools', '/AdminSchools', Record<never, never>, Record<never, never>>,
     '/Class/[id]': RouteRecordInfo<'/Class/[id]', '/Class/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
@@ -28,8 +30,10 @@ declare module 'vue-router/auto-routes' {
     '/GetStarted': RouteRecordInfo<'/GetStarted', '/GetStarted', Record<never, never>, Record<never, never>>,
     '/Join/[code]': RouteRecordInfo<'/Join/[code]', '/Join/:code', { code: ParamValue<true> }, { code: ParamValue<false> }>,
     '/Login': RouteRecordInfo<'/Login', '/Login', Record<never, never>, Record<never, never>>,
+    '/MySchool': RouteRecordInfo<'/MySchool', '/MySchool', Record<never, never>, Record<never, never>>,
     '/Onboarding': RouteRecordInfo<'/Onboarding', '/Onboarding', Record<never, never>, Record<never, never>>,
     '/Profile': RouteRecordInfo<'/Profile', '/Profile', Record<never, never>, Record<never, never>>,
+    '/SchoolAdminBilling': RouteRecordInfo<'/SchoolAdminBilling', '/SchoolAdminBilling', Record<never, never>, Record<never, never>>,
     '/SchoolAdminDashboard': RouteRecordInfo<'/SchoolAdminDashboard', '/SchoolAdminDashboard', Record<never, never>, Record<never, never>>,
     '/SchoolAdminOnboarding': RouteRecordInfo<'/SchoolAdminOnboarding', '/SchoolAdminOnboarding', Record<never, never>, Record<never, never>>,
     '/SchoolAdminOverview': RouteRecordInfo<'/SchoolAdminOverview', '/SchoolAdminOverview', Record<never, never>, Record<never, never>>,
@@ -52,12 +56,20 @@ declare module 'vue-router/auto-routes' {
       routes: '/'
       views: never
     }
+    'src/pages/[...path].vue': {
+      routes: '/[...path]'
+      views: never
+    }
     'src/pages/AddClass.vue': {
       routes: '/AddClass'
       views: never
     }
     'src/pages/AdminDashboard.vue': {
       routes: '/AdminDashboard'
+      views: never
+    }
+    'src/pages/AdminSchoolBilling.vue': {
+      routes: '/AdminSchoolBilling'
       views: never
     }
     'src/pages/AdminSchoolGroups.vue': {
@@ -88,12 +100,20 @@ declare module 'vue-router/auto-routes' {
       routes: '/Login'
       views: never
     }
+    'src/pages/MySchool.vue': {
+      routes: '/MySchool'
+      views: never
+    }
     'src/pages/Onboarding.vue': {
       routes: '/Onboarding'
       views: never
     }
     'src/pages/Profile.vue': {
       routes: '/Profile'
+      views: never
+    }
+    'src/pages/SchoolAdminBilling.vue': {
+      routes: '/SchoolAdminBilling'
       views: never
     }
     'src/pages/SchoolAdminDashboard.vue': {

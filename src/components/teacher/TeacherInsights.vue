@@ -1,6 +1,6 @@
 <template>
   <div class="teacherInsights">
-    <div class="insightsToolbar">
+    <div v-if="!isMySchoolPage" class="insightsToolbar">
       <v-btn-toggle v-model="scope" mandatory density="comfortable" class="scopeToggle" divided>
         <v-btn value="myClasses" size="small" prepend-icon="mdi-google-classroom">
           My classes
@@ -9,56 +9,56 @@
           My school
         </v-btn>
       </v-btn-toggle>
+    </div>
 
-      <div v-if="scope === 'mySchool' && hasTeacherSchools" class="controlRow">
-        <v-select
-          v-if="schoolOptions.length > 1"
-          v-model="selectedSchoolId"
-          :items="schoolOptions"
-          item-title="schoolName"
-          item-value="schoolId"
-          label="School"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="controlField glassField"
-          :menu-props="{ contentClass: 'classPerformanceMenu' }"
-          @update:model-value="onSchoolOrTermChange"
-        />
-        <v-select
-          v-model="year"
-          :items="yearItems"
-          label="Year"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="controlField yearField glassField"
-          :menu-props="{ contentClass: 'classPerformanceMenu' }"
-          @update:model-value="onSchoolOrTermChange"
-        />
-        <v-select
-          v-model="term"
-          :items="termItems"
-          item-title="title"
-          item-value="value"
-          label="Term"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="controlField termField glassField"
-          :menu-props="{ contentClass: 'classPerformanceMenu' }"
-          @update:model-value="onSchoolOrTermChange"
-        />
-        <v-btn
-          size="small"
-          icon="mdi-refresh"
-          variant="tonal"
-          class="refreshBtn"
-          :loading="loading"
-          aria-label="Refresh insights"
-          @click="loadInsights"
-        />
-      </div>
+    <div v-if="scope === 'mySchool' && hasTeacherSchools" class="controlRow">
+      <v-select
+        v-if="schoolOptions.length > 1"
+        v-model="selectedSchoolId"
+        :items="schoolOptions"
+        item-title="schoolName"
+        item-value="schoolId"
+        label="School"
+        density="compact"
+        hide-details
+        variant="outlined"
+        class="controlField glassField"
+        :menu-props="{ contentClass: 'classPerformanceMenu' }"
+        @update:model-value="onSchoolOrTermChange"
+      />
+      <v-select
+        v-model="year"
+        :items="yearItems"
+        label="Year"
+        density="compact"
+        hide-details
+        variant="outlined"
+        class="controlField yearField glassField"
+        :menu-props="{ contentClass: 'classPerformanceMenu' }"
+        @update:model-value="onSchoolOrTermChange"
+      />
+      <v-select
+        v-model="term"
+        :items="termItems"
+        item-title="title"
+        item-value="value"
+        label="Term"
+        density="compact"
+        hide-details
+        variant="outlined"
+        class="controlField termField glassField"
+        :menu-props="{ contentClass: 'classPerformanceMenu' }"
+        @update:model-value="onSchoolOrTermChange"
+      />
+      <v-btn
+        size="small"
+        icon="mdi-refresh"
+        variant="tonal"
+        class="refreshBtn"
+        :loading="loading"
+        aria-label="Refresh insights"
+        @click="loadInsights"
+      />
     </div>
 
     <MyClassInsights
@@ -116,16 +116,19 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useUserProfile } from '@/composables/useUserProfile';
 import { useTeacherSchoolInsights } from '@/composables/useTeacherSchoolInsights';
 import MyClassInsights from '@/components/teacher/MyClassInsights.vue';
 import SchoolInsights from '@/components/teacher/SchoolInsights.vue';
 
 const router = useRouter();
+const route = useRoute();
 const { teacherSchools } = useUserProfile();
 
-const scope = ref('myClasses');
+// Default to 'mySchool' when on /MySchool page
+const isMySchoolPage = computed(() => route.path === '/MySchool');
+const scope = ref(isMySchoolPage.value ? 'mySchool' : 'myClasses');
 
 const {
   selectedSchoolId,

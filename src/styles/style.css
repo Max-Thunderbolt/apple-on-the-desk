@@ -24,50 +24,79 @@
   /* ------- Dark theme (default) ------- */
 
   /* Backgrounds */
-  --color-bg: #00171f;
-  --color-bg-rgb: 0, 23, 31;
-  --color-bg-grad-mid: #0a2530;
-  --color-bg-grad-deep: #061a22;
+  --color-bg: #0B1218;
+  --color-bg-rgb: 11, 18, 24;
+  --color-bg-grad-mid: #0E1A22;
+  --color-bg-grad-deep: #0B1218;
 
-  /* Text */
-  --color-text: #ffffff;
-  --color-text-rgb: 255, 255, 255;
-  --color-text-strong: #ffffff;
-  --color-text-muted: rgba(255, 255, 255, 0.72);
-  --color-text-subtle: rgba(255, 255, 255, 0.55);
-  --color-text-on-accent: #ffffff;
+  /* Surfaces (layered over background) */
+  --color-surface-1: #152028;
+  --color-surface-2: #1C2A35;
+  --color-surface-3: #1A2430;
+  --color-surface: var(--color-surface-1);
+  --color-surface-hover: rgba(255, 255, 255, 0.06);
+  --color-surface-elevated: #1A2430;
+  --color-surface-overlay: rgba(26, 36, 48, 0.94);
+
+  /* Text / Ink */
+  --color-text: #F2F5F8;
+  --color-text-rgb: 242, 245, 248;
+  --color-text-strong: #FFFFFF;
+  --color-text-secondary: #A8B3C0;
+  --color-text-muted: #6B7785;
+  --color-text-subtle: rgba(242, 245, 248, 0.45);
+  --color-text-on-accent: #FFFFFF;
 
   /* RGB tuples used in alpha overlays so the same value flips per theme. */
-  --ink-rgb: 255, 255, 255;
+  --ink-rgb: 242, 245, 248;
   --shadow-rgb: 0, 0, 0;
   --highlight-rgb: 255, 255, 255;
 
   /* Borders */
-  --color-border: rgba(255, 255, 255, 0.16);
-  --color-border-soft: rgba(255, 255, 255, 0.10);
-  --color-border-strong: rgba(255, 255, 255, 0.28);
+  --color-border: rgba(255, 255, 255, 0.10);
+  --color-border-soft: rgba(255, 255, 255, 0.06);
+  --color-border-strong: rgba(255, 255, 255, 0.18);
 
-  /* Surfaces (overlay tints on top of the page bg) */
-  --color-surface: rgba(255, 255, 255, 0.05);
-  --color-surface-2: rgba(255, 255, 255, 0.08);
-  --color-surface-3: rgba(255, 255, 255, 0.12);
-  --color-surface-hover: rgba(255, 255, 255, 0.10);
-  --color-surface-elevated: rgba(8, 33, 42, 0.96);
-  --color-surface-overlay: rgba(0, 23, 31, 0.85);
-
-  /* Shadows */
+  /* Shadows & Glows (dark mode uses glows, not black shadows) */
   --color-shadow: rgba(0, 0, 0, 0.40);
   --color-shadow-soft: rgba(0, 0, 0, 0.18);
   --color-shadow-strong: rgba(0, 0, 0, 0.55);
+  --color-glow: rgba(94, 224, 192, 0.15);
+  --color-glow-soft: rgba(94, 224, 192, 0.08);
+
+  /* Buttons */
+  --color-btn-primary-bg: #3DB8A0;
+  --color-btn-primary-text: #FFFFFF;
+  --color-btn-primary-hover: #4BC9B0;
+  --color-btn-secondary-bg: transparent;
+  --color-btn-secondary-border: var(--color-border-strong);
+  --color-btn-secondary-text: var(--color-text);
+  --color-btn-secondary-hover: rgba(255, 255, 255, 0.08);
+  --color-btn-danger-bg: transparent;
+  --color-btn-danger-border: rgba(255, 107, 107, 0.4);
+  --color-btn-danger-text: #FF6B6B;
+  --color-btn-danger-hover: rgba(255, 107, 107, 0.12);
+
+  /* Progress bars */
+  --color-progress-track: #2E3A46;
+  --color-progress-fill: #5EE0C0;
+  --color-progress-copper: #E85D4C;
+
+  /* Game accents (dark-tuned) */
+  --color-xp-gold: #FFB020;
+  --color-xp-target: #C4A0FF;
+  --color-rank-title-bg: #2A2208;
+  --color-rank-title-text: #FFC14D;
+  --color-sparkle-glow: rgba(255, 200, 80, 0.45);
 
   /* Focus / selection */
-  --color-focus-ring: rgba(0, 168, 232, 0.55);
-  --color-selection-bg: rgba(0, 168, 232, 0.35);
-  --color-selection-text: #ffffff;
+  --color-focus-ring: rgba(61, 184, 160, 0.55);
+  --color-selection-bg: rgba(94, 224, 192, 0.30);
+  --color-selection-text: #FFFFFF;
 
   /* Status colors (theme-tuned) */
   --color-success: var(--seaGreen);
-  --color-error: var(--intenseCherry);
+  --color-error: #FF6B6B;
   --color-info: var(--freshSky);
   --color-warning: var(--gold);
 
@@ -97,50 +126,87 @@
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --color-bg: #f7fafc;
-  --color-bg-rgb: 247, 250, 252;
-  --color-bg-grad-mid: #ecf3fa;
-  --color-bg-grad-deep: #dfecf7;
+  /* Backgrounds */
+  --color-bg: #F4F8FC;
+  --color-bg-rgb: 244, 248, 252;
+  --color-bg-grad-mid: #FAFCFE;
+  --color-bg-grad-deep: #FFFFFF;
 
-  --color-text: #0d2530;
-  --color-text-rgb: 13, 37, 48;
-  --color-text-strong: #061a22;
-  --color-text-muted: rgba(13, 37, 48, 0.74);
-  --color-text-subtle: rgba(13, 37, 48, 0.55);
-  --color-text-on-accent: #ffffff;
-
-  --ink-rgb: 13, 37, 48;
-  --shadow-rgb: 13, 37, 48;
-  --highlight-rgb: 255, 255, 255;
-
-  --color-border: rgba(13, 37, 48, 0.18);
-  --color-border-soft: rgba(13, 37, 48, 0.10);
-  --color-border-strong: rgba(13, 37, 48, 0.30);
-
-  --color-surface: rgba(255, 255, 255, 0.85);
+  /* Surfaces (layered over background) */
+  --color-surface-1: rgba(255, 255, 255, 0.85);
   --color-surface-2: rgba(255, 255, 255, 0.94);
-  --color-surface-3: #ffffff;
-  --color-surface-hover: rgba(13, 37, 48, 0.06);
-  --color-surface-elevated: #ffffff;
+  --color-surface-3: #FFFFFF;
+  --color-surface: var(--color-surface-1);
+  --color-surface-hover: rgba(26, 31, 46, 0.04);
+  --color-surface-elevated: #FFFFFF;
   --color-surface-overlay: rgba(255, 255, 255, 0.94);
 
-  --color-shadow: rgba(13, 37, 48, 0.18);
-  --color-shadow-soft: rgba(13, 37, 48, 0.08);
-  --color-shadow-strong: rgba(13, 37, 48, 0.30);
+  /* Text / Ink */
+  --color-text: #1A1F2E;
+  --color-text-rgb: 26, 31, 46;
+  --color-text-strong: #0D141F;
+  --color-text-secondary: #5B6475;
+  --color-text-muted: #8B93A3;
+  --color-text-subtle: rgba(26, 31, 46, 0.50);
+  --color-text-on-accent: #FFFFFF;
 
-  --color-focus-ring: rgba(0, 120, 166, 0.55);
-  --color-selection-bg: rgba(0, 120, 166, 0.30);
-  --color-selection-text: #061a22;
+  /* RGB tuples */
+  --ink-rgb: 26, 31, 46;
+  --shadow-rgb: 26, 31, 46;
+  --highlight-rgb: 255, 255, 255;
 
-  /* Slightly darker variants for AA contrast against light backgrounds */
+  /* Borders */
+  --color-border: rgba(26, 31, 46, 0.14);
+  --color-border-soft: rgba(26, 31, 46, 0.08);
+  --color-border-strong: rgba(26, 31, 46, 0.24);
+
+  /* Shadows (light mode uses drop shadows) */
+  --color-shadow: rgba(26, 31, 46, 0.12);
+  --color-shadow-soft: rgba(26, 31, 46, 0.06);
+  --color-shadow-strong: rgba(26, 31, 46, 0.20);
+  --color-glow: transparent;
+  --color-glow-soft: transparent;
+
+  /* Buttons */
+  --color-btn-primary-bg: #1a936f;
+  --color-btn-primary-text: #FFFFFF;
+  --color-btn-primary-hover: #23a97e;
+  --color-btn-secondary-bg: transparent;
+  --color-btn-secondary-border: rgba(26, 31, 46, 0.24);
+  --color-btn-secondary-text: var(--color-text);
+  --color-btn-secondary-hover: rgba(26, 31, 46, 0.06);
+  --color-btn-danger-bg: transparent;
+  --color-btn-danger-border: rgba(197, 40, 61, 0.35);
+  --color-btn-danger-text: #C5283D;
+  --color-btn-danger-hover: rgba(197, 40, 61, 0.08);
+
+  /* Progress bars */
+  --color-progress-track: rgba(26, 31, 46, 0.12);
+  --color-progress-fill: #1a936f;
+  --color-progress-copper: #D84A38;
+
+  /* Game accents (light-tuned) */
+  --color-xp-gold: #D89600;
+  --color-xp-target: #9333B9;
+  --color-rank-title-bg: #FFF4E0;
+  --color-rank-title-text: #B07B04;
+  --color-sparkle-glow: rgba(216, 150, 0, 0.30);
+
+  /* Focus / selection */
+  --color-focus-ring: rgba(26, 147, 111, 0.50);
+  --color-selection-bg: rgba(26, 147, 111, 0.22);
+  --color-selection-text: #1A1F2E;
+
+  /* Status colors (contrast-adjusted for light backgrounds) */
   --color-success: #137a55;
-  --color-error: #b52236;
+  --color-error: #C5283D;
   --color-info: #0078a6;
   --color-warning: #b07b04;
 
-  --color-scrollbar-track: rgba(13, 37, 48, 0.04);
-  --color-scrollbar-thumb: rgba(13, 37, 48, 0.22);
-  --color-scrollbar-thumb-hover: rgba(13, 37, 48, 0.34);
+  /* Scrollbar */
+  --color-scrollbar-track: rgba(26, 31, 46, 0.05);
+  --color-scrollbar-thumb: rgba(26, 31, 46, 0.20);
+  --color-scrollbar-thumb-hover: rgba(26, 31, 46, 0.32);
 }
 
 /* ==========================================================================

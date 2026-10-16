@@ -1,7 +1,7 @@
 <template>
   <div class="container adminPage">
     <div class="adminShell">
-      <AdminNav />
+      
 
       <header class="adminHeader">
         <div class="adminHeaderLeft">
@@ -57,13 +57,22 @@
           </div>
           <v-text-field v-model="schoolSearch" placeholder="Search schools…" density="compact" hide-details
             variant="outlined" class="glassField searchField" prepend-inner-icon="mdi-magnify" rounded="lg" clearable />
+          <v-select v-model="statusFilter" :items="statusFilterItems" density="compact" hide-details
+            variant="outlined" class="glassField searchField" rounded="lg" label="Billing status" />
 
           <div v-if="filteredSchools.length" class="schoolList">
             <button v-for="s in filteredSchools" :key="s.id" type="button" class="schoolListItem"
               :class="{ 'schoolListItem--active': selectedSchoolId === s.id }" @click="selectSchool(s.id)">
               <span class="schoolListName">{{ s.name }}</span>
+              <BillingStatusChip :status="schoolBillingStatus(s)" :pilot="s.billing?.pilot === true" :show-icon="false"
+                class="schoolListStatus" />
               <span class="schoolListMeta">{{ s.id.slice(0, 8) }}…</span>
             </button>
+          </div>
+          <div v-else-if="schools.length" class="emptyState emptyState--compact">
+            <v-icon size="36" class="emptyIcon">mdi-filter-off-outline</v-icon>
+            <p class="emptyTitle">No matching schools</p>
+            <p class="emptyText">Change the search or billing status filter.</p>
           </div>
           <div v-else class="emptyState emptyState--compact">
             <v-icon size="36" class="emptyIcon">mdi-school-outline</v-icon>
@@ -162,6 +171,21 @@
             </div>
           </section>
 
+          <!-- Billing -->
+          <section class="actionCard">
+            <div class="actionHeader">
+              <v-icon size="22" color="rgba(247,183,7,0.9)">mdi-receipt-text-outline</v-icon>
+              <h3 class="actionTitle">Billing</h3>
+            </div>
+            <p class="actionDesc">Manage invoices, payment status, and billing lock ladder for this school.</p>
+            <div class="actionFields">
+              <v-btn variant="outlined" prepend-icon="mdi-receipt-text" class="actionBtn actionBtn--billing"
+                @click="goToBilling">
+                Manage billing
+              </v-btn>
+            </div>
+          </section>
+
           <!-- Members -->
           <section class="membersPanel">
             <div class="panelHead">
@@ -224,8 +248,11 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Server from '@/services/server'
-import AdminNav from '@/components/admin/AdminNav.vue'
+import BillingStatusChip from '@/components/common/BillingStatusChip.vue'
+
+const router = useRouter()
 
 const schools = ref([])
 const schoolsLoading = ref(false)
@@ -263,10 +290,34 @@ const roleItems = [
   { title: 'Teacher', value: 'teacher' },
 ]
 
+const BILLING_STATUSES = ['trial', 'invoiced', 'paid', 'notice', 'soft_locked', 'locked']
+const statusFilter = ref('all')
+const statusFilterItems = [
+  { title: 'All statuses', value: 'all' },
+  { title: 'Trial', value: 'trial' },
+  { title: 'Invoiced', value: 'invoiced' },
+  { title: 'Paid', value: 'paid' },
+  { title: 'Notice', value: 'notice' },
+  { title: 'Soft lock', value: 'soft_locked' },
+  { title: 'Locked', value: 'locked' },
+  { title: 'Pilot', value: 'pilot' },
+]
+
+/** GET /admin/schools returns raw School docs: status lives at billing.status */
+function schoolBillingStatus(s) {
+  const status = s.billing?.status
+  return BILLING_STATUSES.includes(status) ? status : 'trial'
+}
+
 const filteredSchools = computed(() => {
   const q = schoolSearch.value?.trim().toLowerCase()
-  if (!q) return schools.value
-  return schools.value.filter((s) => s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q))
+  const f = statusFilter.value
+  return schools.value.filter((s) => {
+    if (q && !(s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q))) return false
+    if (f === 'pilot') return s.billing?.pilot === true
+    if (f !== 'all') return schoolBillingStatus(s) === f
+    return true
+  })
 })
 
 const selectedSchool = computed(() =>
@@ -324,6 +375,11 @@ function selectSchool(schoolId) {
   memberSearchQuery.value = ''
   memberSearchResults.value = []
   loadMembers(schoolId)
+}
+
+function goToBilling() {
+  if (!selectedSchoolId.value) return
+  router.push({ path: '/AdminSchoolBilling', query: { schoolId: selectedSchoolId.value } })
 }
 
 async function createSchool() {
@@ -717,6 +773,11 @@ onMounted(loadSchools)
   color: var(--white);
 }
 
+.schoolListStatus {
+  font-size: 0.62rem !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
 .schoolListMeta {
   font-size: 0.65rem;
   font-family: ui-monospace, monospace;
@@ -860,6 +921,12 @@ onMounted(loadSchools)
 .actionBtn--invite {
   background: linear-gradient(135deg, rgba(168, 51, 185, 0.35) 0%, rgba(168, 51, 185, 0.15) 100%) !important;
   border: 1px solid rgba(168, 51, 185, 0.3) !important;
+  color: var(--white) !important;
+}
+
+.actionBtn--billing {
+  background: linear-gradient(135deg, rgba(247, 183, 7, 0.35) 0%, rgba(247, 183, 7, 0.15) 100%) !important;
+  border: 1px solid rgba(247, 183, 7, 0.3) !important;
   color: var(--white) !important;
 }
 
